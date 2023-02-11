@@ -69,20 +69,23 @@ void i2s_install() {
 const byte polyphony = 6;
 uint32_t freqmutato[4][polyphony];
 uint32_t pich[4][polyphony];
-byte szorzo = 1;
 byte generatornumber = 1;
 uint32_t wavefreq[4][polyphony];
-uint32_t noteertek[256];
+uint32_t noteertek[4][256];
 byte oldnoteByte[polyphony];
 bool noteoff[polyphony];
 bool loopsample[4] = { false, false, false, false };
-uint16_t samplebegin[4] = { 1000, 1000, 1000, 1000 };
-uint16_t sampleend[4] = { 3000, 3000, 3000, 3000 };
+uint16_t samplebegin[4] = { 20, 20, 20, 20 };
+uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
-byte COARSE[4] = { 0, 0, 0, 0 };
+uint16_t GLOBAL_TUNE = 15936;
+byte COARSE[4] = { 3, 3, 3, 3 };
 byte FINE[4] = { 50, 50, 50, 50 };
-uint32_t detune_Fine[4] = { int(FINE) << 12, int(FINE) << 12, int(FINE) << 12, int(FINE) << 12 };
+float c[4] = {1001, 1001, 1001, 1001};
+byte szorzo[4] = {1, 1, 1, 1};
+byte LKeyShift = 0;
+byte UKeyShift = 0;
 byte volume[4] { 80, 80, 0, 0 };
 byte generatorvolume[4][polyphony];
 //reverb variable
@@ -100,9 +103,13 @@ byte reverblevel = 60;
 byte reverbdiffusion = 22;
 uint16_t reverbtime = delaybuffersize;
 uint16_t reverbtime2 = delaybuffersize;
-byte chorusLevelLeft = 50;
-byte chorusLevelRight = 50;
+byte chorusLevelLeft = 10;
+byte chorusLevelRight = 49;
+uint16_t chorusbuffersize = 511;
+uint16_t chorusbuffersize2 = 511;
 int16_t const* genstartadress[4];
+const byte LFOnumber = 8;
+uint16_t const* LFOadress[LFOnumber];
 int32_t tempbuffer;
 byte ENV_L0 = 0;
 byte ENV_T1[4] = { 125, 125, 125, 125 };
@@ -118,68 +125,111 @@ byte ENV_LEND[4] = { 0, 0, 0, 0 };
 byte generatorstatus[4][polyphony];
 byte TVAvolume[4][polyphony];
 byte TVA[4] = {0, 0, 0, 0};
-byte KEYFollow[4] = { 1, 1, 1, 1 };
+byte KEYFollow[4] = { 11, 11, 11, 11 };
 byte LFOMode[4] = { 0, 0, 0, 0 };
 byte PENVMode[4] = { 0, 0, 0, 0 };
 byte BENDERMode[4] = { 0, 0, 0, 0 };
 byte Waveform[4] = { 0, 1, 0, 1 };
 byte PCMWaveNo[4] = { 12, 12, 12, 12 };
-uint32_t lfo1arrayindex = 0;
-uint16_t lfo1value;
-byte lfo1freq = 50;
-uint32_t lfo2arrayindex = 0;
-uint16_t lfo2value;
-byte lfo2freq = 50;
+uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
+uint16_t lfovalue[LFOnumber];
+byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
+
 //---------------------------TUNE----------------------------------
-float c = 1001;
+
 void notetune() {
-  // float c = 6574;
-  float cisz = c * 1.0594631;
-  float d = cisz * 1.0594631;
-  float disz = d * 1.0594631;
-  float e = disz * 1.0594631;
-  float f = e * 1.0594631;
-  float fisz = f * 1.0594631;
-  float g = fisz * 1.0594631;
-  float gisz = g * 1.0594631;
-  float a = gisz * 1.0594631;
-  float b = a * 1.0594631;
-  float h = b * 1.0594631;
-  //Tune global pitch
-  int szorzo2 = szorzo;
-  for (int i = 0; i < 256; i += 12) {
-    noteertek[i] = round(c * szorzo2);
-    noteertek[i + 1] = round(cisz * szorzo2);
-    noteertek[i + 2] = round(d * szorzo2);
-    noteertek[i + 3] = round(disz * szorzo2);
-    noteertek[i + 4] = round(e * szorzo2);
-    noteertek[i + 5] = round(f * szorzo2);
-    noteertek[i + 6] = round(fisz * szorzo2);
-    noteertek[i + 7] = round(g * szorzo2);
-    noteertek[i + 8] = round(gisz * szorzo2);
-    noteertek[i + 9] = round(a * szorzo2);
-    noteertek[i + 10] = round(b * szorzo2);
-    noteertek[i + 11] = round(h * szorzo2);
-    szorzo2 *= 2;
+  for (int j = 0; j < 4; j++) {
+    /*
+      switch (COARSE[j]){
+      case 0: c[j]=1001; break;
+      case 1: c[j]=1061; break;
+      case 2: c[j]=1190; break;
+      case 3: c[j]=1261; break;
+      case 4: c[j]=1124; break;
+      case 5: c[j]=1336; break;
+      case 6: c[j]=1416; break;
+      case 7: c[j]=1500; break;
+      case 8: c[j]=1589; break;
+      case 9: c[j]=1683; break;
+      case 10: c[j]=1784; break;
+      case 11: c[j]=1890; break;
+      case 12: c[j]=2002; break;
+      case 24: c[j]=4004; break;
+      case 36: c[j]=2002; break;
+      case 48: c[j]=4004; break;
+      }
+    */
+    c[j] = (GLOBAL_TUNE + (FINE[j] << 3));
+    float cisz = c[j] * 1.0594631;
+    float d = cisz * 1.0594631;
+    float disz = d * 1.0594631;
+    float e = disz * 1.0594631;
+    float f = e * 1.0594631;
+    float fisz = f * 1.0594631;
+    float g = fisz * 1.0594631;
+    float gisz = g * 1.0594631;
+    float a = gisz * 1.0594631;
+    float b = a * 1.0594631;
+    float h = b * 1.0594631;
+    //Tune global pitch
+    int shift = COARSE[j];
+    float szorzo2 = 1;
+    switch (KEYFollow[j]) {
+      case 0: szorzo2 = -1; break;
+      case 1: szorzo2 = -0.5; break;
+      case 2: szorzo2 = -0.25; break;
+      case 3: szorzo2 = 0; break;
+      case 4: szorzo2 = 0.125; break;
+      case 5: szorzo2 = 0.25; break;
+      case 6: szorzo2 = 0.375; break;
+      case 7: szorzo2 = 0.5; break;
+      case 8: szorzo2 = 0.625; break;
+      case 9: szorzo2 = 0.75; break;
+      case 10: szorzo2 = 0.875; break;
+      case 11: szorzo2 = 1; break;
+      case 12: szorzo2 = 1.25; break;
+      case 13: szorzo2 = 1.5; break;
+      case 14: szorzo2 = 2; break;
+      case 15: szorzo2 = 3; break;
+      case 16: szorzo2 = 4; break;
+    }
+
+    for (int i = 0; i < 256; i += 12) {
+      noteertek[j][i + shift] = round(c[j] * szorzo2);
+      noteertek[j][i + 1 + shift] = round(cisz * szorzo2);
+      noteertek[j][i + 2 + shift] = round(d * szorzo2);
+      noteertek[j][i + 3 + shift] = round(disz * szorzo2);
+      noteertek[j][i + 4 + shift] = round(e * szorzo2);
+      noteertek[j][i + 5 + shift] = round(f * szorzo2);
+      noteertek[j][i + 6 + shift] = round(fisz * szorzo2);
+      noteertek[j][i + 7 + shift] = round(g * szorzo2);
+      noteertek[j][i + 8 + shift] = round(gisz * szorzo2);
+      noteertek[j][i + 9 + shift] = round(a * szorzo2);
+      noteertek[j][i + 10 + shift] = round(b * szorzo2);
+      noteertek[j][i + 11 + shift] = round(h * szorzo2);
+      szorzo2 *= 2;
+    }
   }
 }
 
 uint16_t sizes[36];
 void maxsize() {
-  sizes[0] = sizeof(marimba) >> 1;
-  sizes[1] = sizeof(vibraphone) >> 1;
-  sizes[2] = sizeof(xilophone1) >> 1;
-  sizes[3] = sizeof(xilophone2) >> 1;
-  sizes[4] = sizeof(logbass) >> 1;
-  sizes[5] = sizeof(hammer) >> 1;
-  sizes[6] = sizeof(japanesedrum) >> 1;
-  sizes[7] = sizeof(kalimba) >> 1;
-  sizes[8] = sizeof(pluck1) >> 1;
-  sizes[9] = sizeof(chink) >> 1;
-  sizes[10] = sizeof(agogo) >> 1;
-  sizes[11] = sizeof(triangle) >> 1;
+  /*
+    sizes[0] = sizeof(marimba) >> 1;
+    sizes[1] = sizeof(vibraphone) >> 1;
+    sizes[2] = sizeof(xilophone1) >> 1;
+    sizes[3] = sizeof(xilophone2) >> 1;
+    sizes[4] = sizeof(logbass) >> 1;
+    sizes[5] = sizeof(hammer) >> 1;
+    sizes[6] = sizeof(japanesedrum) >> 1;
+    sizes[7] = sizeof(kalimba) >> 1;
+    sizes[8] = sizeof(pluck1) >> 1;
+    sizes[9] = sizeof(chink) >> 1;
+    sizes[10] = sizeof(agogo) >> 1;
+    sizes[11] = sizeof(triangle) >> 1;
+  */
   sizes[12] = sizeof(bells) >> 1;
-  
+  /*
     sizes[13] = sizeof(nailfile) >> 1;
     sizes[14] = sizeof(pick) >> 1;
     sizes[15] = sizeof(lowpiano) >> 1;
@@ -200,7 +250,7 @@ void maxsize() {
     sizes[30] = sizeof(breath) >> 1;
     sizes[31] = sizeof(klarinet) >> 1;
     sizes[32] = sizeof(steamer) >> 1;
-  
+  */
 }
 
 void setsamplesize() {
@@ -218,48 +268,60 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-    case 0: genstartadress[opmenuoldal] = marimba; break;
-    case 1: genstartadress[opmenuoldal] = vibraphone; break;
-    case 2: genstartadress[opmenuoldal] = xilophone1; break;
-    case 3: genstartadress[opmenuoldal] = xilophone2; break;
-    case 4: genstartadress[opmenuoldal] = logbass; break;
-    case 5: genstartadress[opmenuoldal] = hammer; break;
-    case 6: genstartadress[opmenuoldal] = japanesedrum; break;
-    case 7: genstartadress[opmenuoldal] = kalimba; break;
-    case 8: genstartadress[opmenuoldal] = pluck1; break;
-    case 9: genstartadress[opmenuoldal] = chink; break;
-    case 10: genstartadress[opmenuoldal] = agogo; break;
-    case 11: genstartadress[opmenuoldal] = triangle; break;
+    /*
+      case 0: genstartadress[opmenuoldal] = marimba; break;
+      case 1: genstartadress[opmenuoldal] = vibraphone; break;
+      case 2: genstartadress[opmenuoldal] = xilophone1; break;
+      case 3: genstartadress[opmenuoldal] = xilophone2; break;
+      case 4: genstartadress[opmenuoldal] = logbass; break;
+      case 5: genstartadress[opmenuoldal] = hammer; break;
+      case 6: genstartadress[opmenuoldal] = japanesedrum; break;
+      case 7: genstartadress[opmenuoldal] = kalimba; break;
+      case 8: genstartadress[opmenuoldal] = pluck1; break;
+      case 9: genstartadress[opmenuoldal] = chink; break;
+      case 10: genstartadress[opmenuoldal] = agogo; break;
+      case 11: genstartadress[opmenuoldal] = triangle; break;
+    */
     case 12: genstartadress[opmenuoldal] = bells; break;
-      
-        case 13: genstartadress[opmenuoldal] = nailfile; break;
-        case 14: genstartadress[opmenuoldal] = pick; break;
-        case 15: genstartadress[opmenuoldal] = lowpiano; break;
-        case 16: genstartadress[opmenuoldal] = midpiano; break;
-        case 17: genstartadress[opmenuoldal] = highpiano; break;
-        case 18: genstartadress[opmenuoldal] = hapsichord; break;
-        case 19: genstartadress[opmenuoldal] = harp; break;
-        case 20: genstartadress[opmenuoldal] = organpercus; break;
-        case 21: genstartadress[opmenuoldal] = steelstrings; break;
-        case 22: genstartadress[opmenuoldal] = nylonstrings; break;
-        case 23: genstartadress[opmenuoldal] = electgitar1; break;
-        case 24: genstartadress[opmenuoldal] = electgitar2; break;
-        case 25: genstartadress[opmenuoldal] = dirtygitar; break;
-        case 26: genstartadress[opmenuoldal] = pickbass; break;
-        case 27: genstartadress[opmenuoldal] = popbass; break;
-        case 28: genstartadress[opmenuoldal] = thump; break;
-        case 29: genstartadress[opmenuoldal] = klarinet; break;
-        case 30: genstartadress[opmenuoldal] = breath; break;
-        case 31: genstartadress[opmenuoldal] = popbass; break;
-        case 32: genstartadress[opmenuoldal] = steamer; break;
-      
+      /*
+         case 13: genstartadress[opmenuoldal] = nailfile; break;
+         case 14: genstartadress[opmenuoldal] = pick; break;
+         case 15: genstartadress[opmenuoldal] = lowpiano; break;
+         case 16: genstartadress[opmenuoldal] = midpiano; break;
+         case 17: genstartadress[opmenuoldal] = highpiano; break;
+         case 18: genstartadress[opmenuoldal] = hapsichord; break;
+         case 19: genstartadress[opmenuoldal] = harp; break;
+         case 20: genstartadress[opmenuoldal] = organpercus; break;
+         case 21: genstartadress[opmenuoldal] = steelstrings; break;
+         case 22: genstartadress[opmenuoldal] = nylonstrings; break;
+         case 23: genstartadress[opmenuoldal] = electgitar1; break;
+         case 24: genstartadress[opmenuoldal] = electgitar2; break;
+         case 25: genstartadress[opmenuoldal] = dirtygitar; break;
+         case 26: genstartadress[opmenuoldal] = pickbass; break;
+         case 27: genstartadress[opmenuoldal] = popbass; break;
+         case 28: genstartadress[opmenuoldal] = thump; break;
+         case 29: genstartadress[opmenuoldal] = klarinet; break;
+         case 30: genstartadress[opmenuoldal] = breath; break;
+         case 31: genstartadress[opmenuoldal] = popbass; break;
+         case 32: genstartadress[opmenuoldal] = steamer; break;
+      */
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
 }
 
-//--------------MIDI SYSEX PARAMETER CONTROL------
+void setLFOWave() {
+  LFOadress[0] = lfosine;
+  LFOadress[1] = lfotriangle;
+  LFOadress[2] = lfosine;
+  LFOadress[3] = lfotriangle;
+  LFOadress[4] = lfosine;
+  LFOadress[5] = lfotriangle;
+  LFOadress[6] = lfosine;
+  LFOadress[7] = lfotriangle;
+}
 
+//--------------MIDI SYSEX PARAMETER CONTROL------
 void parametersysexchanged() {
   byte value = velocityByte;
 
@@ -267,22 +329,9 @@ void parametersysexchanged() {
     switch (noteByte) {
 
       case 1:
-        FINE[opmenuoldal] = value;
-        Serial.println("FINE" + String(FINE[0]));
-        break;
-      case 66:
-        if (value == 3) {
-          KEYFollow[0] = 0;
-        }
-        if (value == 11) {
-          KEYFollow[0] = 1;
-        }
-        if (value == 14) {
-          KEYFollow[0] = 2;
-        }
-        Serial.println("KEYFollow" + String(KEYFollow[0]));
 
         break;
+
       case 3:
         LFOMode[opmenuoldal] = value;
         break;
@@ -296,7 +345,7 @@ void parametersysexchanged() {
         // Waveform[opmenuoldal] = value;
         break;
       case 43:
-        lfo2freq = value;
+        lfofreq[1] = value;
         break;
       case 44:
         chorusLevelRight = value;
@@ -304,8 +353,19 @@ void parametersysexchanged() {
       case 64:
         COARSE[0] = value;
         Serial.println("COARSE" + String(COARSE[0]));
+        notetune();
         break;
+      case 65:
+        FINE[0] = value;
+        Serial.println("FINE 0" + String(FINE[0]));
+        notetune();
+        break;
+      case 66:
+        KEYFollow[0] = value;
+        Serial.println("KEYFollow 0" + String(KEYFollow[0]));
+        notetune();
 
+        break;
       case 67:
         TVA[0] = value;
         Serial.println("TVA 0: " + String(TVA[0]));
@@ -393,18 +453,17 @@ void parametersysexchanged() {
       case 0:
         COARSE[1] = value;
         Serial.println("COARSE" + String(COARSE[1]));
+        notetune();
+        break;
+      case 1:
+        FINE[1] = value;
+        Serial.println("FINE 1" + String(FINE[1]));
+        notetune();
         break;
       case 2:
-        if (value == 3) {
-          KEYFollow[1] = 0;
-        }
-        if (value == 11) {
-          KEYFollow[1] = 1;
-        }
-        if (value == 14) {
-          KEYFollow[1] = 2;
-        }
-        Serial.println("KEYFollow" + String(KEYFollow[1]));
+        KEYFollow[1] = value;;
+        Serial.println("KEYFollow 1" + String(KEYFollow[1]));
+        notetune();
         break;
       case 4:
         TVA[1] = value;
@@ -484,9 +543,50 @@ void parametersysexchanged() {
           Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
         }
         break;
+      case 106:
+        switch (value) {
+          case 1:
+            //chorus1
+            chorusbuffersize = 255;
+            LFOadress[0] = lfotriangle;
+            LFOadress[1] = lfotriangle;
+            break;
+          case 2:
+            //chorus2
+            chorusbuffersize = 386;
+            LFOadress[0] = lfotriangle;
+            LFOadress[1] = lfosine;
+            break;
+          case 3:
+            //chorus3
+            chorusbuffersize = 511;
+            LFOadress[0] = lfotriangle;
+            LFOadress[1] = lfotriangle;
+            break;
+          case 4:
+            //chorus4
+            chorusbuffersize = 255;
+            LFOadress[0] = lfosine;
+            LFOadress[1] = lfotriangle;
+            break;
+          case 5:
+            //chorus5
+            chorusbuffersize = 386;
+            LFOadress[0] = lfosine;
+            LFOadress[1] = lfosine;
+            break;
+          case 6:
+            //chorus6
+            chorusbuffersize = 511;
+            LFOadress[0] = lfosine;
+            LFOadress[1] = lfosine;
+            break;
+
+        }
+        break;
       case 107:
         // chorusRate=value;
-        lfo1freq = value;
+        lfofreq[0] = value;
         break;
       case 108:
         chorusLevelLeft = value;
@@ -683,7 +783,7 @@ void parameterchange2() {
       ENV_LSUS[opmenuoldal] = value;
       break;
     case 113:
-      detune_Fine[opmenuoldal] = value << 10;
+
       break;
     case 114:
       ENV_T1[opmenuoldal] = value;
@@ -729,9 +829,7 @@ void reverbleft() {
     delaybufferindex++;
     delaystep = 0;
   }
-  if (delaybufferindex >= reverbtime) {
-    delaybufferindex = 0;
-  }
+  delaybufferindex &= (reverbtime - 1);
 }
 
 //------------------------------REVERB-DELAY EFFECT RIGHT-----------------------------------------
@@ -746,46 +844,39 @@ void reverbright() {
     delaybufferindex2++;
     delay2step = 0;
   }
-  if (delaybufferindex2 >= reverbtime2) {
-    delaybufferindex2 = 0;
-  }
+
+  delaybufferindex2 &= (reverbtime2 - 1);
+  // Serial.println("delaybufferindex2 : " + String(delaybufferindex2));
 }
 
 //--------------------------CHORUS LEFT------------------------------
 
-uint16_t chorusbuffersize = 256;
+
 int16_t chorusbufferleft[512];
 uint16_t chorusbufferindex = 0;
 uint16_t chorusindex;
 void chorusleft() {
   chorusbufferleft[chorusbufferindex] = bufferbe[0];
-  if (chorusbufferindex < chorusbuffersize)
-  {
-    chorusbufferindex++;
-  }
-  else {
-    chorusbufferindex = 0;
-  }
-  chorusindex = (lfo1value + chorusbufferindex) % chorusbuffersize;
+  chorusbufferindex++;
+  chorusbufferindex &= (chorusbuffersize);
+  chorusindex = (lfovalue[0] + chorusbufferindex) % chorusbuffersize;
   bufferbe[0] = (bufferbe[0] + ((chorusbufferleft[chorusindex] * chorusLevelLeft) >> 7));
 }
 
 //--------------------------CHORUS RIGHT------------------------------
 
-uint16_t chorusbuffersize2 = 256;
 int16_t chorusbufferright[512];
 uint16_t chorusbufferindex2 = 0;
 uint16_t chorusindex2;
 void chorusright() {
   chorusbufferright[chorusbufferindex2] = bufferbe[1];
-  if (chorusbufferindex2 < chorusbuffersize2)
-  {
-    chorusbufferindex2++;
-  }
-  else {
-    chorusbufferindex2 = 0;
-  }
-  chorusindex2 = (lfo2value + chorusbufferindex2) % chorusbuffersize2;
+  chorusbufferindex2++;
+  chorusbufferindex2 &= (chorusbuffersize2);
+
+
+  // Serial.println("chorusbufferindex2 : " + String(chorusbufferindex2 ));
+
+  chorusindex2 = (lfovalue[1] + chorusbufferindex2) % chorusbuffersize2;
   bufferbe[1] = (bufferbe[1] + ((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7));
 }
 
@@ -818,11 +909,11 @@ void serialEvent() {
         noteByte = MIDI2.getData1();
         velocityByte = MIDI2.getData2();
 
-        wavefreq[0][generatornumber] = noteertek[noteByte * KEYFollow[0] + COARSE[0]];
+        wavefreq[0][generatornumber] = noteertek[0][noteByte  + LKeyShift];
         //Serial.println("wavefreq0: " + String(wavefreq[0][generatornumber]));
-        wavefreq[1][generatornumber] = noteertek[noteByte * KEYFollow[1] + COARSE[1]];
-        wavefreq[2][generatornumber] = noteertek[noteByte * KEYFollow[2] + COARSE[2]];
-        wavefreq[3][generatornumber] = noteertek[noteByte * KEYFollow[3] + COARSE[3]];
+        wavefreq[1][generatornumber] = noteertek[1][noteByte  + UKeyShift];
+        wavefreq[2][generatornumber] = noteertek[2][noteByte  + LKeyShift];
+        wavefreq[3][generatornumber] = noteertek[3][noteByte  + UKeyShift];
         oldnoteByte[generatornumber] = noteByte;
         pich[0][generatornumber] = wavefreq[0][generatornumber];
         pich[1][generatornumber] = wavefreq[1][generatornumber];
@@ -929,6 +1020,7 @@ void setup() {
   //Set up NOTE TUNE
   notetune();
   maxsize();
+  setLFOWave();
   for (int i = 0; i < 4; i++) {
     opmenuoldal = i;
     setPCMWave();
@@ -944,18 +1036,18 @@ const uint32_t expgains128[128] = { 0, 1, 2, 3, 4, 5, 6, 11, 16, 23, 32, 42, 55,
 
 
 void loop() {
-    //--MIDI input--
+  //--MIDI input--
   serialEvent();
-  
   //LFO
-  
-  lfo1value = lfoarray[lfo1arrayindex >> 23];
-  lfo1arrayindex += (lfo1freq << 19);
-
-  lfo2value = lfoarray[lfo2arrayindex >> 23];
-  lfo2arrayindex += (lfo2freq << 19);
-
- //Serial.println("lfo1value : " + String(lfo1value ));
+  for (int i = 0; i < LFOnumber; i++) {
+    lfovalue[i] = *(LFOadress[i] + (lfoarrayindex[i] >> 23));
+    lfoarrayindex[i] += (lfofreq[i] << 19);
+  }
+  /*
+    lfovalue[1] = *(LFOadress[1]+(lfoarrayindex[1] >> 23));
+    lfoarrayindex[1] += (lfofreq[1] << 19);
+  */
+  // Serial.println("lfo1value : " + String(lfo1value ));
   //TVA ENVELOPE
 
   for (int i = 0; i < 4; i++) {
