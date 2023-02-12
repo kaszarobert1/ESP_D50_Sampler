@@ -86,7 +86,7 @@ float c[4] = {1001, 1001, 1001, 1001};
 byte szorzo[4] = {1, 1, 1, 1};
 byte LKeyShift = 0;
 byte UKeyShift = 0;
-byte volume[4] { 60, 60, 0, 0 };
+byte volume[4] { 60, 0, 0, 0 };
 byte generatorvolume[4][polyphony];
 //reverb variable
 int32_t bufferbe[2];
@@ -136,6 +136,13 @@ uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
 
 //---------------------------TUNE----------------------------------
+void notevaluesarraytest(){
+  for (int i = 0; i < 256; i++) {
+      Serial.print(String(noteertek[0][i])+" ");        
+  }
+  Serial.println();
+}
+
 
 void notetune() {
   for (int j = 0; j < 4; j++) {
@@ -143,10 +150,10 @@ void notetune() {
     float tunediv = 1.0594631;
    
     switch (KEYFollow[j]) {
-      case 0: tunediv = -1.0594631; szorzo2 = -1; break;
+      case 0: tunediv = -1.0594631; szorzo2 = -2; break;
       case 1: tunediv = -0.52973155; szorzo2 = -0.5; break;
       case 2: tunediv = -0.264865775; szorzo2 = -0.25; break;
-      case 3: tunediv = 0; szorzo2 = 0; break;
+      case 3: tunediv = 0; szorzo2 = 1; break;
       case 4: tunediv = 0.1324328875; szorzo2 = 0.125; break;
       case 5: tunediv = 0.264865775;  szorzo2 = 0.25; break;
       case 6: tunediv = 0.375; szorzo2 = 0.375; break;
@@ -154,15 +161,15 @@ void notetune() {
       case 8: tunediv = 0.625; szorzo2 = 0.625; break;
       case 9: tunediv = 0.75; szorzo2 = 0.75; break;
       case 10: tunediv = 0.875; szorzo2 = 0.875; break;
-      case 11: tunediv = 1.0594631; szorzo2 = 1; break;
+      case 11: tunediv = 1.0594631; szorzo2 = 2; break;
       case 12: tunediv = 1.25; szorzo2 = 1.25; break;
       case 13: tunediv = 1.5; szorzo2 = 1.5; break;
-      case 14: tunediv = 2.1189262; szorzo2 = 2; break;
+      case 14: tunediv = 2.1189262; szorzo2 = 4; break;
       case 15: tunediv = 3; szorzo2 = 3; break;
       case 16: tunediv = 4.2378524; break;
     }
  c[j]=GLOBAL_TUNE*pow(tunediv, tunediv*COARSE[j]);
-    c[j] = (c[j] + (FINE[j] << 3));
+    c[j] = (c[j] + (FINE[j]));
     float cisz = c[j] * tunediv;
     float d = cisz * tunediv;
     float disz = d * tunediv;
@@ -174,28 +181,29 @@ void notetune() {
     float a = gisz * tunediv;
     float b = a * tunediv;
     float h = b * tunediv;
-    
-    for (int i = 0; i < 256; i += 12) {
-      noteertek[j][i] = round(c[j] * szorzo2);
-      noteertek[j][i + 1] = round(cisz * szorzo2);
-      noteertek[j][i + 2] = round(d * szorzo2);
-      noteertek[j][i + 3] = round(disz * szorzo2);
-      noteertek[j][i + 4] = round(e * szorzo2);
-      noteertek[j][i + 5] = round(f * szorzo2);
-      noteertek[j][i + 6] = round(fisz * szorzo2);
-      noteertek[j][i + 7] = round(g * szorzo2);
-      noteertek[j][i + 8] = round(gisz * szorzo2);
-      noteertek[j][i + 9] = round(a * szorzo2);
-      noteertek[j][i + 10] = round(b * szorzo2);
-      noteertek[j][i + 11] = round(h * szorzo2);
-      szorzo2 *= 2;
+    byte okt=0;
+    for (int i = 0; i < 256; i += 12) {  
+      noteertek[j][i] = round(c[j] * pow(szorzo2,okt));
+      noteertek[j][i + 1] = round(cisz * pow(szorzo2,okt));
+      noteertek[j][i + 2] = round(d * pow(szorzo2,okt));
+      noteertek[j][i + 3] = round(disz * pow(szorzo2,okt));
+      noteertek[j][i + 4] = round(e * pow(szorzo2,okt));
+      noteertek[j][i + 5] = round(f * pow(szorzo2,okt));
+      noteertek[j][i + 6] = round(fisz * pow(szorzo2,okt));
+      noteertek[j][i + 7] = round(g * pow(szorzo2,okt));
+      noteertek[j][i + 8] = round(gisz * pow(szorzo2,okt));
+      noteertek[j][i + 9] = round(a * pow(szorzo2,okt));
+      noteertek[j][i + 10] = round(b * pow(szorzo2,okt));
+      noteertek[j][i + 11] = round(h * pow(szorzo2,okt));
+      okt++;
     }
   }
+  notevaluesarraytest();
 }
 
 uint16_t sizes[36];
 void maxsize() {
-  /*
+ 
     sizes[0] = sizeof(marimba) >> 1;
     sizes[1] = sizeof(vibraphone) >> 1;
     sizes[2] = sizeof(xilophone1) >> 1;
@@ -208,9 +216,9 @@ void maxsize() {
     sizes[9] = sizeof(chink) >> 1;
     sizes[10] = sizeof(agogo) >> 1;
     sizes[11] = sizeof(triangle) >> 1;
-  */
+  
   sizes[12] = sizeof(bells) >> 1;
-  /*
+  
     sizes[13] = sizeof(nailfile) >> 1;
     sizes[14] = sizeof(pick) >> 1;
     sizes[15] = sizeof(lowpiano) >> 1;
@@ -231,7 +239,7 @@ void maxsize() {
     sizes[30] = sizeof(breath) >> 1;
     sizes[31] = sizeof(klarinet) >> 1;
     sizes[32] = sizeof(steamer) >> 1;
-  */
+ 
 }
 
 void setsamplesize() {
@@ -249,7 +257,7 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-    /*
+    
       case 0: genstartadress[opmenuoldal] = marimba; break;
       case 1: genstartadress[opmenuoldal] = vibraphone; break;
       case 2: genstartadress[opmenuoldal] = xilophone1; break;
@@ -262,9 +270,9 @@ void setPCMWave() {
       case 9: genstartadress[opmenuoldal] = chink; break;
       case 10: genstartadress[opmenuoldal] = agogo; break;
       case 11: genstartadress[opmenuoldal] = triangle; break;
-    */
-    case 12: genstartadress[opmenuoldal] = bells; break;
-      /*
+  
+      case 12: genstartadress[opmenuoldal] = bells; break;
+     
          case 13: genstartadress[opmenuoldal] = nailfile; break;
          case 14: genstartadress[opmenuoldal] = pick; break;
          case 15: genstartadress[opmenuoldal] = lowpiano; break;
@@ -285,7 +293,7 @@ void setPCMWave() {
          case 30: genstartadress[opmenuoldal] = breath; break;
          case 31: genstartadress[opmenuoldal] = popbass; break;
          case 32: genstartadress[opmenuoldal] = steamer; break;
-      */
+     
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
