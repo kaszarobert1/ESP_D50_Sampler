@@ -75,18 +75,18 @@ uint32_t noteertek[4][256];
 byte oldnoteByte[polyphony];
 bool noteoff[polyphony];
 bool loopsample[4] = { false, false, false, false };
-uint16_t samplebegin[4] = { 20, 20, 20, 20 };
+uint16_t samplebegin[4] = { 64, 64, 64, 64 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
-uint16_t GLOBAL_TUNE = 15936;
-byte COARSE[4] = { 3, 3, 3, 3 };
+uint16_t GLOBAL_TUNE = 440;
+byte COARSE[4] = { 36, 36, 36, 36 };
 byte FINE[4] = { 50, 50, 50, 50 };
 float c[4] = {1001, 1001, 1001, 1001};
 byte szorzo[4] = {1, 1, 1, 1};
 byte LKeyShift = 0;
 byte UKeyShift = 0;
-byte volume[4] { 80, 80, 0, 0 };
+byte volume[4] { 60, 60, 0, 0 };
 byte generatorvolume[4][polyphony];
 //reverb variable
 int32_t bufferbe[2];
@@ -139,74 +139,55 @@ byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
 
 void notetune() {
   for (int j = 0; j < 4; j++) {
-    /*
-      switch (COARSE[j]){
-      case 0: c[j]=1001; break;
-      case 1: c[j]=1061; break;
-      case 2: c[j]=1190; break;
-      case 3: c[j]=1261; break;
-      case 4: c[j]=1124; break;
-      case 5: c[j]=1336; break;
-      case 6: c[j]=1416; break;
-      case 7: c[j]=1500; break;
-      case 8: c[j]=1589; break;
-      case 9: c[j]=1683; break;
-      case 10: c[j]=1784; break;
-      case 11: c[j]=1890; break;
-      case 12: c[j]=2002; break;
-      case 24: c[j]=4004; break;
-      case 36: c[j]=2002; break;
-      case 48: c[j]=4004; break;
-      }
-    */
-    c[j] = (GLOBAL_TUNE + (FINE[j] << 3));
-    float cisz = c[j] * 1.0594631;
-    float d = cisz * 1.0594631;
-    float disz = d * 1.0594631;
-    float e = disz * 1.0594631;
-    float f = e * 1.0594631;
-    float fisz = f * 1.0594631;
-    float g = fisz * 1.0594631;
-    float gisz = g * 1.0594631;
-    float a = gisz * 1.0594631;
-    float b = a * 1.0594631;
-    float h = b * 1.0594631;
-    //Tune global pitch
-    int shift = COARSE[j];
-    float szorzo2 = 1;
+     float szorzo2 = 1;
+    float tunediv = 1.0594631;
+   
     switch (KEYFollow[j]) {
-      case 0: szorzo2 = -1; break;
-      case 1: szorzo2 = -0.5; break;
-      case 2: szorzo2 = -0.25; break;
-      case 3: szorzo2 = 0; break;
-      case 4: szorzo2 = 0.125; break;
-      case 5: szorzo2 = 0.25; break;
-      case 6: szorzo2 = 0.375; break;
-      case 7: szorzo2 = 0.5; break;
-      case 8: szorzo2 = 0.625; break;
-      case 9: szorzo2 = 0.75; break;
-      case 10: szorzo2 = 0.875; break;
-      case 11: szorzo2 = 1; break;
-      case 12: szorzo2 = 1.25; break;
-      case 13: szorzo2 = 1.5; break;
-      case 14: szorzo2 = 2; break;
-      case 15: szorzo2 = 3; break;
-      case 16: szorzo2 = 4; break;
+      case 0: tunediv = -1.0594631; szorzo2 = -1; break;
+      case 1: tunediv = -0.52973155; szorzo2 = -0.5; break;
+      case 2: tunediv = -0.264865775; szorzo2 = -0.25; break;
+      case 3: tunediv = 0; szorzo2 = 0; break;
+      case 4: tunediv = 0.1324328875; szorzo2 = 0.125; break;
+      case 5: tunediv = 0.264865775;  szorzo2 = 0.25; break;
+      case 6: tunediv = 0.375; szorzo2 = 0.375; break;
+      case 7: tunediv = 0.52973155; szorzo2 = 0.5; break;
+      case 8: tunediv = 0.625; szorzo2 = 0.625; break;
+      case 9: tunediv = 0.75; szorzo2 = 0.75; break;
+      case 10: tunediv = 0.875; szorzo2 = 0.875; break;
+      case 11: tunediv = 1.0594631; szorzo2 = 1; break;
+      case 12: tunediv = 1.25; szorzo2 = 1.25; break;
+      case 13: tunediv = 1.5; szorzo2 = 1.5; break;
+      case 14: tunediv = 2.1189262; szorzo2 = 2; break;
+      case 15: tunediv = 3; szorzo2 = 3; break;
+      case 16: tunediv = 4.2378524; break;
     }
-
+ c[j]=GLOBAL_TUNE*pow(tunediv, tunediv*COARSE[j]);
+    c[j] = (c[j] + (FINE[j] << 3));
+    float cisz = c[j] * tunediv;
+    float d = cisz * tunediv;
+    float disz = d * tunediv;
+    float e = disz * tunediv;
+    float f = e * tunediv;
+    float fisz = f * tunediv;
+    float g = fisz * tunediv;
+    float gisz = g * tunediv;
+    float a = gisz * tunediv;
+    float b = a * tunediv;
+    float h = b * tunediv;
+    
     for (int i = 0; i < 256; i += 12) {
-      noteertek[j][i + shift] = round(c[j] * szorzo2);
-      noteertek[j][i + 1 + shift] = round(cisz * szorzo2);
-      noteertek[j][i + 2 + shift] = round(d * szorzo2);
-      noteertek[j][i + 3 + shift] = round(disz * szorzo2);
-      noteertek[j][i + 4 + shift] = round(e * szorzo2);
-      noteertek[j][i + 5 + shift] = round(f * szorzo2);
-      noteertek[j][i + 6 + shift] = round(fisz * szorzo2);
-      noteertek[j][i + 7 + shift] = round(g * szorzo2);
-      noteertek[j][i + 8 + shift] = round(gisz * szorzo2);
-      noteertek[j][i + 9 + shift] = round(a * szorzo2);
-      noteertek[j][i + 10 + shift] = round(b * szorzo2);
-      noteertek[j][i + 11 + shift] = round(h * szorzo2);
+      noteertek[j][i] = round(c[j] * szorzo2);
+      noteertek[j][i + 1] = round(cisz * szorzo2);
+      noteertek[j][i + 2] = round(d * szorzo2);
+      noteertek[j][i + 3] = round(disz * szorzo2);
+      noteertek[j][i + 4] = round(e * szorzo2);
+      noteertek[j][i + 5] = round(f * szorzo2);
+      noteertek[j][i + 6] = round(fisz * szorzo2);
+      noteertek[j][i + 7] = round(g * szorzo2);
+      noteertek[j][i + 8] = round(gisz * szorzo2);
+      noteertek[j][i + 9] = round(a * szorzo2);
+      noteertek[j][i + 10] = round(b * szorzo2);
+      noteertek[j][i + 11] = round(h * szorzo2);
       szorzo2 *= 2;
     }
   }
