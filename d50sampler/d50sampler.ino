@@ -110,7 +110,10 @@ uint16_t chorusbuffersize2 = 511;
 int16_t const* genstartadress[4];
 const byte LFOnumber = 8;
 uint16_t const* LFOadress[LFOnumber];
-int32_t tempbuffer;
+int32_t tempbuffer1;
+int32_t tempbuffer2;
+int32_t tempbuffer3;
+int32_t tempbuffer4;
 byte ENV_L0 = 0;
 byte ENV_T1[4] = { 125, 125, 125, 125 };
 byte ENV_L1[4] = { 125, 125, 125, 125 };
@@ -136,110 +139,101 @@ uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
 
 //---------------------------TUNE----------------------------------
-void notevaluesarraytest(){
+void notevaluesarraytest() {
   for (int i = 0; i < 256; i++) {
-      Serial.print(String(noteertek[0][i])+" ");        
+    Serial.print(String(noteertek[0][i]) + " ");
   }
   Serial.println();
 }
 
 
 void notetune() {
+  float szorzo2 = 2;
   for (int j = 0; j < 4; j++) {
-     float szorzo2 = 1;
-    float tunediv = 1.0594631;
-   
     switch (KEYFollow[j]) {
-      case 0: tunediv = -1.0594631; szorzo2 = -2; break;
-      case 1: tunediv = -0.52973155; szorzo2 = -0.5; break;
-      case 2: tunediv = -0.264865775; szorzo2 = -0.25; break;
-      case 3: tunediv = 0; szorzo2 = 1; break;
-      case 4: tunediv = 0.1324328875; szorzo2 = 0.125; break;
-      case 5: tunediv = 0.264865775;  szorzo2 = 0.25; break;
-      case 6: tunediv = 0.375; szorzo2 = 0.375; break;
-      case 7: tunediv = 0.52973155; szorzo2 = 0.5; break;
-      case 8: tunediv = 0.625; szorzo2 = 0.625; break;
-      case 9: tunediv = 0.75; szorzo2 = 0.75; break;
-      case 10: tunediv = 0.875; szorzo2 = 0.875; break;
-      case 11: tunediv = 1.0594631; szorzo2 = 2; break;
-      case 12: tunediv = 1.25; szorzo2 = 1.25; break;
-      case 13: tunediv = 1.5; szorzo2 = 1.5; break;
-      case 14: tunediv = 2.1189262; szorzo2 = 4; break;
-      case 15: tunediv = 3; szorzo2 = 3; break;
-      case 16: tunediv = 4.2378524; break;
+      case 0:  szorzo2 = 0.12; break;
+      case 1:  szorzo2 = 0.5; break;
+      case 2:  szorzo2 = 0.25; break;
+      case 3:  szorzo2 = 1; break;
+      case 4:  szorzo2 = 1.125; break;
+      case 5:  szorzo2 = 1.25; break;
+      case 6:  szorzo2 = 1.375; break;
+      case 7:  szorzo2 = 1.5; break;
+      case 8:  szorzo2 = 1.625; break;
+      case 9:  szorzo2 = 1.75; break;
+      case 10: szorzo2 = 1.875; break;
+      case 11: szorzo2 = 2; break;
+      case 12: szorzo2 = 2.25; break;
+      case 13: szorzo2 = 2.5; break;
+      case 14: szorzo2 = 4; break;
+      case 15: szorzo2 = 3; break;
+      case 16: szorzo2 = 5; break;
     }
- c[j]=GLOBAL_TUNE*pow(tunediv, tunediv*COARSE[j]);
-    c[j] = (c[j] + (FINE[j]));
-    float cisz = c[j] * tunediv;
-    float d = cisz * tunediv;
-    float disz = d * tunediv;
-    float e = disz * tunediv;
-    float f = e * tunediv;
-    float fisz = f * tunediv;
-    float g = fisz * tunediv;
-    float gisz = g * tunediv;
-    float a = gisz * tunediv;
-    float b = a * tunediv;
-    float h = b * tunediv;
-    byte okt=0;
-    for (int i = 0; i < 256; i += 12) {  
-      noteertek[j][i] = round(c[j] * pow(szorzo2,okt));
-      noteertek[j][i + 1] = round(cisz * pow(szorzo2,okt));
-      noteertek[j][i + 2] = round(d * pow(szorzo2,okt));
-      noteertek[j][i + 3] = round(disz * pow(szorzo2,okt));
-      noteertek[j][i + 4] = round(e * pow(szorzo2,okt));
-      noteertek[j][i + 5] = round(f * pow(szorzo2,okt));
-      noteertek[j][i + 6] = round(fisz * pow(szorzo2,okt));
-      noteertek[j][i + 7] = round(g * pow(szorzo2,okt));
-      noteertek[j][i + 8] = round(gisz * pow(szorzo2,okt));
-      noteertek[j][i + 9] = round(a * pow(szorzo2,okt));
-      noteertek[j][i + 10] = round(b * pow(szorzo2,okt));
-      noteertek[j][i + 11] = round(h * pow(szorzo2,okt));
-      okt++;
+    float TUNE_NOW = GLOBAL_TUNE + FINE[j];
+    TUNE_NOW = TUNE_NOW * pow(szorzo2, COARSE[j] / 12.0);
+    TUNE_NOW += ((pow(2, 13) / pow(szorzo2, 13)) - 1) * COARSE[j];
+    float BASIC_TUNE[12];
+    for (int i = 0; i < 12; i++) {
+
+      BASIC_TUNE[i] = TUNE_NOW  * pow(szorzo2, i / 12.0);
+    }
+    for (int i = 0; i < 12; i++) {
+      //Serial.print(String(BASIC_TUNE[i]) + " ");
+    }
+    //Serial.println();
+
+    float okt = 1;
+    for (int i = 0; i < 14; i++) {
+      for (int k = 0; k < 12; k++) {
+        noteertek [j][i * 12 + k] = BASIC_TUNE[k] * okt;
+      }
+      okt = okt * szorzo2;
     }
   }
-  notevaluesarraytest();
+
+  //notevaluesarraytest();
 }
 
 uint16_t sizes[36];
 void maxsize() {
- 
-    sizes[0] = sizeof(marimba) >> 1;
-    sizes[1] = sizeof(vibraphone) >> 1;
-    sizes[2] = sizeof(xilophone1) >> 1;
-    sizes[3] = sizeof(xilophone2) >> 1;
-    sizes[4] = sizeof(logbass) >> 1;
-    sizes[5] = sizeof(hammer) >> 1;
-    sizes[6] = sizeof(japanesedrum) >> 1;
-    sizes[7] = sizeof(kalimba) >> 1;
-    sizes[8] = sizeof(pluck1) >> 1;
-    sizes[9] = sizeof(chink) >> 1;
-    sizes[10] = sizeof(agogo) >> 1;
-    sizes[11] = sizeof(triangle) >> 1;
-  
+/*
+  sizes[0] = sizeof(marimba) >> 1;
+  sizes[1] = sizeof(vibraphone) >> 1;
+  sizes[2] = sizeof(xilophone1) >> 1;
+  sizes[3] = sizeof(xilophone2) >> 1;
+  sizes[4] = sizeof(logbass) >> 1;
+  sizes[5] = sizeof(hammer) >> 1;
+  sizes[6] = sizeof(japanesedrum) >> 1;
+  sizes[7] = sizeof(kalimba) >> 1;
+  sizes[8] = sizeof(pluck1) >> 1;
+  sizes[9] = sizeof(chink) >> 1;
+  sizes[10] = sizeof(agogo) >> 1;
+*/
+  sizes[11] = sizeof(triangle) >> 1;
+
   sizes[12] = sizeof(bells) >> 1;
-  
-    sizes[13] = sizeof(nailfile) >> 1;
-    sizes[14] = sizeof(pick) >> 1;
-    sizes[15] = sizeof(lowpiano) >> 1;
-    sizes[16] = sizeof(midpiano) >> 1;
-    sizes[17] = sizeof(highpiano) >> 1;
-    sizes[18] = sizeof(hapsichord) >> 1;
-    sizes[19] = sizeof(harp) >> 1;
-    sizes[20] = sizeof(organpercus) >> 1;
-    sizes[21] = sizeof(steelstrings) >> 1;
-    sizes[22] = sizeof(nylonstrings) >> 1;
-    sizes[23] = sizeof(electgitar1) >> 1;
-    sizes[24] = sizeof(electgitar2) >> 1;
-    sizes[25] = sizeof(dirtygitar) >> 1;
-    sizes[26] = sizeof(pickbass) >> 1;
-    sizes[27] = sizeof(popbass) >> 1;
-    sizes[28] = sizeof(thump) >> 1;
-    sizes[29] = sizeof(klarinet) >> 1;
-    sizes[30] = sizeof(breath) >> 1;
-    sizes[31] = sizeof(klarinet) >> 1;
-    sizes[32] = sizeof(steamer) >> 1;
- 
+/*
+  sizes[13] = sizeof(nailfile) >> 1;
+  sizes[14] = sizeof(pick) >> 1;
+  sizes[15] = sizeof(lowpiano) >> 1;
+  sizes[16] = sizeof(midpiano) >> 1;
+  sizes[17] = sizeof(highpiano) >> 1;
+  sizes[18] = sizeof(hapsichord) >> 1;
+  sizes[19] = sizeof(harp) >> 1;
+  sizes[20] = sizeof(organpercus) >> 1;
+  sizes[21] = sizeof(steelstrings) >> 1;
+  sizes[22] = sizeof(nylonstrings) >> 1;
+  sizes[23] = sizeof(electgitar1) >> 1;
+  sizes[24] = sizeof(electgitar2) >> 1;
+  sizes[25] = sizeof(dirtygitar) >> 1;
+  sizes[26] = sizeof(pickbass) >> 1;
+  sizes[27] = sizeof(popbass) >> 1;
+  sizes[28] = sizeof(thump) >> 1;
+  sizes[29] = sizeof(klarinet) >> 1;
+  sizes[30] = sizeof(breath) >> 1;
+  sizes[31] = sizeof(klarinet) >> 1;
+  sizes[32] = sizeof(steamer) >> 1;
+*/
 }
 
 void setsamplesize() {
@@ -257,43 +251,44 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-    
-      case 0: genstartadress[opmenuoldal] = marimba; break;
-      case 1: genstartadress[opmenuoldal] = vibraphone; break;
-      case 2: genstartadress[opmenuoldal] = xilophone1; break;
-      case 3: genstartadress[opmenuoldal] = xilophone2; break;
-      case 4: genstartadress[opmenuoldal] = logbass; break;
-      case 5: genstartadress[opmenuoldal] = hammer; break;
-      case 6: genstartadress[opmenuoldal] = japanesedrum; break;
-      case 7: genstartadress[opmenuoldal] = kalimba; break;
-      case 8: genstartadress[opmenuoldal] = pluck1; break;
-      case 9: genstartadress[opmenuoldal] = chink; break;
-      case 10: genstartadress[opmenuoldal] = agogo; break;
-      case 11: genstartadress[opmenuoldal] = triangle; break;
-  
-      case 12: genstartadress[opmenuoldal] = bells; break;
-     
-         case 13: genstartadress[opmenuoldal] = nailfile; break;
-         case 14: genstartadress[opmenuoldal] = pick; break;
-         case 15: genstartadress[opmenuoldal] = lowpiano; break;
-         case 16: genstartadress[opmenuoldal] = midpiano; break;
-         case 17: genstartadress[opmenuoldal] = highpiano; break;
-         case 18: genstartadress[opmenuoldal] = hapsichord; break;
-         case 19: genstartadress[opmenuoldal] = harp; break;
-         case 20: genstartadress[opmenuoldal] = organpercus; break;
-         case 21: genstartadress[opmenuoldal] = steelstrings; break;
-         case 22: genstartadress[opmenuoldal] = nylonstrings; break;
-         case 23: genstartadress[opmenuoldal] = electgitar1; break;
-         case 24: genstartadress[opmenuoldal] = electgitar2; break;
-         case 25: genstartadress[opmenuoldal] = dirtygitar; break;
-         case 26: genstartadress[opmenuoldal] = pickbass; break;
-         case 27: genstartadress[opmenuoldal] = popbass; break;
-         case 28: genstartadress[opmenuoldal] = thump; break;
-         case 29: genstartadress[opmenuoldal] = klarinet; break;
-         case 30: genstartadress[opmenuoldal] = breath; break;
-         case 31: genstartadress[opmenuoldal] = popbass; break;
-         case 32: genstartadress[opmenuoldal] = steamer; break;
-     
+/*
+    case 0: genstartadress[opmenuoldal] = marimba; break;
+    case 1: genstartadress[opmenuoldal] = vibraphone; break;
+    case 2: genstartadress[opmenuoldal] = xilophone1; break;
+    case 3: genstartadress[opmenuoldal] = xilophone2; break;
+    case 4: genstartadress[opmenuoldal] = logbass; break;
+    case 5: genstartadress[opmenuoldal] = hammer; break;
+    case 6: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 7: genstartadress[opmenuoldal] = kalimba; break;
+    case 8: genstartadress[opmenuoldal] = pluck1; break;
+    case 9: genstartadress[opmenuoldal] = chink; break;
+    case 10: genstartadress[opmenuoldal] = agogo; break;
+*/
+    case 11: genstartadress[opmenuoldal] = triangle; break;
+
+    case 12: genstartadress[opmenuoldal] = bells; break;
+/*
+    case 13: genstartadress[opmenuoldal] = nailfile; break;
+    case 14: genstartadress[opmenuoldal] = pick; break;
+    case 15: genstartadress[opmenuoldal] = lowpiano; break;
+    case 16: genstartadress[opmenuoldal] = midpiano; break;
+    case 17: genstartadress[opmenuoldal] = highpiano; break;
+    case 18: genstartadress[opmenuoldal] = hapsichord; break;
+    case 19: genstartadress[opmenuoldal] = harp; break;
+    case 20: genstartadress[opmenuoldal] = organpercus; break;
+    case 21: genstartadress[opmenuoldal] = steelstrings; break;
+    case 22: genstartadress[opmenuoldal] = nylonstrings; break;
+    case 23: genstartadress[opmenuoldal] = electgitar1; break;
+    case 24: genstartadress[opmenuoldal] = electgitar2; break;
+    case 25: genstartadress[opmenuoldal] = dirtygitar; break;
+    case 26: genstartadress[opmenuoldal] = pickbass; break;
+    case 27: genstartadress[opmenuoldal] = popbass; break;
+    case 28: genstartadress[opmenuoldal] = thump; break;
+    case 29: genstartadress[opmenuoldal] = klarinet; break;
+    case 30: genstartadress[opmenuoldal] = breath; break;
+    case 31: genstartadress[opmenuoldal] = popbass; break;
+    case 32: genstartadress[opmenuoldal] = steamer; break;
+*/
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -313,6 +308,209 @@ void setLFOWave() {
 //--------------MIDI SYSEX PARAMETER CONTROL------
 void parametersysexchanged() {
   byte value = velocityByte;
+  if (localParameterByte == 0)
+    switch (noteByte) {
+      case 0:
+        //couarse u1
+        COARSE[2] = value;
+        Serial.println("COARSE U1: " + String(COARSE[2]));
+        notetune();
+        break;
+      case 1:
+        //couarse u1
+        FINE[2] = value;
+        Serial.println("COARSE U1: " + String(FINE[2]));
+        notetune();
+        break;
+      case 2:
+        KEYFollow[2] = value;
+        Serial.println("KEYFollow U1: " + String(KEYFollow[2]));
+        notetune();
+        break;
+      case 3:
+
+        break;
+      case 4:
+        TVA[2] = value;
+        Serial.println("TVA U1: " + String(TVA[1]));
+        break;
+      case 7:
+        PCMWaveNo[2] = value;
+        Serial.println("PCMWaveNo U1: " + String(PCMWaveNo[2]));
+        opmenuoldal = 2;
+        setPCMWave();
+        break;
+      case 35:
+        volume[2] = value;
+        Serial.println("Level U1: " + String(volume[2]));
+        break;
+      case 39:
+        ENV_T1[2] = value;
+        Serial.println("ENV_T1 U1: " + String(ENV_T1[2]));
+        break;
+      case 40:
+        ENV_T2[2] = value;
+        Serial.println("ENV_T2 U1:" + String(ENV_T2[2]));
+        break;
+      case 41:
+        ENV_T3[2] = value;
+        Serial.println("ENV_T3 U1:" + String(ENV_T3[2]));
+        break;
+      case 42:
+        ENV_T4[2] = value;
+        Serial.println("ENV_T4 U1:" + String(ENV_T4[2]));
+        break;
+      case 43:
+        // ENV_T5[2] = value;
+        // Serial.println("ENV_T5 U1:" + String(ENV_T5[2]));
+        sampleend[2] = value << 7;
+        if (samplesize[2] < sampleend[2]) {
+          sampleend[2] = samplesize[2];
+        }
+        Serial.println("SAMPLE END U1: " + String(sampleend[2]));
+        break;
+      case 44:
+        ENV_L1[2] = value;
+        Serial.println("ENV_L1 U1:" + String(ENV_L1[2]));
+        break;
+      case 45:
+        ENV_L2[2] = value;
+        Serial.println("ENV_L2 U1:" + String(ENV_L2[2]));
+        break;
+      case 46:
+        samplebegin[2] = value << 7;
+        if  (samplesize[2] < samplebegin[2])
+        {
+          samplebegin[2] = samplesize[2];
+        }
+        Serial.println("SAMPLE BEGIN U1 :" + String(samplebegin[2]));
+        /*
+          ENV_L3[0] = value;
+          Serial.println("ENV_L3 0" + String(ENV_L3[0]));
+        */
+
+        break;
+      case 47:
+        ENV_LSUS[2] = value;
+        Serial.println("ENV_LSUS U1: " + String(ENV_LSUS[2]));
+        break;
+      case 48:
+        ENV_LEND[2] = value;
+        Serial.println("ENV_LEND U1: " + String(ENV_LEND[2]));
+        break;
+      case 49:
+        opmenuoldal = 2;
+        if (value == 0) {
+
+          loopsample[opmenuoldal] = false;
+          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+        }
+        if (value == 1) {
+          loopsample[opmenuoldal] = true;
+          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+        }
+        break;
+      case 64:
+        //couarse u2
+        COARSE[3] = value;
+        Serial.println("COARSE U2:" + String(COARSE[3]));
+        notetune();
+        break;
+      case 65:
+        //couarse u2
+        FINE[3] = value;
+        Serial.println("COARSE U2:" + String(FINE[3]));
+        notetune();
+        break;
+      case 66:
+        KEYFollow[3] = value;
+        Serial.println("KEYFollow U2:" + String(KEYFollow[3]));
+        notetune();
+        break;
+      case 67:
+
+        break;
+      case 68:
+        TVA[3] = value;
+        Serial.println("TVA U2: " + String(TVA[3]));
+        break;
+      case 71:
+        PCMWaveNo[3] = value;
+        Serial.println("PCMWaveNo U2: " + String(PCMWaveNo[3]));
+        opmenuoldal = 3;
+        setPCMWave();
+        break;
+      case 99:
+        volume[3] = value;
+        Serial.println("Level U2: " + String(volume[3]));
+        break;
+      case 103:
+        ENV_T1[3] = value;
+        Serial.println("ENV_T1 U2: " + String(ENV_T1[3]));
+        break;
+      case 104:
+        ENV_T2[3] = value;
+        Serial.println("ENV_T2 U2:" + String(ENV_T2[3]));
+        break;
+      case 105:
+        ENV_T3[3] = value;
+        Serial.println("ENV_T3 U2:" + String(ENV_T3[3]));
+        break;
+      case 106:
+        ENV_T4[3] = value;
+        Serial.println("ENV_T4 U2:" + String(ENV_T4[3]));
+        break;
+      case 107:
+        // ENV_T5[3] = value;
+        // Serial.println("ENV_T5 U2: " + String(ENV_T5[3]));
+        sampleend[3] = value << 7;
+        if (samplesize[3] < sampleend[3]) {
+          sampleend[3] = samplesize[3];
+        }
+        Serial.println("SAMPLE END U2: " + String(sampleend[3]));
+        break;
+      case 108:
+        ENV_L1[3] = value;
+        Serial.println("ENV_L1 U2: " + String(ENV_L1[3]));
+        break;
+      case 109:
+        ENV_L2[3] = value;
+        Serial.println("ENV_L2 U2: " + String(ENV_L2[3]));
+        break;
+      case 110:
+        samplebegin[3] = value << 7;
+        if  (samplesize[3] < samplebegin[3])
+        {
+          samplebegin[3] = samplesize[3];
+        }
+        Serial.println("SAMPLE BEGIN U2 :" + String(samplebegin[3]));
+        /*
+          ENV_L3[0] = value;
+          Serial.println("ENV_L3 0" + String(ENV_L3[0]));
+        */
+
+        break;
+      case 111:
+        ENV_LSUS[3] = value;
+        Serial.println("ENV_LSUS U2" + String(ENV_LSUS[3]));
+        break;
+      case 112:
+        ENV_LEND[3] = value;
+        Serial.println("ENV_LEND U2: " + String(ENV_LEND[3]));
+        break;
+      case 113:
+        opmenuoldal = 3;
+        if (value == 0) {
+
+          loopsample[opmenuoldal] = false;
+          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+        }
+        if (value == 1) {
+          loopsample[opmenuoldal] = true;
+          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+        }
+        break;
+    }
 
   if (localParameterByte == 1)
     switch (noteByte) {
@@ -331,7 +529,7 @@ void parametersysexchanged() {
         BENDERMode[opmenuoldal] = value;
         break;
       case 6:
-        // Waveform[opmenuoldal] = value;
+
         break;
       case 43:
         lfofreq[1] = value;
@@ -341,23 +539,23 @@ void parametersysexchanged() {
         break;
       case 64:
         COARSE[0] = value;
-        Serial.println("COARSE" + String(COARSE[0]));
+        Serial.println("COARSE L1: " + String(COARSE[0]));
         notetune();
         break;
       case 65:
         FINE[0] = value;
-        Serial.println("FINE 0" + String(FINE[0]));
+        Serial.println("FINE L1: " + String(FINE[0]));
         notetune();
         break;
       case 66:
         KEYFollow[0] = value;
-        Serial.println("KEYFollow 0" + String(KEYFollow[0]));
+        Serial.println("KEYFollow L1: " + String(KEYFollow[0]));
         notetune();
 
         break;
       case 67:
         TVA[0] = value;
-        Serial.println("TVA 0: " + String(TVA[0]));
+        Serial.println("TVA L1: " + String(TVA[0]));
         break;
       case 71:
         PCMWaveNo[0] = value;
@@ -367,40 +565,40 @@ void parametersysexchanged() {
         break;
       case 99:
         volume[0] = value;
-        Serial.println("Level 0: " + String(volume[0]));
+        Serial.println("Level L1: " + String(volume[0]));
         break;
       case 103:
         ENV_T1[0] = value;
-        Serial.println("ENV_T1 0: " + String(ENV_T1[0]));
+        Serial.println("ENV_T1 L1: " + String(ENV_T1[0]));
         break;
       case 104:
         ENV_T2[0] = value;
-        Serial.println("ENV_T2 0" + String(ENV_T2[0]));
+        Serial.println("ENV_T2 L1:" + String(ENV_T2[0]));
         break;
       case 105:
         ENV_T3[0] = value;
-        Serial.println("ENV_T3 0" + String(ENV_T3[0]));
+        Serial.println("ENV_T3 L1:" + String(ENV_T3[0]));
         break;
       case 106:
         ENV_T4[0] = value;
-        Serial.println("ENV_T4 0" + String(ENV_T4[0]));
+        Serial.println("ENV_T4 L1" + String(ENV_T4[0]));
         break;
       case 107:
         // ENV_T5[0] = value;
-        // Serial.println("ENV_T5 0" + String(ENV_T5[0]));
+        // Serial.println("ENV_T5 L1" + String(ENV_T5[0]));
         sampleend[0] = value << 7;
         if (samplesize[0] < sampleend[0]) {
           sampleend[0] = samplesize[0];
         }
-        Serial.println("SAMPLE END 0: " + String(sampleend[0]));
+        Serial.println("SAMPLE END L1: " + String(sampleend[0]));
         break;
       case 108:
         ENV_L1[0] = value;
-        Serial.println("ENV_L1 0" + String(ENV_L1[0]));
+        Serial.println("ENV_L1 L1: " + String(ENV_L1[0]));
         break;
       case 109:
         ENV_L2[0] = value;
-        Serial.println("ENV_L2 0" + String(ENV_L2[0]));
+        Serial.println("ENV_L2 L1: " + String(ENV_L2[0]));
         break;
       case 110:
         samplebegin[0] = value << 7;
@@ -408,7 +606,7 @@ void parametersysexchanged() {
         {
           samplebegin[0] = samplesize[0];
         }
-        Serial.println("SAMPLE BEGIN" + String(1) + " :" + String(samplebegin[0]));
+        Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
         /*
           ENV_L3[0] = value;
           Serial.println("ENV_L3 0" + String(ENV_L3[0]));
@@ -417,11 +615,11 @@ void parametersysexchanged() {
         break;
       case 111:
         ENV_LSUS[0] = value;
-        Serial.println("ENV_LSUS 0" + String(ENV_LSUS[0]));
+        Serial.println("ENV_LSUS L1" + String(ENV_LSUS[0]));
         break;
       case 112:
         ENV_LEND[0] = value;
-        Serial.println("ENV_LEND 0" + String(ENV_LEND[0]));
+        Serial.println("ENV_LEND L1" + String(ENV_LEND[0]));
         break;
       case 113:
         opmenuoldal = 0;
@@ -441,66 +639,66 @@ void parametersysexchanged() {
     switch (noteByte) {
       case 0:
         COARSE[1] = value;
-        Serial.println("COARSE" + String(COARSE[1]));
+        Serial.println("COARSE L2: " + String(COARSE[1]));
         notetune();
         break;
       case 1:
         FINE[1] = value;
-        Serial.println("FINE 1" + String(FINE[1]));
+        Serial.println("FINE L2: " + String(FINE[1]));
         notetune();
         break;
       case 2:
-        KEYFollow[1] = value;;
-        Serial.println("KEYFollow 1" + String(KEYFollow[1]));
+        KEYFollow[1] = value;
+        Serial.println("KEYFollow L2: " + String(KEYFollow[1]));
         notetune();
         break;
       case 4:
         TVA[1] = value;
-        Serial.println("TVA 1: " + String(TVA[1]));
+        Serial.println("TVA L2: " + String(TVA[1]));
         break;
       case 7:
         PCMWaveNo[1] = value;
-        Serial.println("PCMWaveNo" + String(1) + ": " + String(PCMWaveNo[1]));
+        Serial.println("PCMWaveNo L2: " + String(PCMWaveNo[1]));
         opmenuoldal = 1;
         setPCMWave();
         break;
       case 35:
         volume[1] = value;
-        Serial.println("Level 1: " + String(volume[1]));
+        Serial.println("Level L2: " + String(volume[1]));
         break;
 
       case 39:
         ENV_T1[1] = value;
-        Serial.println("ENV_T1 1: " + String(ENV_T1[1]));
+        Serial.println("ENV_T1 L2: " + String(ENV_T1[1]));
         break;
       case 40:
         ENV_T2[1] = value;
-        Serial.println("ENV_T2 1" + String(ENV_T2[1]));
+        Serial.println("ENV_T2 L2" + String(ENV_T2[1]));
         break;
       case 41:
         ENV_T3[1] = value;
-        Serial.println("ENV_T3 1" + String(ENV_T3[1]));
+        Serial.println("ENV_T3 L2" + String(ENV_T3[1]));
         break;
       case 42:
         ENV_T4[1] = value;
-        Serial.println("ENV_T4 1" + String(ENV_T4[1]));
+        Serial.println("ENV_T4 L2" + String(ENV_T4[1]));
         break;
       case 43:
         // ENV_T5[1] = value;
-        // Serial.println("ENV_T5 1" + String(ENV_T5[1]));
+        // Serial.println("ENV_T5 L2: " + String(ENV_T5[1]));
         sampleend[1] = value << 7;
         if (samplesize[1] < sampleend[1]) {
           sampleend[1] = samplesize[1];
         }
-        Serial.println("SAMPLE END 1: " + String(sampleend[1]));
+        Serial.println("SAMPLE END L2: " + String(sampleend[1]));
         break;
       case 44:
         ENV_L1[1] = value;
-        Serial.println("ENV_L1 1" + String(ENV_L1[1]));
+        Serial.println("ENV_L1 L2: " + String(ENV_L1[1]));
         break;
       case 45:
         ENV_L2[1] = value;
-        Serial.println("ENV_L2 1" + String(ENV_L2[1]));
+        Serial.println("ENV_L2 L2: " + String(ENV_L2[1]));
         break;
       case 46:
         samplebegin[1] = value << 7;
@@ -508,17 +706,17 @@ void parametersysexchanged() {
         {
           samplebegin[1] = samplesize[1];
         }
-        Serial.println("SAMPLE BEGIN" + String(1) + " :" + String(samplebegin[1]));
+        Serial.println("SAMPLE BEGIN: " + String(1) + " :" + String(samplebegin[1]));
         //ENV_L3[1] = value;
-        //Serial.println("ENV_L3 1" + String(ENV_L3[1]));
+        //Serial.println("ENV_L3 L2: " + String(ENV_L3[1]));
         break;
       case 47:
         ENV_LSUS[1] = value;
-        Serial.println("ENV_LSUS 1" + String(ENV_LSUS[1]));
+        Serial.println("ENV_LSUS L2: " + String(ENV_LSUS[1]));
         break;
       case 48:
         ENV_LEND[1] = value;
-        Serial.println("ENV_LEND 1" + String(ENV_LEND[1]));
+        Serial.println("ENV_LEND L2: " + String(ENV_LEND[1]));
         break;
       case 49:
         opmenuoldal = 1;
@@ -1094,33 +1292,35 @@ void loop() {
     for (int j = 0; j < polyphony; j++) {
 
       if ((freqmutato[0][j] >> 18) < sampleend[0] - 1) {
-        tempbuffer = *(genstartadress[0] + (freqmutato[0][j] >> 18));
-        bufferbe[0] += (tempbuffer * generatorvolume[0][j]) >> 5;
+        tempbuffer1 = *(genstartadress[0] + (freqmutato[0][j] >> 18));
+       // bufferbe[0] += (tempbuffer1 * generatorvolume[0][j]) >> 5;
         freqmutato[0][j] += pich[0][j];
       } else if (loopsample[0]) {
         // if(j==0){Serial.println(String(freqmutato[0][0] >> 18));}
         freqmutato[0][j] = samplebegin[0] << 18;
         // if(j==0){Serial.println(String(freqmutato[0][0] >> 18));}
       }
-      if ((freqmutato[2][j] >> 18) < sampleend[2]) {
-        tempbuffer = *(genstartadress[2] + (freqmutato[2][j] >> 18));
-        bufferbe[0] += (tempbuffer * generatorvolume[2][j]) >> 5;
-        freqmutato[2][j] += pich[2][j];
-      } else if (loopsample[2]) {
-        freqmutato[2][j] = samplebegin[2] << 18;
-      }
 
       if ((freqmutato[1][j] >> 18) < sampleend[1]) {
-        tempbuffer = *(genstartadress[1] + (freqmutato[1][j] >> 18));
-        bufferbe[1] += (tempbuffer * generatorvolume[1][j]) >> 5;
+        tempbuffer2 = *(genstartadress[1] + (freqmutato[1][j] >> 18));
+    //    bufferbe[0] += (((tempbuffer2 * generatorvolume[1][j]) >> 5)*((tempbuffer1 * generatorvolume[0][j]) >> 5))>>10; //ringmod
+        bufferbe[0] += ((tempbuffer2 * generatorvolume[1][j]) >> 5)+((tempbuffer1 * generatorvolume[0][j]) >> 5);
         freqmutato[1][j] += pich[1][j];
       } else if (loopsample[1]) {
         freqmutato[1][j] = samplebegin[0] << 18;
       }
 
+      if ((freqmutato[2][j] >> 18) < sampleend[2]) {
+        tempbuffer3 = *(genstartadress[2] + (freqmutato[2][j] >> 18));
+        bufferbe[1] += (tempbuffer3 * generatorvolume[2][j]) >> 5;
+        freqmutato[2][j] += pich[2][j];
+      } else if (loopsample[2]) {
+        freqmutato[2][j] = samplebegin[2] << 18;
+      }
+
       if ((freqmutato[3][j] >> 18) < sampleend[3]) {
-        tempbuffer = *(genstartadress[3] + (freqmutato[3][j] >> 18));
-        bufferbe[1] += (tempbuffer * generatorvolume[3][j]) >> 5;
+        tempbuffer4 = *(genstartadress[3] + (freqmutato[3][j] >> 18));
+        bufferbe[1] += (tempbuffer4 * generatorvolume[3][j]) >> 5;
         freqmutato[3][j] += pich[3][j];
       } else if (loopsample[3]) {
         freqmutato[3][j] = samplebegin[3] << 18;
