@@ -66,11 +66,12 @@ void i2s_install() {
 
 
 //----------------------PROGRAM VARIABLES-----------
-const byte polyphony = 6;
+const byte polyphony = 10;
 uint32_t freqmutato[4][polyphony];
 uint32_t pich[4][polyphony];
 byte generatornumber = 1;
 uint32_t wavefreq[4][polyphony];
+byte wavebias[4][polyphony];
 uint32_t noteertek[4][256];
 byte oldnoteByte[polyphony];
 bool noteoff[polyphony];
@@ -134,19 +135,46 @@ byte PENVMode[4] = { 0, 0, 0, 0 };
 byte BENDERMode[4] = { 0, 0, 0, 0 };
 byte Waveform[4] = { 0, 1, 0, 1 };
 byte PCMWaveNo[4] = { 12, 12, 12, 12 };
+byte BiasPoint[4] = {64, 64, 64, 64};
+byte BiasLevel[4] = {0, 0, 0, 0};
+byte Bias[4][256];
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
 
 //---------------------------TUNE----------------------------------
-void notevaluesarraytest() {
+/*
+  void notevaluesarraytest() {
   for (int i = 0; i < 256; i++) {
     Serial.print(String(noteertek[0][i]) + " ");
   }
   Serial.println();
+  }
+*/
+void notebias() {
+  for (int j = 0; j < 4; j++) {
+    if (BiasPoint[j] < 64) {
+      for (int i = 0; i < 128; i++)
+      {
+        if (i < BiasPoint[j]) {
+          Bias[j][i] = BiasLevel[j] ;
+        } else {
+          Bias[j][i] = 12;
+        }
+      }
+    }
+    if (BiasPoint[j] >= 64) {
+      for (int i = 0; i < 128; i++)
+      {
+        if (i < BiasPoint[j]) {
+          Bias[j][i] = 12 ;
+        } else {
+          Bias[j][i] = BiasLevel[j];
+        }
+      }
+    }
+  }
 }
-
-
 void notetune() {
   float szorzo2 = 2;
   for (int j = 0; j < 4; j++) {
@@ -196,44 +224,44 @@ void notetune() {
 
 uint16_t sizes[36];
 void maxsize() {
-/*
-  sizes[0] = sizeof(marimba) >> 1;
-  sizes[1] = sizeof(vibraphone) >> 1;
-  sizes[2] = sizeof(xilophone1) >> 1;
-  sizes[3] = sizeof(xilophone2) >> 1;
-  sizes[4] = sizeof(logbass) >> 1;
-  sizes[5] = sizeof(hammer) >> 1;
-  sizes[6] = sizeof(japanesedrum) >> 1;
-  sizes[7] = sizeof(kalimba) >> 1;
-  sizes[8] = sizeof(pluck1) >> 1;
-  sizes[9] = sizeof(chink) >> 1;
-  sizes[10] = sizeof(agogo) >> 1;
-*/
+  
+    sizes[0] = sizeof(marimba) >> 1;
+    sizes[1] = sizeof(vibraphone) >> 1;
+    sizes[2] = sizeof(xilophone1) >> 1;
+    sizes[3] = sizeof(xilophone2) >> 1;
+    sizes[4] = sizeof(logbass) >> 1;
+    sizes[5] = sizeof(hammer) >> 1;
+    sizes[6] = sizeof(japanesedrum) >> 1;
+    sizes[7] = sizeof(kalimba) >> 1;
+    sizes[8] = sizeof(pluck1) >> 1;
+    sizes[9] = sizeof(chink) >> 1;
+    sizes[10] = sizeof(agogo) >> 1;
+  
   sizes[11] = sizeof(triangle) >> 1;
 
   sizes[12] = sizeof(bells) >> 1;
-/*
-  sizes[13] = sizeof(nailfile) >> 1;
-  sizes[14] = sizeof(pick) >> 1;
-  sizes[15] = sizeof(lowpiano) >> 1;
-  sizes[16] = sizeof(midpiano) >> 1;
-  sizes[17] = sizeof(highpiano) >> 1;
-  sizes[18] = sizeof(hapsichord) >> 1;
-  sizes[19] = sizeof(harp) >> 1;
-  sizes[20] = sizeof(organpercus) >> 1;
-  sizes[21] = sizeof(steelstrings) >> 1;
-  sizes[22] = sizeof(nylonstrings) >> 1;
-  sizes[23] = sizeof(electgitar1) >> 1;
-  sizes[24] = sizeof(electgitar2) >> 1;
-  sizes[25] = sizeof(dirtygitar) >> 1;
-  sizes[26] = sizeof(pickbass) >> 1;
-  sizes[27] = sizeof(popbass) >> 1;
-  sizes[28] = sizeof(thump) >> 1;
-  sizes[29] = sizeof(klarinet) >> 1;
-  sizes[30] = sizeof(breath) >> 1;
-  sizes[31] = sizeof(klarinet) >> 1;
-  sizes[32] = sizeof(steamer) >> 1;
-*/
+  
+    sizes[13] = sizeof(nailfile) >> 1;
+    sizes[14] = sizeof(pick) >> 1;
+    sizes[15] = sizeof(lowpiano) >> 1;
+    sizes[16] = sizeof(midpiano) >> 1;
+    sizes[17] = sizeof(highpiano) >> 1;
+    sizes[18] = sizeof(hapsichord) >> 1;
+    sizes[19] = sizeof(harp) >> 1;
+    sizes[20] = sizeof(organpercus) >> 1;
+    sizes[21] = sizeof(steelstrings) >> 1;
+    sizes[22] = sizeof(nylonstrings) >> 1;
+    sizes[23] = sizeof(electgitar1) >> 1;
+    sizes[24] = sizeof(electgitar2) >> 1;
+    sizes[25] = sizeof(dirtygitar) >> 1;
+    sizes[26] = sizeof(pickbass) >> 1;
+    sizes[27] = sizeof(popbass) >> 1;
+    sizes[28] = sizeof(thump) >> 1;
+    sizes[29] = sizeof(klarinet) >> 1;
+    sizes[30] = sizeof(breath) >> 1;
+    sizes[31] = sizeof(klarinet) >> 1;
+    sizes[32] = sizeof(steamer) >> 1;
+  
 }
 
 void setsamplesize() {
@@ -251,44 +279,44 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-/*
-    case 0: genstartadress[opmenuoldal] = marimba; break;
-    case 1: genstartadress[opmenuoldal] = vibraphone; break;
-    case 2: genstartadress[opmenuoldal] = xilophone1; break;
-    case 3: genstartadress[opmenuoldal] = xilophone2; break;
-    case 4: genstartadress[opmenuoldal] = logbass; break;
-    case 5: genstartadress[opmenuoldal] = hammer; break;
-    case 6: genstartadress[opmenuoldal] = japanesedrum; break;
-    case 7: genstartadress[opmenuoldal] = kalimba; break;
-    case 8: genstartadress[opmenuoldal] = pluck1; break;
-    case 9: genstartadress[opmenuoldal] = chink; break;
-    case 10: genstartadress[opmenuoldal] = agogo; break;
-*/
+    
+        case 0: genstartadress[opmenuoldal] = marimba; break;
+        case 1: genstartadress[opmenuoldal] = vibraphone; break;
+        case 2: genstartadress[opmenuoldal] = xilophone1; break;
+        case 3: genstartadress[opmenuoldal] = xilophone2; break;
+        case 4: genstartadress[opmenuoldal] = logbass; break;
+        case 5: genstartadress[opmenuoldal] = hammer; break;
+        case 6: genstartadress[opmenuoldal] = japanesedrum; break;
+        case 7: genstartadress[opmenuoldal] = kalimba; break;
+        case 8: genstartadress[opmenuoldal] = pluck1; break;
+        case 9: genstartadress[opmenuoldal] = chink; break;
+        case 10: genstartadress[opmenuoldal] = agogo; break;
+    
     case 11: genstartadress[opmenuoldal] = triangle; break;
 
     case 12: genstartadress[opmenuoldal] = bells; break;
-/*
-    case 13: genstartadress[opmenuoldal] = nailfile; break;
-    case 14: genstartadress[opmenuoldal] = pick; break;
-    case 15: genstartadress[opmenuoldal] = lowpiano; break;
-    case 16: genstartadress[opmenuoldal] = midpiano; break;
-    case 17: genstartadress[opmenuoldal] = highpiano; break;
-    case 18: genstartadress[opmenuoldal] = hapsichord; break;
-    case 19: genstartadress[opmenuoldal] = harp; break;
-    case 20: genstartadress[opmenuoldal] = organpercus; break;
-    case 21: genstartadress[opmenuoldal] = steelstrings; break;
-    case 22: genstartadress[opmenuoldal] = nylonstrings; break;
-    case 23: genstartadress[opmenuoldal] = electgitar1; break;
-    case 24: genstartadress[opmenuoldal] = electgitar2; break;
-    case 25: genstartadress[opmenuoldal] = dirtygitar; break;
-    case 26: genstartadress[opmenuoldal] = pickbass; break;
-    case 27: genstartadress[opmenuoldal] = popbass; break;
-    case 28: genstartadress[opmenuoldal] = thump; break;
-    case 29: genstartadress[opmenuoldal] = klarinet; break;
-    case 30: genstartadress[opmenuoldal] = breath; break;
-    case 31: genstartadress[opmenuoldal] = popbass; break;
-    case 32: genstartadress[opmenuoldal] = steamer; break;
-*/
+      
+          case 13: genstartadress[opmenuoldal] = nailfile; break;
+          case 14: genstartadress[opmenuoldal] = pick; break;
+          case 15: genstartadress[opmenuoldal] = lowpiano; break;
+          case 16: genstartadress[opmenuoldal] = midpiano; break;
+          case 17: genstartadress[opmenuoldal] = highpiano; break;
+          case 18: genstartadress[opmenuoldal] = hapsichord; break;
+          case 19: genstartadress[opmenuoldal] = harp; break;
+          case 20: genstartadress[opmenuoldal] = organpercus; break;
+          case 21: genstartadress[opmenuoldal] = steelstrings; break;
+          case 22: genstartadress[opmenuoldal] = nylonstrings; break;
+          case 23: genstartadress[opmenuoldal] = electgitar1; break;
+          case 24: genstartadress[opmenuoldal] = electgitar2; break;
+          case 25: genstartadress[opmenuoldal] = dirtygitar; break;
+          case 26: genstartadress[opmenuoldal] = pickbass; break;
+          case 27: genstartadress[opmenuoldal] = popbass; break;
+          case 28: genstartadress[opmenuoldal] = thump; break;
+          case 29: genstartadress[opmenuoldal] = klarinet; break;
+          case 30: genstartadress[opmenuoldal] = breath; break;
+          case 31: genstartadress[opmenuoldal] = popbass; break;
+          case 32: genstartadress[opmenuoldal] = steamer; break;
+      
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -343,6 +371,16 @@ void parametersysexchanged() {
       case 35:
         volume[2] = value;
         Serial.println("Level U1: " + String(volume[2]));
+        break;
+      case 37:
+        BiasPoint[2] = value;
+        Serial.println("BiasPoint U1: " + String(BiasPoint[2]));
+        notebias();
+        break;
+      case 38:
+        BiasLevel[2] = value;
+        Serial.println("bieasLevel U1: " + String(BiasLevel[2]));
+        notebias();
         break;
       case 39:
         ENV_T1[2] = value;
@@ -443,6 +481,16 @@ void parametersysexchanged() {
       case 99:
         volume[3] = value;
         Serial.println("Level U2: " + String(volume[3]));
+        break;
+      case 101:
+        BiasPoint[3] = value;
+        Serial.println("BiasPoint L2: " + String(BiasPoint[3]));
+        notebias();
+        break;
+      case 102:
+        BiasLevel[3] = value;
+        Serial.println("bieasLevel L1: " + String(BiasLevel[3]));
+        notebias();
         break;
       case 103:
         ENV_T1[3] = value;
@@ -567,6 +615,16 @@ void parametersysexchanged() {
         volume[0] = value;
         Serial.println("Level L1: " + String(volume[0]));
         break;
+      case 101:
+        BiasPoint[0] = value;
+        Serial.println("BiasPoint L1: " + String(BiasPoint[0]));
+        notebias();
+        break;
+      case 102:
+        BiasLevel[0] = value;
+        Serial.println("bieasLevel L1: " + String(BiasLevel[0]));
+        notebias();
+        break;
       case 103:
         ENV_T1[0] = value;
         Serial.println("ENV_T1 L1: " + String(ENV_T1[0]));
@@ -666,7 +724,16 @@ void parametersysexchanged() {
         volume[1] = value;
         Serial.println("Level L2: " + String(volume[1]));
         break;
-
+      case 37:
+        BiasPoint[1] = value;
+        Serial.println("BiasPoint L2: " + String(BiasPoint[1]));
+        notebias();
+        break;
+      case 38:
+        BiasLevel[1] = value;
+        Serial.println("bieasLevel L2: " + String(BiasLevel[1]));
+        notebias();
+        break;
       case 39:
         ENV_T1[1] = value;
         Serial.println("ENV_T1 L2: " + String(ENV_T1[1]));
@@ -1097,10 +1164,14 @@ void serialEvent() {
         velocityByte = MIDI2.getData2();
 
         wavefreq[0][generatornumber] = noteertek[0][noteByte  + LKeyShift];
+        wavebias[0][generatornumber] = Bias[0][noteByte  + LKeyShift];
         //Serial.println("wavefreq0: " + String(wavefreq[0][generatornumber]));
         wavefreq[1][generatornumber] = noteertek[1][noteByte  + UKeyShift];
+        wavebias[1][generatornumber] = Bias[1][noteByte  + LKeyShift];
         wavefreq[2][generatornumber] = noteertek[2][noteByte  + LKeyShift];
+        wavebias[2][generatornumber] = Bias[2][noteByte  + LKeyShift];
         wavefreq[3][generatornumber] = noteertek[3][noteByte  + UKeyShift];
+        wavebias[3][generatornumber] = Bias[3][noteByte  + LKeyShift];
         oldnoteByte[generatornumber] = noteByte;
         pich[0][generatornumber] = wavefreq[0][generatornumber];
         pich[1][generatornumber] = wavefreq[1][generatornumber];
@@ -1206,6 +1277,7 @@ void setup() {
   MIDI2.begin(MIDI_CHANNEL_OMNI);
   //Set up NOTE TUNE
   notetune();
+  notebias();
   maxsize();
   setLFOWave();
   for (int i = 0; i < 4; i++) {
@@ -1272,13 +1344,13 @@ void loop() {
             TVAvolume[i][j] = 0;
             break;
         }
-        generatorvolume[i][j] = (TVAvolume[i][j] * volume[i]) >> 8;
+        generatorvolume[i][j] = (TVAvolume[i][j] * volume[i] * wavebias[i][j]) >> 10;
       }
       // Serial.println("Generator" + String(i) + "statusz: " + String(generatorstatus[i][0])+" "+String(generatorstatus[i][1])+" "+String(generatorstatus[i][2])+" "+String(generatorstatus[i][3])+" "+String(generatorstatus[i][4])+" "+String(generatorstatus[i][5]));
     } else
     {
       for (int j = 0; j < polyphony; j++) {
-        generatorvolume[i][j] =  volume[i] >> 1;
+        generatorvolume[i][j] =  (volume[i] * wavebias[i][j]) >> 4;
       }
     }
   }
@@ -1293,7 +1365,7 @@ void loop() {
 
       if ((freqmutato[0][j] >> 18) < sampleend[0] - 1) {
         tempbuffer1 = *(genstartadress[0] + (freqmutato[0][j] >> 18));
-       // bufferbe[0] += (tempbuffer1 * generatorvolume[0][j]) >> 5;
+        bufferbe[0] += (tempbuffer1 * generatorvolume[0][j]) >> 5;
         freqmutato[0][j] += pich[0][j];
       } else if (loopsample[0]) {
         // if(j==0){Serial.println(String(freqmutato[0][0] >> 18));}
@@ -1303,8 +1375,8 @@ void loop() {
 
       if ((freqmutato[1][j] >> 18) < sampleend[1]) {
         tempbuffer2 = *(genstartadress[1] + (freqmutato[1][j] >> 18));
-    //    bufferbe[0] += (((tempbuffer2 * generatorvolume[1][j]) >> 5)*((tempbuffer1 * generatorvolume[0][j]) >> 5))>>10; //ringmod
-        bufferbe[0] += ((tempbuffer2 * generatorvolume[1][j]) >> 5)+((tempbuffer1 * generatorvolume[0][j]) >> 5);
+        //    bufferbe[0] += (((tempbuffer2 * generatorvolume[1][j]) >> 5)*((tempbuffer1 * generatorvolume[0][j]) >> 5))>>10; //ringmod
+        bufferbe[0] += ((tempbuffer2 * generatorvolume[1][j]) >> 5);
         freqmutato[1][j] += pich[1][j];
       } else if (loopsample[1]) {
         freqmutato[1][j] = samplebegin[0] << 18;
