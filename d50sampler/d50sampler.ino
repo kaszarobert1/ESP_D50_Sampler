@@ -261,6 +261,11 @@ void maxsize() {
     sizes[30] = sizeof(breath) >> 1;
     sizes[31] = sizeof(klarinet) >> 1;
     sizes[32] = sizeof(steamer) >> 1;
+    sizes[47] = sizeof(drawbarsloop) >> 1;
+    sizes[48] = sizeof(highorganloop) >> 1;
+    sizes[49] = sizeof(loworganloop) >> 1;
+    sizes[50] = sizeof(electpiano1loop) >> 1;
+    sizes[51] = sizeof(electpiano2loop) >> 1;
   
 }
 
@@ -316,7 +321,12 @@ void setPCMWave() {
           case 30: genstartadress[opmenuoldal] = breath; break;
           case 31: genstartadress[opmenuoldal] = popbass; break;
           case 32: genstartadress[opmenuoldal] = steamer; break;
-      
+          case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
+          case 48: genstartadress[opmenuoldal] = highorganloop; break;
+          case 49: genstartadress[opmenuoldal] = loworganloop; break;
+          case 50: genstartadress[opmenuoldal] = electpiano1loop; break;
+          case 51: genstartadress[opmenuoldal] = electpiano2loop; break;
+     
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -1291,8 +1301,12 @@ void setup() {
 
 const uint32_t expgains128[128] = { 0, 1, 2, 3, 4, 5, 6, 11, 16, 23, 32, 42, 55, 70, 88, 108, 132, 158, 188, 221, 258, 298, 343, 392, 445, 504, 566, 634, 708, 786, 870, 961, 1057, 1159, 1267, 1383, 1505, 1633, 1770, 1913, 2064, 2223, 2389, 2564, 2747, 2939, 3139, 3349, 3567, 3795, 4032, 4279, 4535, 4802, 5079, 5366, 5665, 5973, 6293, 6625, 6967, 7321, 7688, 8066, 8456, 8858, 9274, 9702, 10142, 10597, 11064, 11545, 12040, 12548, 13071, 13608, 14160, 14726, 15308, 15904, 16516, 17143, 17786, 18444, 19119, 19810, 20517, 21242, 21982, 22740, 23516, 24308, 25118, 25947, 26793, 27657, 28539, 29441, 30361, 31299, 32258, 33235, 34232, 35249, 36285, 37342, 38419, 39517, 40635, 41775, 42935, 44117, 45320, 46545, 47791, 49060, 50351, 51664, 53001, 54359, 55741, 57147, 58575, 60027, 61504, 63004, 64430, 65535 };
 
-
-
+/*
+uint32_t egyopgenA(uint32_t freqmutato1, long op1level, byte lep)
+{
+  return generator1[freqmutato1 >> lep] * op1level;
+}
+*/
 
 void loop() {
   //--MIDI input--
@@ -1302,10 +1316,6 @@ void loop() {
     lfovalue[i] = *(LFOadress[i] + (lfoarrayindex[i] >> 23));
     lfoarrayindex[i] += (lfofreq[i] << 19);
   }
-  /*
-    lfovalue[1] = *(LFOadress[1]+(lfoarrayindex[1] >> 23));
-    lfoarrayindex[1] += (lfofreq[1] << 19);
-  */
   // Serial.println("lfo1value : " + String(lfo1value ));
   //TVA ENVELOPE
 
