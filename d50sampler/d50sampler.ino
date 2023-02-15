@@ -63,8 +63,6 @@ void i2s_install() {
 }
 //----------------DAC SETUP END------------
 
-
-
 //----------------------PROGRAM VARIABLES-----------
 const byte polyphony = 10;
 uint32_t freqmutato[4][polyphony];
