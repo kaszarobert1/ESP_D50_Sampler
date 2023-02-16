@@ -78,7 +78,7 @@ uint16_t samplebegin[4] = { 64, 64, 64, 64 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
-uint16_t GLOBAL_TUNE = 440;
+uint16_t GLOBAL_TUNE = 894;
 byte COARSE[4] = { 36, 36, 36, 36 };
 byte FINE[4] = { 50, 50, 50, 50 };
 float c[4] = {1001, 1001, 1001, 1001};
@@ -222,49 +222,55 @@ void notetune() {
 
 uint16_t sizes[36];
 void maxsize() {
-  
-    sizes[0] = sizeof(marimba) >> 1;
-    sizes[1] = sizeof(vibraphone) >> 1;
-    sizes[2] = sizeof(xilophone1) >> 1;
-    sizes[3] = sizeof(xilophone2) >> 1;
-    sizes[4] = sizeof(logbass) >> 1;
-    sizes[5] = sizeof(hammer) >> 1;
-    sizes[6] = sizeof(japanesedrum) >> 1;
-    sizes[7] = sizeof(kalimba) >> 1;
-    sizes[8] = sizeof(pluck1) >> 1;
-    sizes[9] = sizeof(chink) >> 1;
-    sizes[10] = sizeof(agogo) >> 1;
-  
+
+  sizes[0] = sizeof(marimba) >> 1;
+  sizes[1] = sizeof(vibraphone) >> 1;
+  sizes[2] = sizeof(xilophone1) >> 1;
+  sizes[3] = sizeof(xilophone2) >> 1;
+  sizes[4] = sizeof(logbass) >> 1;
+  sizes[5] = sizeof(hammer) >> 1;
+  sizes[6] = sizeof(japanesedrum) >> 1;
+  sizes[7] = sizeof(kalimba) >> 1;
+  sizes[8] = sizeof(pluck1) >> 1;
+  sizes[9] = sizeof(chink) >> 1;
+  sizes[10] = sizeof(agogo) >> 1;
+
   sizes[11] = sizeof(triangle) >> 1;
 
   sizes[12] = sizeof(bells) >> 1;
-  
-    sizes[13] = sizeof(nailfile) >> 1;
-    sizes[14] = sizeof(pick) >> 1;
-    sizes[15] = sizeof(lowpiano) >> 1;
-    sizes[16] = sizeof(midpiano) >> 1;
-    sizes[17] = sizeof(highpiano) >> 1;
-    sizes[18] = sizeof(hapsichord) >> 1;
-    sizes[19] = sizeof(harp) >> 1;
-    sizes[20] = sizeof(organpercus) >> 1;
-    sizes[21] = sizeof(steelstrings) >> 1;
-    sizes[22] = sizeof(nylonstrings) >> 1;
-    sizes[23] = sizeof(electgitar1) >> 1;
-    sizes[24] = sizeof(electgitar2) >> 1;
-    sizes[25] = sizeof(dirtygitar) >> 1;
-    sizes[26] = sizeof(pickbass) >> 1;
-    sizes[27] = sizeof(popbass) >> 1;
-    sizes[28] = sizeof(thump) >> 1;
-    sizes[29] = sizeof(klarinet) >> 1;
-    sizes[30] = sizeof(breath) >> 1;
-    sizes[31] = sizeof(klarinet) >> 1;
-    sizes[32] = sizeof(steamer) >> 1;
-    sizes[47] = sizeof(drawbarsloop) >> 1;
-    sizes[48] = sizeof(highorganloop) >> 1;
-    sizes[49] = sizeof(loworganloop) >> 1;
-    sizes[50] = sizeof(electpiano1loop) >> 1;
-    sizes[51] = sizeof(electpiano2loop) >> 1;
-  
+
+  sizes[13] = sizeof(nailfile) >> 1;
+  sizes[14] = sizeof(pick) >> 1;
+  sizes[15] = sizeof(lowpiano) >> 1;
+  sizes[16] = sizeof(midpiano) >> 1;
+  sizes[17] = sizeof(highpiano) >> 1;
+  sizes[18] = sizeof(hapsichord) >> 1;
+  sizes[19] = sizeof(harp) >> 1;
+  sizes[20] = sizeof(organpercus) >> 1;
+  sizes[21] = sizeof(steelstrings) >> 1;
+  sizes[22] = sizeof(nylonstrings) >> 1;
+  sizes[23] = sizeof(electgitar1) >> 1;
+  sizes[24] = sizeof(electgitar2) >> 1;
+  sizes[25] = sizeof(dirtygitar) >> 1;
+  sizes[26] = sizeof(pickbass) >> 1;
+  sizes[27] = sizeof(popbass) >> 1;
+  sizes[28] = sizeof(thump) >> 1;
+  sizes[29] = sizeof(klarinet) >> 1;
+  sizes[30] = sizeof(breath) >> 1;
+  sizes[31] = sizeof(klarinet) >> 1;
+  sizes[32] = sizeof(steamer) >> 1;
+  sizes[47] = sizeof(drawbarsloop) >> 1;
+  sizes[48] = sizeof(highorganloop) >> 1;
+  sizes[49] = sizeof(loworganloop) >> 1;
+  sizes[50] = sizeof(electpiano1loop) >> 1;
+  sizes[51] = sizeof(electpiano2loop) >> 1;
+  sizes[52] = sizeof(claviloop) >> 1;
+  sizes[53] = sizeof(hapsichordloop) >> 1;
+  sizes[54] = sizeof(electbassloop1) >> 1;
+  sizes[55] = sizeof(acusticbassloop) >> 1;
+  sizes[56] = sizeof(electbassloop2) >> 1;
+  sizes[57] = sizeof(violinloop) >> 1;
+
 }
 
 void setsamplesize() {
@@ -282,49 +288,55 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-    
-        case 0: genstartadress[opmenuoldal] = marimba; break;
-        case 1: genstartadress[opmenuoldal] = vibraphone; break;
-        case 2: genstartadress[opmenuoldal] = xilophone1; break;
-        case 3: genstartadress[opmenuoldal] = xilophone2; break;
-        case 4: genstartadress[opmenuoldal] = logbass; break;
-        case 5: genstartadress[opmenuoldal] = hammer; break;
-        case 6: genstartadress[opmenuoldal] = japanesedrum; break;
-        case 7: genstartadress[opmenuoldal] = kalimba; break;
-        case 8: genstartadress[opmenuoldal] = pluck1; break;
-        case 9: genstartadress[opmenuoldal] = chink; break;
-        case 10: genstartadress[opmenuoldal] = agogo; break;
-    
+
+    case 0: genstartadress[opmenuoldal] = marimba; break;
+    case 1: genstartadress[opmenuoldal] = vibraphone; break;
+    case 2: genstartadress[opmenuoldal] = xilophone1; break;
+    case 3: genstartadress[opmenuoldal] = xilophone2; break;
+    case 4: genstartadress[opmenuoldal] = logbass; break;
+    case 5: genstartadress[opmenuoldal] = hammer; break;
+    case 6: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 7: genstartadress[opmenuoldal] = kalimba; break;
+    case 8: genstartadress[opmenuoldal] = pluck1; break;
+    case 9: genstartadress[opmenuoldal] = chink; break;
+    case 10: genstartadress[opmenuoldal] = agogo; break;
+
     case 11: genstartadress[opmenuoldal] = triangle; break;
 
     case 12: genstartadress[opmenuoldal] = bells; break;
-      
-          case 13: genstartadress[opmenuoldal] = nailfile; break;
-          case 14: genstartadress[opmenuoldal] = pick; break;
-          case 15: genstartadress[opmenuoldal] = lowpiano; break;
-          case 16: genstartadress[opmenuoldal] = midpiano; break;
-          case 17: genstartadress[opmenuoldal] = highpiano; break;
-          case 18: genstartadress[opmenuoldal] = hapsichord; break;
-          case 19: genstartadress[opmenuoldal] = harp; break;
-          case 20: genstartadress[opmenuoldal] = organpercus; break;
-          case 21: genstartadress[opmenuoldal] = steelstrings; break;
-          case 22: genstartadress[opmenuoldal] = nylonstrings; break;
-          case 23: genstartadress[opmenuoldal] = electgitar1; break;
-          case 24: genstartadress[opmenuoldal] = electgitar2; break;
-          case 25: genstartadress[opmenuoldal] = dirtygitar; break;
-          case 26: genstartadress[opmenuoldal] = pickbass; break;
-          case 27: genstartadress[opmenuoldal] = popbass; break;
-          case 28: genstartadress[opmenuoldal] = thump; break;
-          case 29: genstartadress[opmenuoldal] = klarinet; break;
-          case 30: genstartadress[opmenuoldal] = breath; break;
-          case 31: genstartadress[opmenuoldal] = popbass; break;
-          case 32: genstartadress[opmenuoldal] = steamer; break;
-          case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
-          case 48: genstartadress[opmenuoldal] = highorganloop; break;
-          case 49: genstartadress[opmenuoldal] = loworganloop; break;
-          case 50: genstartadress[opmenuoldal] = electpiano1loop; break;
-          case 51: genstartadress[opmenuoldal] = electpiano2loop; break;
-     
+
+    case 13: genstartadress[opmenuoldal] = nailfile; break;
+    case 14: genstartadress[opmenuoldal] = pick; break;
+    case 15: genstartadress[opmenuoldal] = lowpiano; break;
+    case 16: genstartadress[opmenuoldal] = midpiano; break;
+    case 17: genstartadress[opmenuoldal] = highpiano; break;
+    case 18: genstartadress[opmenuoldal] = hapsichord; break;
+    case 19: genstartadress[opmenuoldal] = harp; break;
+    case 20: genstartadress[opmenuoldal] = organpercus; break;
+    case 21: genstartadress[opmenuoldal] = steelstrings; break;
+    case 22: genstartadress[opmenuoldal] = nylonstrings; break;
+    case 23: genstartadress[opmenuoldal] = electgitar1; break;
+    case 24: genstartadress[opmenuoldal] = electgitar2; break;
+    case 25: genstartadress[opmenuoldal] = dirtygitar; break;
+    case 26: genstartadress[opmenuoldal] = pickbass; break;
+    case 27: genstartadress[opmenuoldal] = popbass; break;
+    case 28: genstartadress[opmenuoldal] = thump; break;
+    case 29: genstartadress[opmenuoldal] = klarinet; break;
+    case 30: genstartadress[opmenuoldal] = breath; break;
+    case 31: genstartadress[opmenuoldal] = popbass; break;
+    case 32: genstartadress[opmenuoldal] = steamer; break;
+    case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
+    case 48: genstartadress[opmenuoldal] = highorganloop; break;
+    case 49: genstartadress[opmenuoldal] = loworganloop; break;
+    case 50: genstartadress[opmenuoldal] = electpiano1loop; break;
+    case 51: genstartadress[opmenuoldal] = electpiano2loop; break;
+    case 52: genstartadress[opmenuoldal] = claviloop; break;
+    case 53: genstartadress[opmenuoldal] = hapsichordloop; break;
+    case 54: genstartadress[opmenuoldal] = electbassloop1; break;
+    case 55: genstartadress[opmenuoldal] = acusticbassloop; break;
+    case 56: genstartadress[opmenuoldal] = electbassloop2; break;
+    case 57: genstartadress[opmenuoldal] = violinloop; break;
+
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -343,6 +355,7 @@ void setLFOWave() {
 
 //--------------MIDI SYSEX PARAMETER CONTROL------
 void parametersysexchanged() {
+  byte step = 1;
   byte value = velocityByte;
   if (localParameterByte == 0)
     switch (noteByte) {
@@ -407,12 +420,8 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 U1:" + String(ENV_T4[2]));
         break;
       case 43:
-        // ENV_T5[2] = value;
-        // Serial.println("ENV_T5 U1:" + String(ENV_T5[2]));
-        sampleend[2] = value << 7;
-        if (samplesize[2] < sampleend[2]) {
-          sampleend[2] = samplesize[2];
-        }
+        step = samplesize[2] / 100;
+        sampleend[2] = value * step;
         Serial.println("SAMPLE END U1: " + String(sampleend[2]));
         break;
       case 44:
@@ -424,17 +433,9 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 U1:" + String(ENV_L2[2]));
         break;
       case 46:
-        samplebegin[2] = value << 7;
-        if  (samplesize[2] < samplebegin[2])
-        {
-          samplebegin[2] = samplesize[2];
-        }
-        Serial.println("SAMPLE BEGIN U1 :" + String(samplebegin[2]));
-        /*
-          ENV_L3[0] = value;
-          Serial.println("ENV_L3 0" + String(ENV_L3[0]));
-        */
-
+        step = samplesize[2] / 100;
+        samplebegin[2] = value * step;
+        Serial.println("SAMPLE BEGIN U1: " + String(samplebegin[2]));
         break;
       case 47:
         ENV_LSUS[2] = value;
@@ -517,12 +518,8 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 U2:" + String(ENV_T4[3]));
         break;
       case 107:
-        // ENV_T5[3] = value;
-        // Serial.println("ENV_T5 U2: " + String(ENV_T5[3]));
-        sampleend[3] = value << 7;
-        if (samplesize[3] < sampleend[3]) {
-          sampleend[3] = samplesize[3];
-        }
+        step = samplesize[3] / 100;
+        sampleend[3] = value * step;
         Serial.println("SAMPLE END U2: " + String(sampleend[3]));
         break;
       case 108:
@@ -534,17 +531,9 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 U2: " + String(ENV_L2[3]));
         break;
       case 110:
-        samplebegin[3] = value << 7;
-        if  (samplesize[3] < samplebegin[3])
-        {
-          samplebegin[3] = samplesize[3];
-        }
-        Serial.println("SAMPLE BEGIN U2 :" + String(samplebegin[3]));
-        /*
-          ENV_L3[0] = value;
-          Serial.println("ENV_L3 0" + String(ENV_L3[0]));
-        */
-
+        step = samplesize[3] / 100;
+        samplebegin[3] = value * step;
+        Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[3]));
         break;
       case 111:
         ENV_LSUS[3] = value;
@@ -650,12 +639,8 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 L1" + String(ENV_T4[0]));
         break;
       case 107:
-        // ENV_T5[0] = value;
-        // Serial.println("ENV_T5 L1" + String(ENV_T5[0]));
-        sampleend[0] = value << 7;
-        if (samplesize[0] < sampleend[0]) {
-          sampleend[0] = samplesize[0];
-        }
+        step = samplesize[0] / 100;
+        sampleend[0] = value * step;
         Serial.println("SAMPLE END L1: " + String(sampleend[0]));
         break;
       case 108:
@@ -667,17 +652,9 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 L1: " + String(ENV_L2[0]));
         break;
       case 110:
-        samplebegin[0] = value << 7;
-        if  (samplesize[0] < samplebegin[0])
-        {
-          samplebegin[0] = samplesize[0];
-        }
+        step = samplesize[0] / 100;
+        samplebegin[0] = value * step;
         Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
-        /*
-          ENV_L3[0] = value;
-          Serial.println("ENV_L3 0" + String(ENV_L3[0]));
-        */
-
         break;
       case 111:
         ENV_LSUS[0] = value;
@@ -698,6 +675,24 @@ void parametersysexchanged() {
           loopsample[opmenuoldal] = true;
           Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
         }
+        break;
+      case 114:
+        if (value == 4) {
+          sampleend[0]++;
+          if (samplesize[0] < sampleend[0]) {
+            sampleend[0] = samplesize[0];
+          }
+        }
+
+        Serial.println("SAMPLE END L1: " + String(sampleend[0]));
+        if (value == 1) {
+          samplebegin[0]++;
+          if (samplesize[0] < samplebegin[0]) {
+            samplebegin[0] = samplesize[0];
+          }
+        }
+        Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
+
         break;
     }
 
@@ -759,12 +754,8 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 L2" + String(ENV_T4[1]));
         break;
       case 43:
-        // ENV_T5[1] = value;
-        // Serial.println("ENV_T5 L2: " + String(ENV_T5[1]));
-        sampleend[1] = value << 7;
-        if (samplesize[1] < sampleend[1]) {
-          sampleend[1] = samplesize[1];
-        }
+        step = samplesize[1] / 100;
+        sampleend[1] = value * step;
         Serial.println("SAMPLE END L2: " + String(sampleend[1]));
         break;
       case 44:
@@ -776,14 +767,9 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 L2: " + String(ENV_L2[1]));
         break;
       case 46:
-        samplebegin[1] = value << 7;
-        if  (samplesize[1] < samplebegin[1])
-        {
-          samplebegin[1] = samplesize[1];
-        }
-        Serial.println("SAMPLE BEGIN: " + String(1) + " :" + String(samplebegin[1]));
-        //ENV_L3[1] = value;
-        //Serial.println("ENV_L3 L2: " + String(ENV_L3[1]));
+        step = samplesize[1] / 100;
+        samplebegin[1] = value * step;
+        Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
         break;
       case 47:
         ENV_LSUS[1] = value;
@@ -805,6 +791,25 @@ void parametersysexchanged() {
           Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
         }
         break;
+      case 50:
+        if (value == 4) {
+          sampleend[1]++;
+          if (samplesize[1] < sampleend[1]) {
+            sampleend[1] = samplesize[1];
+          }
+        }
+
+        Serial.println("SAMPLE END L1: " + String(sampleend[1]));
+        if (value == 1) {
+          samplebegin[1]++;
+          if (samplesize[1] < samplebegin[1]) {
+            samplebegin[1] = samplesize[1];
+          }
+        }
+        Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
+
+        break;
+
       case 106:
         switch (value) {
           case 1:
@@ -964,6 +969,7 @@ void parametersysexchanged() {
 
 //--------------MIDI PARAMETER CONTROL-------------
 void parameterchange2() {
+
   byte value = velocityByte;
   switch (noteByte) {
     case 0:
@@ -1300,10 +1306,10 @@ void setup() {
 const uint32_t expgains128[128] = { 0, 1, 2, 3, 4, 5, 6, 11, 16, 23, 32, 42, 55, 70, 88, 108, 132, 158, 188, 221, 258, 298, 343, 392, 445, 504, 566, 634, 708, 786, 870, 961, 1057, 1159, 1267, 1383, 1505, 1633, 1770, 1913, 2064, 2223, 2389, 2564, 2747, 2939, 3139, 3349, 3567, 3795, 4032, 4279, 4535, 4802, 5079, 5366, 5665, 5973, 6293, 6625, 6967, 7321, 7688, 8066, 8456, 8858, 9274, 9702, 10142, 10597, 11064, 11545, 12040, 12548, 13071, 13608, 14160, 14726, 15308, 15904, 16516, 17143, 17786, 18444, 19119, 19810, 20517, 21242, 21982, 22740, 23516, 24308, 25118, 25947, 26793, 27657, 28539, 29441, 30361, 31299, 32258, 33235, 34232, 35249, 36285, 37342, 38419, 39517, 40635, 41775, 42935, 44117, 45320, 46545, 47791, 49060, 50351, 51664, 53001, 54359, 55741, 57147, 58575, 60027, 61504, 63004, 64430, 65535 };
 
 /*
-uint32_t egyopgenA(uint32_t freqmutato1, long op1level, byte lep)
-{
+  uint32_t egyopgenA(uint32_t freqmutato1, long op1level, byte lep)
+  {
   return generator1[freqmutato1 >> lep] * op1level;
-}
+  }
 */
 
 void loop() {
