@@ -88,7 +88,7 @@ byte UKeyShift = 0;
 byte volume[4] { 60, 0, 0, 0 };
 byte generatorvolume[4][polyphony];
 //reverb variable
-int32_t bufferbe[2];
+int32_t bufferbe[4];
 uint16_t delaybuffersize = 8192;
 int16_t delaybuffer[8192];
 int16_t delaybuffer2[8192];
@@ -109,10 +109,10 @@ uint16_t chorusbuffersize2 = 511;
 int16_t const* genstartadress[4];
 const byte LFOnumber = 8;
 uint16_t const* LFOadress[LFOnumber];
+int32_t tempbuffer0;
 int32_t tempbuffer1;
 int32_t tempbuffer2;
 int32_t tempbuffer3;
-int32_t tempbuffer4;
 byte ENV_L0 = 0;
 byte ENV_T1[4] = { 125, 125, 125, 125 };
 byte ENV_L1[4] = { 125, 125, 125, 125 };
@@ -134,13 +134,18 @@ byte BENDERMode[4] = { 0, 0, 0, 0 };
 byte Waveform[4] = { 0, 1, 0, 1 };
 byte PCMWaveNo[4] = { 12, 12, 12, 12 };
 byte BiasPoint[4] = {64, 64, 64, 64};
-byte BiasLevel[4] = {0, 0, 0, 0};
+byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
+byte STRUCTURE_L = 6;
+byte STRUCTURE_U = 6;
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
 float f0 = 100;
+float f0orig = 100;
 float Q = 2;
+byte lfo2level = 2;
+byte lfo2sync = 2;
 
 
 
@@ -155,7 +160,7 @@ float Q = 2;
 */
 float Fs = 44100;
 float Pi = 3.141592;
-byte eqlevel=10;
+byte eqlevel = 10;
 //parametric eq left default:
 float w0 = 2 * Pi * f0 / Fs;
 float alpha = sin(w0) / (2 * Q);
@@ -175,11 +180,11 @@ void eqkiszamol() {
   a0 = (1 + alpha) * 100 ;
   a1 = (-2 * cos(w0)) * 100;
   a2 = (1 - alpha) * 100;
- 
+
   b0 = ((1 + cos(w0)) / 2) * 100;
   b1 = (-(1 + cos(w0))) * 100;
   b2 = ((1 + cos(w0)) / 2) * 100;
- 
+
 }
 
 
@@ -189,13 +194,13 @@ int32_t lastbuffer[4];
 
 //parametric eq left function
 void parametereqleft() {
-  
+
   PrevSample[3] = PrevSample[2];
   PrevSample[2] = PrevSample[1];
   PrevSample[1] = PrevSample[0];
   PrevSample[0] = bufferbe[0];
   //bufferbe[0] = ( b0 / a0 * PrevSample[0]) +(b1 / a0 * PrevSample[1]) +(b2 / a0 * PrevSample[2]) -(a1 / a0 * lastbuffer[0]) - (a2 / a0 * lastlastbuffer);
-  lastbuffer[3] = (b0 / a0 * PrevSample[0]) +(b1 / a0 * PrevSample[1])+(b2 / a0 * PrevSample[2])  -(a1 / a0 * lastbuffer[0])- (a2 / a0 * lastbuffer[1]);
+  lastbuffer[3] = (b0 / a0 * PrevSample[0]) + (b1 / a0 * PrevSample[1]) + (b2 / a0 * PrevSample[2])  - (a1 / a0 * lastbuffer[0]) - (a2 / a0 * lastbuffer[1]);
   lastbuffer[2] = lastbuffer[1];
   lastbuffer[1] = lastbuffer[0];
   lastbuffer[0] =  lastbuffer[3];
@@ -282,7 +287,7 @@ void notetune() {
   //notevaluesarraytest();
 }
 
-uint16_t sizes[36];
+uint16_t sizes[128];
 void maxsize() {
 /*
   sizes[0] = sizeof(marimba) >> 1;
@@ -300,7 +305,7 @@ void maxsize() {
   sizes[11] = sizeof(triangle) >> 1;
 
   sizes[12] = sizeof(bells) >> 1;
-/*
+
   sizes[13] = sizeof(nailfile) >> 1;
   sizes[14] = sizeof(pick) >> 1;
   sizes[15] = sizeof(lowpiano) >> 1;
@@ -321,6 +326,20 @@ void maxsize() {
   sizes[30] = sizeof(breath) >> 1;
   sizes[31] = sizeof(klarinet) >> 1;
   sizes[32] = sizeof(steamer) >> 1;
+  sizes[33] = sizeof(steamer) >> 1;
+  sizes[34] = sizeof(steamer) >> 1;
+  sizes[35] = sizeof(steamer) >> 1;
+  sizes[36] = sizeof(steamer) >> 1;
+  sizes[37] = sizeof(steamer) >> 1;
+  sizes[38] = sizeof(steamer) >> 1;
+  sizes[39] = sizeof(steamer) >> 1;
+  sizes[40] = sizeof(steamer) >> 1;
+  sizes[41] = sizeof(steamer) >> 1;
+  sizes[42] = sizeof(steamer) >> 1;
+  sizes[43] = sizeof(steamer) >> 1;
+  sizes[44] = sizeof(steamer) >> 1;
+  sizes[45] = sizeof(steamer) >> 1;
+  sizes[46] = sizeof(steamer) >> 1;
   sizes[47] = sizeof(drawbarsloop) >> 1;
   sizes[48] = sizeof(highorganloop) >> 1;
   sizes[49] = sizeof(loworganloop) >> 1;
@@ -332,15 +351,13 @@ void maxsize() {
   sizes[55] = sizeof(acusticbassloop) >> 1;
   sizes[56] = sizeof(electbassloop2) >> 1;
   sizes[57] = sizeof(violinloop) >> 1;
-*/
+
 }
 
 void setsamplesize() {
   //Set up max sample size
   samplesize[opmenuoldal] = sizes[PCMWaveNo[opmenuoldal]];
-  if (samplesize[opmenuoldal] < sampleend[opmenuoldal]) {
-    sampleend[opmenuoldal] = samplesize[opmenuoldal];
-  }
+  sampleend[opmenuoldal] = samplesize[opmenuoldal];
   Serial.println("Size of sample:");
   Serial.println(String(samplesize[0]));
   Serial.println(String(samplesize[1]));
@@ -366,7 +383,7 @@ void setPCMWave() {
     case 11: genstartadress[opmenuoldal] = triangle; break;
 
     case 12: genstartadress[opmenuoldal] = bells; break;
-/*
+
     case 13: genstartadress[opmenuoldal] = nailfile; break;
     case 14: genstartadress[opmenuoldal] = pick; break;
     case 15: genstartadress[opmenuoldal] = lowpiano; break;
@@ -387,6 +404,20 @@ void setPCMWave() {
     case 30: genstartadress[opmenuoldal] = breath; break;
     case 31: genstartadress[opmenuoldal] = popbass; break;
     case 32: genstartadress[opmenuoldal] = steamer; break;
+    case 33: genstartadress[opmenuoldal] = steamer; break;
+    case 34: genstartadress[opmenuoldal] = steamer; break;
+    case 35: genstartadress[opmenuoldal] = steamer; break;
+    case 36: genstartadress[opmenuoldal] = steamer; break;
+    case 37: genstartadress[opmenuoldal] = steamer; break;
+    case 38: genstartadress[opmenuoldal] = steamer; break;
+    case 39: genstartadress[opmenuoldal] = steamer; break;
+    case 40: genstartadress[opmenuoldal] = steamer; break;
+    case 41: genstartadress[opmenuoldal] = steamer; break;
+    case 42: genstartadress[opmenuoldal] = steamer; break;
+    case 43: genstartadress[opmenuoldal] = steamer; break;
+    case 44: genstartadress[opmenuoldal] = steamer; break;
+    case 45: genstartadress[opmenuoldal] = steamer; break;
+    case 46: genstartadress[opmenuoldal] = steamer; break;
     case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
     case 48: genstartadress[opmenuoldal] = highorganloop; break;
     case 49: genstartadress[opmenuoldal] = loworganloop; break;
@@ -398,7 +429,7 @@ void setPCMWave() {
     case 55: genstartadress[opmenuoldal] = acusticbassloop; break;
     case 56: genstartadress[opmenuoldal] = electbassloop2; break;
     case 57: genstartadress[opmenuoldal] = violinloop; break;
-*/
+
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -627,22 +658,30 @@ void parametersysexchanged() {
         break;
 
       case 3:
-        LFOMode[opmenuoldal] = value;
+        LFOMode[0] = value;
+        Serial.println("LFOMode L1: " + String(LFOMode[0]));
         break;
       case 4:
-        PENVMode[opmenuoldal] = value;
+        PENVMode[0] = value;
+        Serial.println("LFOMode L1: " + String(PENVMode[0]));
         break;
       case 5:
-        BENDERMode[opmenuoldal] = value;
+        BENDERMode[0] = value;
+        Serial.println("BENDERMode L1: " + String(BENDERMode[0] ));
         break;
       case 6:
-
+        break;
+      case 10:
+        STRUCTURE_U = value;
+        Serial.println("STRUCTURE_U: " + String(STRUCTURE_U ));
         break;
       case 43:
         lfofreq[1] = value;
+        Serial.println("CHORUSFREQ U: " + String(lfofreq[1] ));
         break;
       case 44:
         chorusLevelRight = value;
+        Serial.println("CHORUSLEVEL U: " + String(chorusLevelRight ));
         break;
       case 64:
         COARSE[0] = value;
@@ -871,20 +910,37 @@ void parametersysexchanged() {
         Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
 
         break;
-
+      case 74:
+        STRUCTURE_L = value;
+        Serial.println("STRUCTURE_L: " + String(STRUCTURE_L));
+        break;
       case 86:
-        f0 = expgains128[value] >> 1 + 1;
+        f0orig = expgains128[value] >> 1 + 1;
+        f0 = f0orig;
         eqkiszamol();
+        Serial.println("f0orig: " + String(f0orig));
         break;
       case 87:
-        Q = value / 25.0;
+        Q = value / 10.0;
         eqkiszamol();
+        Serial.println("Q: " + String(Q));
         break;
       case 88:
-      eqlevel=value;
+        eqlevel = value;
+        Serial.println("eqlevel: " + String(eqlevel));
         break;
-
-
+      case 90:
+        lfofreq[2] = value;
+        Serial.println(" lfofreq2: " + String(lfofreq[2]));
+        break;
+      case 91:
+        lfo2level = value;
+        Serial.println(" lfofreq2: " + String(lfofreq[2]));
+        break;
+      case 94:        
+        lfo2sync = value;
+        Serial.println(" lfofreq2: " + String(lfofreq[2]));
+        break;
       case 106:
         switch (value) {
           case 1:
@@ -929,9 +985,11 @@ void parametersysexchanged() {
       case 107:
         // chorusRate=value;
         lfofreq[0] = value;
+        Serial.println(" Chorus RATE L: " + String(lfofreq[0]));
         break;
       case 108:
         chorusLevelLeft = value;
+        Serial.println(" Chorus LEVEL U: " + String( chorusLevelLeft));
         break;
 
     }
@@ -945,97 +1003,113 @@ void parametersysexchanged() {
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            Serial.println("SmallHall");
+            Serial.println("Small Hall");
             break;
           case 1:
             delaybuffersize = 4096;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
+            Serial.println("Medium Hall");
             break;
           case 2:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
+            Serial.println("Large Hall");
             break;
           case 3:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
+            Serial.println("Chapel");
             break;
           case 4:
             delaybuffersize = 4096;
             delaytime = 1;
             delay2time = 2;
             reverblevel = 127;
+            Serial.println("SmallHall");
             break;
           case 5:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 1;
             reverblevel = 127;
+            Serial.println("Box");
             break;
           case 6:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 2;
             reverblevel = 127;
+            Serial.println("Small Metal Room");
             break;
           case 7:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 2;
             reverblevel = 127;
+            Serial.println("Small Room");
             break;
           case 8:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 2;
             reverblevel = 127;
+            Serial.println("Room");
             break;
           case 9:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 2;
             reverblevel = 127;
+            Serial.println("Medium Room");
             break;
           case 10:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 3;
             reverblevel = 127;
+            Serial.println("Medium Large Room");
             break;
           case 11:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 4;
             reverblevel = 127;
+            Serial.println("Large Room");
             break;
           case 12:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 4;
             reverblevel = 127;
+            Serial.println("Single Delay 102ms");
             break;
           case 13:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 4;
             reverblevel = 127;
+            Serial.println("Cross Delay 180ms");
             break;
           case 14:
-            Serial.println("Crossdelay 148-256msec");
             delaybuffersize = 8192;
             delaytime = 4;
             delay2time = 4;
             reverblevel = 127;
+            Serial.println("Cross Delay 148-256msec");
             break;
         }
         break;
       case 31:
         reverbdiffusion = value;
+        break;
+      case 39:
+
         break;
 
     }
@@ -1168,7 +1242,7 @@ void reverbleft() {
   atlag += (reverblevel - 1) * bufferbe[0] / reverblevel;
   delaystep++;
   if (delaystep >= delaytime) {
-    delaybuffer[delaybufferindex] = ((atlag / delaystep) << 4) / reverbdiffusion;
+    delaybuffer[delaybufferindex] = ((atlag / delaystep) << 4) / (reverbdiffusion + 1);
     atlag = 0;
     delaybufferindex++;
     delaystep = 0;
@@ -1183,7 +1257,7 @@ void reverbright() {
   atlag2 += (reverblevel - 1) * bufferbe[1] / reverblevel;
   delay2step++;
   if (delay2step >= delay2time) {
-    delaybuffer2[delaybufferindex2] = ((atlag2 / delay2step) << 4) / reverbdiffusion;
+    delaybuffer2[delaybufferindex2] = ((atlag2 / delay2step) << 4) / (reverbdiffusion + 1);
     atlag2 = 0;
     delaybufferindex2++;
     delay2step = 0;
@@ -1245,6 +1319,57 @@ void lowpassfilterright() {
 
 
 //-------------------------------MIDI INPUT COMMAND-------------------------------------
+void keyon(byte noteByte) {
+  wavefreq[0][generatornumber] = noteertek[0][noteByte  + LKeyShift];
+  wavebias[0][generatornumber] = Bias[0][noteByte  + LKeyShift];
+  //Serial.println("wavefreq0: " + String(wavefreq[0][generatornumber]));
+  wavefreq[1][generatornumber] = noteertek[1][noteByte  + UKeyShift];
+  wavebias[1][generatornumber] = Bias[1][noteByte  + LKeyShift];
+  wavefreq[2][generatornumber] = noteertek[2][noteByte  + LKeyShift];
+  wavebias[2][generatornumber] = Bias[2][noteByte  + LKeyShift];
+  wavefreq[3][generatornumber] = noteertek[3][noteByte  + UKeyShift];
+  wavebias[3][generatornumber] = Bias[3][noteByte  + LKeyShift];
+  oldnoteByte[generatornumber] = noteByte;
+  pich[0][generatornumber] = wavefreq[0][generatornumber];
+  pich[1][generatornumber] = wavefreq[1][generatornumber];
+  pich[2][generatornumber] = wavefreq[2][generatornumber];
+  pich[3][generatornumber] = wavefreq[3][generatornumber];
+  // Serial.println(String(pich[generatornumber]));
+  freqmutato[0][generatornumber] = samplebegin[0] << 18;
+  freqmutato[1][generatornumber] = samplebegin[1] << 18;
+  freqmutato[2][generatornumber] = samplebegin[2] << 18;
+  freqmutato[3][generatornumber] = samplebegin[3] << 18;
+  noteoff[generatornumber] = false;
+  TVAvolume[0][generatornumber] = ENV_L0;
+  TVAvolume[1][generatornumber] = ENV_L0;
+  TVAvolume[2][generatornumber] = ENV_L0;
+  TVAvolume[3][generatornumber] = ENV_L0;
+  generatorstatus[0][generatornumber] = 0;
+  generatorstatus[1][generatornumber] = 0;
+  generatorstatus[2][generatornumber] = 0;
+  generatorstatus[3][generatornumber] = 0;
+  generatornumber++;
+  if (generatornumber == polyphony) {
+    generatornumber = 0;
+  }
+  if (lfo2sync==2){
+    lfoarrayindex[2]=0;
+    }
+}
+
+void keyoff(byte noteByte) {
+  for (int i = 0; i < polyphony; i++) {
+    if (noteByte == oldnoteByte[i]) {
+      oldnoteByte[i] = 0;
+      //  noteoff[i] = true;
+      generatorstatus[0][i] = 3;
+      generatorstatus[1][i] = 3;
+      generatorstatus[2][i] = 3;
+      generatorstatus[3][i] = 3;
+    }
+  }
+
+}
 void serialEvent() {
   if (MIDI2.read(midichan)) {
     switch (MIDI2.getType()) {
@@ -1252,55 +1377,13 @@ void serialEvent() {
         //  Serial.println("NoteOn: " + String(noteByte) + " " + String(velocityByte) + " ");
         noteByte = MIDI2.getData1();
         velocityByte = MIDI2.getData2();
-
-        wavefreq[0][generatornumber] = noteertek[0][noteByte  + LKeyShift];
-        wavebias[0][generatornumber] = Bias[0][noteByte  + LKeyShift];
-        //Serial.println("wavefreq0: " + String(wavefreq[0][generatornumber]));
-        wavefreq[1][generatornumber] = noteertek[1][noteByte  + UKeyShift];
-        wavebias[1][generatornumber] = Bias[1][noteByte  + LKeyShift];
-        wavefreq[2][generatornumber] = noteertek[2][noteByte  + LKeyShift];
-        wavebias[2][generatornumber] = Bias[2][noteByte  + LKeyShift];
-        wavefreq[3][generatornumber] = noteertek[3][noteByte  + UKeyShift];
-        wavebias[3][generatornumber] = Bias[3][noteByte  + LKeyShift];
-        oldnoteByte[generatornumber] = noteByte;
-        pich[0][generatornumber] = wavefreq[0][generatornumber];
-        pich[1][generatornumber] = wavefreq[1][generatornumber];
-        pich[2][generatornumber] = wavefreq[2][generatornumber];
-        pich[3][generatornumber] = wavefreq[3][generatornumber];
-        // Serial.println(String(pich[generatornumber]));
-        freqmutato[0][generatornumber] = samplebegin[0] << 18;
-        freqmutato[1][generatornumber] = samplebegin[1] << 18;
-        freqmutato[2][generatornumber] = samplebegin[2] << 18;
-        freqmutato[3][generatornumber] = samplebegin[3] << 18;
-        noteoff[generatornumber] = false;
-        TVAvolume[0][generatornumber] = ENV_L0;
-        TVAvolume[1][generatornumber] = ENV_L0;
-        TVAvolume[2][generatornumber] = ENV_L0;
-        TVAvolume[3][generatornumber] = ENV_L0;
-        generatorstatus[0][generatornumber] = 0;
-        generatorstatus[1][generatornumber] = 0;
-        generatorstatus[2][generatornumber] = 0;
-        generatorstatus[3][generatornumber] = 0;
-        generatornumber++;
-        if (generatornumber == polyphony) {
-          generatornumber = 0;
-        }
+        keyon(noteByte);
         break;
       case midi::NoteOff:
         //  Serial.println("Noteoff: " + String(noteByte) + " " + String(velocityByte) + " ");
         noteByte = MIDI2.getData1();
         //  velocityByte = MIDI2.getData2();
-
-        for (int i = 0; i < polyphony; i++) {
-          if (noteByte == oldnoteByte[i]) {
-            oldnoteByte[i] = 0;
-            //  noteoff[i] = true;
-            generatorstatus[0][i] = 3;
-            generatorstatus[1][i] = 3;
-            generatorstatus[2][i] = 3;
-            generatorstatus[3][i] = 3;
-          }
-        }
+        keyoff(noteByte);
         break;
       case midi::ProgramChange:
         Serial.println("Programchange: " + String(noteByte) + " " + String(velocityByte) + " ");
@@ -1325,11 +1408,27 @@ void serialEvent() {
         for (int i = 0; i < MIDI2.getSysExArrayLength(); i++) {
           Serial.print(String(MIDI2.getSysExArray()[i]) + " ");
         }
-        if (MIDI2.getSysExArray()[0] == 240 && MIDI2.getSysExArray()[1] == 65 && MIDI2.getSysExArray()[2] == 0 && MIDI2.getSysExArray()[3] == 20 && MIDI2.getSysExArray()[4] == 18 && MIDI2.getSysExArray()[5] == 0) {
-          localParameterByte = MIDI2.getSysExArray()[6];
-          noteByte = MIDI2.getSysExArray()[7];
-          velocityByte = MIDI2.getSysExArray()[8];
-          parametersysexchanged();
+        if (MIDI2.getSysExArray()[0] == 240 && MIDI2.getSysExArray()[1] == 65 && MIDI2.getSysExArray()[2] == 0 && MIDI2.getSysExArray()[3] == 20 && MIDI2.getSysExArray()[4] == 18 && MIDI2.getSysExArray()[5] == 0)
+        {
+          if (MIDI2.getSysExArrayLength() <= 11)
+          {
+            localParameterByte = MIDI2.getSysExArray()[6];
+            noteByte = MIDI2.getSysExArray()[7];
+            velocityByte = MIDI2.getSysExArray()[8];
+            parametersysexchanged();
+          } else {
+            localParameterByte = MIDI2.getSysExArray()[6];
+            noteByte = MIDI2.getSysExArray()[7];
+            velocityByte = MIDI2.getSysExArray()[8];
+            Serial.println("Localvalue: " + String(localParameterByte) + "Commandsysex: " + String(noteByte) + "Datasysex: " + String(velocityByte));
+            parametersysexchanged();
+            for (int i = 9; i < MIDI2.getSysExArrayLength() - 2; i++) {
+              noteByte++ ;
+              velocityByte = MIDI2.getSysExArray()[i];
+              Serial.println("Localvalue: " + String(localParameterByte) + "Commandsysex:" + String(noteByte) + "Datasysex:" + String(velocityByte));
+              parametersysexchanged();
+            }
+          }
         }
         break;
     }
@@ -1397,6 +1496,13 @@ void loop() {
     lfovalue[i] = *(LFOadress[i] + (lfoarrayindex[i] >> 23));
     lfoarrayindex[i] += (lfofreq[i] << 19);
   }
+  if (true) {
+    f0 = f0orig + (lfovalue[2] * lfo2level);
+    eqkiszamol();
+
+  }
+  // Serial.println(String(f0));
+
   // Serial.println("lfo1value : " + String(lfo1value ));
   //TVA ENVELOPE
 
@@ -1452,47 +1558,60 @@ void loop() {
   for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
     bufferbe[0] = 0;
     bufferbe[1] = 0;
+    bufferbe[2] = 0;
+    bufferbe[3] = 0;
     for (int j = 0; j < polyphony; j++) {
 
       if ((freqmutato[0][j] >> 18) < sampleend[0] - 1) {
-        tempbuffer1 = *(genstartadress[0] + (freqmutato[0][j] >> 18));
-        bufferbe[0] += (tempbuffer1 * generatorvolume[0][j]) >> 5;
+        tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> 18));
+        bufferbe[0] += (tempbuffer0 * generatorvolume[0][j]) >> 6;
         freqmutato[0][j] += pich[0][j];
       } else if (loopsample[0]) {
-        // if(j==0){Serial.println(String(freqmutato[0][0] >> 18));}
         freqmutato[0][j] = samplebegin[0] << 18;
-        // if(j==0){Serial.println(String(freqmutato[0][0] >> 18));}
       }
 
       if ((freqmutato[1][j] >> 18) < sampleend[1]) {
-        tempbuffer2 = *(genstartadress[1] + (freqmutato[1][j] >> 18));
-        //    bufferbe[0] += (((tempbuffer2 * generatorvolume[1][j]) >> 5)*((tempbuffer1 * generatorvolume[0][j]) >> 5))>>10; //ringmod
-        bufferbe[0] += ((tempbuffer2 * generatorvolume[1][j]) >> 5);
+        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> 18));
+        bufferbe[2] += ((tempbuffer1 * generatorvolume[1][j]) >> 6);
         freqmutato[1][j] += pich[1][j];
       } else if (loopsample[1]) {
-        freqmutato[1][j] = samplebegin[0] << 18;
+        freqmutato[1][j] = samplebegin[1] << 18;
       }
 
       if ((freqmutato[2][j] >> 18) < sampleend[2]) {
-        tempbuffer3 = *(genstartadress[2] + (freqmutato[2][j] >> 18));
-        bufferbe[1] += (tempbuffer3 * generatorvolume[2][j]) >> 5;
+        tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> 18));
+        bufferbe[1] += (tempbuffer2 * generatorvolume[2][j]) >> 6;
         freqmutato[2][j] += pich[2][j];
       } else if (loopsample[2]) {
         freqmutato[2][j] = samplebegin[2] << 18;
       }
 
       if ((freqmutato[3][j] >> 18) < sampleend[3]) {
-        tempbuffer4 = *(genstartadress[3] + (freqmutato[3][j] >> 18));
-        bufferbe[1] += (tempbuffer4 * generatorvolume[3][j]) >> 5;
+        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> 18));
+        bufferbe[3] += (tempbuffer3 * generatorvolume[3][j]) >> 6;
         freqmutato[3][j] += pich[3][j];
       } else if (loopsample[3]) {
         freqmutato[3][j] = samplebegin[3] << 18;
       }
     }
-    bufferbe[0] = bufferbe[0] >> 3;
-    bufferbe[1] = bufferbe[1] >> 3;
+    switch (STRUCTURE_L) {
+      case 5:
+        bufferbe[0] = (bufferbe[0] + bufferbe[2]) >> 3;
+        break;
+      case 6:
+        bufferbe[0] = ((bufferbe[0] * bufferbe[2]) >> 15);
+        break;
+    }
+    switch (STRUCTURE_U) {
+      case 5:
+        bufferbe[1] = (bufferbe[1] + bufferbe[3]) >> 3;
+        break;
+      case 6:
+        bufferbe[1] = ((bufferbe[1] * bufferbe[3]) >> 15);
+        break;
+    }
     parametereqleft();
-    bufferbe[0]= (bufferbe[0]-lastbuffer[3]*eqlevel)/(eqlevel+1);
+    bufferbe[0] = (bufferbe[0] - lastbuffer[3] * eqlevel) / (eqlevel + 1);
     chorusleft();
     chorusright();
     reverbleft();
