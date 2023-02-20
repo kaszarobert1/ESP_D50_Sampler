@@ -78,7 +78,7 @@ uint16_t samplebegin[4] = { 64, 64, 64, 64 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
-uint16_t GLOBAL_TUNE = 894;
+uint16_t GLOBAL_TUNE = 958;
 byte COARSE[4] = { 36, 36, 36, 36 };
 byte FINE[4] = { 50, 50, 50, 50 };
 float c[4] = {1001, 1001, 1001, 1001};
