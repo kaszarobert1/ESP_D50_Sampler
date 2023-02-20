@@ -146,9 +146,15 @@ float f0orig = 100;
 float Q = 2;
 byte lfo2level = 2;
 byte lfo2sync = 2;
-byte CHASE_TIME = 40;
-byte CHASE_LEVEL = 0;
-
+byte CHASE_TIME = 0;
+byte CHASE_LEVEL = 4;
+long ido;
+long elozoido;
+byte lastchase = 0;
+byte CaseArray[4];
+byte chaseindex = 0;
+byte MIDI_SYNC = 1;
+byte sixteen = 0;
 
 
 
@@ -307,7 +313,7 @@ void maxsize() {
   sizes[11] = sizeof(triangle) >> 1;
 
   sizes[12] = sizeof(bells) >> 1;
-  
+ 
     sizes[13] = sizeof(nailfile) >> 1;
     sizes[14] = sizeof(pick) >> 1;
     sizes[15] = sizeof(lowpiano) >> 1;
@@ -369,7 +375,7 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-    
+   
         case 0: genstartadress[opmenuoldal] = marimba; break;
         case 1: genstartadress[opmenuoldal] = vibraphone; break;
         case 2: genstartadress[opmenuoldal] = xilophone1; break;
@@ -381,11 +387,11 @@ void setPCMWave() {
         case 8: genstartadress[opmenuoldal] = pluck1; break;
         case 9: genstartadress[opmenuoldal] = chink; break;
         case 10: genstartadress[opmenuoldal] = agogo; break;
-    
+   
     case 11: genstartadress[opmenuoldal] = triangle; break;
 
     case 12: genstartadress[opmenuoldal] = bells; break;
-      
+     
           case 13: genstartadress[opmenuoldal] = nailfile; break;
           case 14: genstartadress[opmenuoldal] = pick; break;
           case 15: genstartadress[opmenuoldal] = lowpiano; break;
@@ -1110,6 +1116,10 @@ void parametersysexchanged() {
       case 31:
         reverbdiffusion = value;
         break;
+      case 34:
+        MIDI_SYNC = value;
+        Serial.println("MIDI_SYNC: " + String(MIDI_SYNC));
+        break;
       case 35:
         CHASE_LEVEL = value;
         break;
@@ -1335,6 +1345,7 @@ void keyon(byte noteByte) {
   wavefreq[3][generatornumber] = noteertek[3][noteByte  + UKeyShift];
   wavebias[3][generatornumber] = Bias[3][noteByte  + LKeyShift];
   oldnoteByte[generatornumber] = noteByte;
+  CaseArray[chaseindex] = noteByte;
   pich[0][generatornumber] = wavefreq[0][generatornumber];
   pich[1][generatornumber] = wavefreq[1][generatornumber];
   pich[2][generatornumber] = wavefreq[2][generatornumber];
@@ -1375,6 +1386,52 @@ void keyoff(byte noteByte) {
   }
 
 }
+
+//--------------CHASE---------------------------
+
+void chasearpeggiomidiclock() {
+  if (CHASE_TIME > 0) {
+    if (MIDI_SYNC == 1) {
+      //  Serial.println("clock: ");
+      sixteen++;
+      if (sixteen % CHASE_TIME == 0) {
+        keyoff(lastchase);
+        chaseindex++;
+        if (chaseindex >= CHASE_LEVEL) {
+          chaseindex = 0;
+        }
+        if (CaseArray[chaseindex] != 0)
+        {
+          lastchase = CaseArray[chaseindex];
+          keyon(lastchase);
+          Serial.println("CHASE_TIME: " + String( MIDI_SYNC));
+          Serial.println("CHASE_TIME: " + String( CHASE_TIME));
+        }
+      }
+    }
+  }
+}
+
+void chasearpeggio() {
+  if (CHASE_TIME > 0) {
+    ido = micros();
+    if (ido - elozoido > (CHASE_TIME << 12)) {
+      keyoff( CaseArray[chaseindex]);
+      chaseindex++;
+      if (chaseindex >= CHASE_LEVEL) {
+        chaseindex = 0;
+      }
+      if (CaseArray[chaseindex] != 0)
+      {
+        lastchase = CaseArray[chaseindex];
+        keyon(lastchase);
+        Serial.println("Lastchase: " + String( lastchase));
+      }
+      elozoido = ido;
+    }
+  }
+}
+
 void serialEvent() {
   if (MIDI2.read(midichan)) {
     switch (MIDI2.getType()) {
@@ -1406,7 +1463,7 @@ void serialEvent() {
 
         break;
       case midi::Clock:
-
+        chasearpeggiomidiclock();
         break;
       case midi::SystemExclusive:
         Serial.println("SysexDATA: ");
@@ -1492,27 +1549,16 @@ void setup() {
   return generator1[freqmutato1 >> lep] * op1level;
   }
 */
-long ido;
-long elozoido;
-byte lastchase = 0;
-byte CaseArray[4];
-byte chaseindex = 0;
+
+
+
+
+
+
 void loop() {
-  if (CHASE_LEVEL > 0) {
-    ido = micros();
-    if (ido - elozoido > (CHASE_TIME << 12)) {
-      keyoff( CaseArray[chaseindex]);      
-      chaseindex++;      
-      if (chaseindex >= 4) {
-        chaseindex = 0;
-      }
-      keyon( CaseArray[chaseindex]);
-      if (oldnoteByte[chaseindex] > 0) {              
-        CaseArray[chaseindex] = oldnoteByte[chaseindex];
-        Serial.println("Lastchase: " + String( lastchase));
-      }
-      elozoido = ido;
-    }
+ if (MIDI_SYNC == 2)
+  {
+    chasearpeggio();
   }
   //--MIDI input--
   serialEvent();
