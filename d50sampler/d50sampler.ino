@@ -74,14 +74,13 @@ uint32_t noteertek[4][256];
 byte oldnoteByte[polyphony];
 bool noteoff[polyphony];
 bool loopsample[4] = { false, false, false, false };
-uint16_t samplebegin[4] = { 64, 64, 64, 64 };
+uint16_t samplebegin[4] = { 0, 0, 0, 0 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
 uint16_t GLOBAL_TUNE = 958;
 byte COARSE[4] = { 36, 36, 36, 36 };
 byte FINE[4] = { 50, 50, 50, 50 };
-float c[4] = {1001, 1001, 1001, 1001};
 byte szorzo[4] = {1, 1, 1, 1};
 byte LKeyShift = 0;
 byte UKeyShift = 0;
@@ -144,14 +143,19 @@ byte lfofreq[LFOnumber] = {22, 34, 22, 22, 22, 22, 22, 22};
 float f0 = 100;
 float f0orig = 100;
 float Q = 2;
+float f02 = 100;
+float f02orig = 100;
+float Q2 = 2;
 byte lfo2level = 2;
 byte lfo2sync = 2;
+byte lfo3level = 2;
+byte lfo3sync = 2;
 byte CHASE_TIME = 0;
 byte CHASE_LEVEL = 4;
 long ido;
 long elozoido;
 byte lastchase = 0;
-byte CaseArray[4];
+byte CaseArray[16];
 byte chaseindex = 0;
 byte MIDI_SYNC = 1;
 byte sixteen = 0;
@@ -169,6 +173,7 @@ byte sixteen = 0;
 float Fs = 44100;
 float Pi = 3.141592;
 byte eqlevel = 10;
+byte eqlevel2 = 10;
 //parametric eq left default:
 float w0 = 2 * Pi * f0 / Fs;
 float alpha = sin(w0) / (2 * Q);
@@ -198,20 +203,58 @@ void eqkiszamol() {
 
 //parametric eq left counts actual value:
 int32_t PrevSample[4];
-int32_t lastbuffer[4];
-
+int32_t lastbuffer[3];
+int32_t paraeqleftbuffer;
 //parametric eq left function
 void parametereqleft() {
-
   PrevSample[3] = PrevSample[2];
   PrevSample[2] = PrevSample[1];
   PrevSample[1] = PrevSample[0];
   PrevSample[0] = bufferbe[0];
   //bufferbe[0] = ( b0 / a0 * PrevSample[0]) +(b1 / a0 * PrevSample[1]) +(b2 / a0 * PrevSample[2]) -(a1 / a0 * lastbuffer[0]) - (a2 / a0 * lastlastbuffer);
-  lastbuffer[3] = (b0 / a0 * PrevSample[0]) + (b1 / a0 * PrevSample[1]) + (b2 / a0 * PrevSample[2])  - (a1 / a0 * lastbuffer[0]) - (a2 / a0 * lastbuffer[1]);
+  paraeqleftbuffer = (b0 / a0 * PrevSample[0]) + (b1 / a0 * PrevSample[1]) + (b2 / a0 * PrevSample[2])  - (a1 / a0 * lastbuffer[0]) - (a2 / a0 * lastbuffer[1]);
   lastbuffer[2] = lastbuffer[1];
   lastbuffer[1] = lastbuffer[0];
-  lastbuffer[0] =  lastbuffer[3];
+  lastbuffer[0] =  paraeqleftbuffer;
+}
+
+
+//parametric eq2 right default:
+float w02 = 2 * Pi * f02 / Fs;
+float alpha2 = sin(w02) / (2 * Q2);
+float a02 = (1 + alpha2);
+float a12 = (-2 * cos(w02));
+float a22 = (1 - alpha2) ;
+float b02 = ((1 + cos(w02)) / 2);
+float b12 = (-(1 + cos(w02))) ;
+float b22 = ((1 + cos(w02)) / 2) ;
+
+//parametric eq2 right init:
+void eqkiszamol2() {
+  w02 = 2 * Pi * f02 / Fs;
+  alpha2 = sin(w02) / (2 * Q2);
+  a02 = (1 + alpha2) * 100 ;
+  a12 = (-2 * cos(w02)) * 100;
+  a22 = (1 - alpha2) * 100;
+  b02 = ((1 + cos(w02)) / 2) * 100;
+  b12 = (-(1 + cos(w02))) * 100;
+  b22 = ((1 + cos(w02)) / 2) * 100;
+}
+//parametric eq right counts actual value:
+int32_t PrevSample2[4];
+int32_t lastbuffer2[3];
+int32_t paraeqrightbuffer;
+//parametric eq left function
+void parametereqright() {
+  PrevSample2[3] = PrevSample2[2];
+  PrevSample2[2] = PrevSample2[1];
+  PrevSample2[1] = PrevSample2[0];
+  PrevSample2[0] = bufferbe[1];
+  //bufferbe[0] = ( b0 / a0 * PrevSample2[0]) +(b1 / a0 * PrevSample2[1]) +(b2 / a0 * PrevSample2[2]) -(a1 / a0 * lastbuffer2[0]) - (a2 / a0 * lastlastbuffer2);
+  paraeqrightbuffer = (b02 / a02 * PrevSample2[0]) + (b12 / a02 * PrevSample2[1]) + (b22 / a02 * PrevSample2[2])  - (a12 / a02 * lastbuffer2[0]) - (a22 / a02 * lastbuffer2[1]);
+  lastbuffer2[2] = lastbuffer2[1];
+  lastbuffer2[1] = lastbuffer2[0];
+  lastbuffer2[0] =  paraeqrightbuffer;
 }
 
 
@@ -297,7 +340,7 @@ void notetune() {
 
 uint16_t sizes[128];
 void maxsize() {
-  
+ 
     sizes[0] = sizeof(marimba) >> 1;
     sizes[1] = sizeof(vibraphone) >> 1;
     sizes[2] = sizeof(xilophone1) >> 1;
@@ -313,52 +356,52 @@ void maxsize() {
   sizes[11] = sizeof(triangle) >> 1;
 
   sizes[12] = sizeof(bells) >> 1;
- 
-    sizes[13] = sizeof(nailfile) >> 1;
-    sizes[14] = sizeof(pick) >> 1;
-    sizes[15] = sizeof(lowpiano) >> 1;
-    sizes[16] = sizeof(midpiano) >> 1;
-    sizes[17] = sizeof(highpiano) >> 1;
-    sizes[18] = sizeof(hapsichord) >> 1;
-    sizes[19] = sizeof(harp) >> 1;
-    sizes[20] = sizeof(organpercus) >> 1;
-    sizes[21] = sizeof(steelstrings) >> 1;
-    sizes[22] = sizeof(nylonstrings) >> 1;
-    sizes[23] = sizeof(electgitar1) >> 1;
-    sizes[24] = sizeof(electgitar2) >> 1;
-    sizes[25] = sizeof(dirtygitar) >> 1;
-    sizes[26] = sizeof(pickbass) >> 1;
-    sizes[27] = sizeof(popbass) >> 1;
-    sizes[28] = sizeof(thump) >> 1;
-    sizes[29] = sizeof(klarinet) >> 1;
-    sizes[30] = sizeof(breath) >> 1;
-    sizes[31] = sizeof(klarinet) >> 1;
-    sizes[32] = sizeof(steamer) >> 1;
-    sizes[33] = sizeof(steamer) >> 1;
-    sizes[34] = sizeof(steamer) >> 1;
-    sizes[35] = sizeof(steamer) >> 1;
-    sizes[36] = sizeof(steamer) >> 1;
-    sizes[37] = sizeof(steamer) >> 1;
-    sizes[38] = sizeof(steamer) >> 1;
-    sizes[39] = sizeof(steamer) >> 1;
-    sizes[40] = sizeof(steamer) >> 1;
-    sizes[41] = sizeof(steamer) >> 1;
-    sizes[42] = sizeof(steamer) >> 1;
-    sizes[43] = sizeof(steamer) >> 1;
-    sizes[44] = sizeof(steamer) >> 1;
-    sizes[45] = sizeof(steamer) >> 1;
-    sizes[46] = sizeof(steamer) >> 1;
-    sizes[47] = sizeof(drawbarsloop) >> 1;
-    sizes[48] = sizeof(highorganloop) >> 1;
-    sizes[49] = sizeof(loworganloop) >> 1;
-    sizes[50] = sizeof(electpiano1loop) >> 1;
-    sizes[51] = sizeof(electpiano2loop) >> 1;
-    sizes[52] = sizeof(claviloop) >> 1;
-    sizes[53] = sizeof(hapsichordloop) >> 1;
-    sizes[54] = sizeof(electbassloop1) >> 1;
-    sizes[55] = sizeof(acusticbassloop) >> 1;
-    sizes[56] = sizeof(electbassloop2) >> 1;
-    sizes[57] = sizeof(violinloop) >> 1;
+  
+     sizes[13] = sizeof(nailfile) >> 1;
+     sizes[14] = sizeof(pick) >> 1;
+     sizes[15] = sizeof(lowpiano) >> 1;
+     sizes[16] = sizeof(midpiano) >> 1;
+     sizes[17] = sizeof(highpiano) >> 1;
+     sizes[18] = sizeof(hapsichord) >> 1;
+     sizes[19] = sizeof(harp) >> 1;
+     sizes[20] = sizeof(organpercus) >> 1;
+     sizes[21] = sizeof(steelstrings) >> 1;
+     sizes[22] = sizeof(nylonstrings) >> 1;
+     sizes[23] = sizeof(electgitar1) >> 1;
+     sizes[24] = sizeof(electgitar2) >> 1;
+     sizes[25] = sizeof(dirtygitar) >> 1;
+     sizes[26] = sizeof(pickbass) >> 1;
+     sizes[27] = sizeof(popbass) >> 1;
+     sizes[28] = sizeof(thump) >> 1;
+     sizes[29] = sizeof(klarinet) >> 1;
+     sizes[30] = sizeof(breath) >> 1;
+     sizes[31] = sizeof(klarinet) >> 1;
+     sizes[32] = sizeof(steamer) >> 1;
+     sizes[33] = sizeof(steamer) >> 1;
+     sizes[34] = sizeof(steamer) >> 1;
+     sizes[35] = sizeof(steamer) >> 1;
+     sizes[36] = sizeof(steamer) >> 1;
+     sizes[37] = sizeof(steamer) >> 1;
+     sizes[38] = sizeof(steamer) >> 1;
+     sizes[39] = sizeof(steamer) >> 1;
+     sizes[40] = sizeof(steamer) >> 1;
+     sizes[41] = sizeof(steamer) >> 1;
+     sizes[42] = sizeof(steamer) >> 1;
+     sizes[43] = sizeof(steamer) >> 1;
+     sizes[44] = sizeof(steamer) >> 1;
+     sizes[45] = sizeof(steamer) >> 1;
+     sizes[46] = sizeof(steamer) >> 1;
+     sizes[47] = sizeof(drawbarsloop) >> 1;
+     sizes[48] = sizeof(highorganloop) >> 1;
+     sizes[49] = sizeof(loworganloop) >> 1;
+     sizes[50] = sizeof(electpiano1loop) >> 1;
+     sizes[51] = sizeof(electpiano2loop) >> 1;
+     sizes[52] = sizeof(claviloop) >> 1;
+     sizes[53] = sizeof(hapsichordloop) >> 1;
+     sizes[54] = sizeof(electbassloop1) >> 1;
+     sizes[55] = sizeof(acusticbassloop) >> 1;
+     sizes[56] = sizeof(electbassloop2) >> 1;
+     sizes[57] = sizeof(violinloop) >> 1;
   
 }
 
@@ -375,68 +418,68 @@ void setsamplesize() {
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
-   
-        case 0: genstartadress[opmenuoldal] = marimba; break;
-        case 1: genstartadress[opmenuoldal] = vibraphone; break;
-        case 2: genstartadress[opmenuoldal] = xilophone1; break;
-        case 3: genstartadress[opmenuoldal] = xilophone2; break;
-        case 4: genstartadress[opmenuoldal] = logbass; break;
-        case 5: genstartadress[opmenuoldal] = hammer; break;
-        case 6: genstartadress[opmenuoldal] = japanesedrum; break;
-        case 7: genstartadress[opmenuoldal] = kalimba; break;
-        case 8: genstartadress[opmenuoldal] = pluck1; break;
-        case 9: genstartadress[opmenuoldal] = chink; break;
-        case 10: genstartadress[opmenuoldal] = agogo; break;
-   
+    
+         case 0: genstartadress[opmenuoldal] = marimba; break;
+         case 1: genstartadress[opmenuoldal] = vibraphone; break;
+         case 2: genstartadress[opmenuoldal] = xilophone1; break;
+         case 3: genstartadress[opmenuoldal] = xilophone2; break;
+         case 4: genstartadress[opmenuoldal] = logbass; break;
+         case 5: genstartadress[opmenuoldal] = hammer; break;
+         case 6: genstartadress[opmenuoldal] = japanesedrum; break;
+         case 7: genstartadress[opmenuoldal] = kalimba; break;
+         case 8: genstartadress[opmenuoldal] = pluck1; break;
+         case 9: genstartadress[opmenuoldal] = chink; break;
+         case 10: genstartadress[opmenuoldal] = agogo; break;
+    
     case 11: genstartadress[opmenuoldal] = triangle; break;
 
     case 12: genstartadress[opmenuoldal] = bells; break;
-     
-          case 13: genstartadress[opmenuoldal] = nailfile; break;
-          case 14: genstartadress[opmenuoldal] = pick; break;
-          case 15: genstartadress[opmenuoldal] = lowpiano; break;
-          case 16: genstartadress[opmenuoldal] = midpiano; break;
-          case 17: genstartadress[opmenuoldal] = highpiano; break;
-          case 18: genstartadress[opmenuoldal] = hapsichord; break;
-          case 19: genstartadress[opmenuoldal] = harp; break;
-          case 20: genstartadress[opmenuoldal] = organpercus; break;
-          case 21: genstartadress[opmenuoldal] = steelstrings; break;
-          case 22: genstartadress[opmenuoldal] = nylonstrings; break;
-          case 23: genstartadress[opmenuoldal] = electgitar1; break;
-          case 24: genstartadress[opmenuoldal] = electgitar2; break;
-          case 25: genstartadress[opmenuoldal] = dirtygitar; break;
-          case 26: genstartadress[opmenuoldal] = pickbass; break;
-          case 27: genstartadress[opmenuoldal] = popbass; break;
-          case 28: genstartadress[opmenuoldal] = thump; break;
-          case 29: genstartadress[opmenuoldal] = klarinet; break;
-          case 30: genstartadress[opmenuoldal] = breath; break;
-          case 31: genstartadress[opmenuoldal] = popbass; break;
-          case 32: genstartadress[opmenuoldal] = steamer; break;
-          case 33: genstartadress[opmenuoldal] = steamer; break;
-          case 34: genstartadress[opmenuoldal] = steamer; break;
-          case 35: genstartadress[opmenuoldal] = steamer; break;
-          case 36: genstartadress[opmenuoldal] = steamer; break;
-          case 37: genstartadress[opmenuoldal] = steamer; break;
-          case 38: genstartadress[opmenuoldal] = steamer; break;
-          case 39: genstartadress[opmenuoldal] = steamer; break;
-          case 40: genstartadress[opmenuoldal] = steamer; break;
-          case 41: genstartadress[opmenuoldal] = steamer; break;
-          case 42: genstartadress[opmenuoldal] = steamer; break;
-          case 43: genstartadress[opmenuoldal] = steamer; break;
-          case 44: genstartadress[opmenuoldal] = steamer; break;
-          case 45: genstartadress[opmenuoldal] = steamer; break;
-          case 46: genstartadress[opmenuoldal] = steamer; break;
-          case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
-          case 48: genstartadress[opmenuoldal] = highorganloop; break;
-          case 49: genstartadress[opmenuoldal] = loworganloop; break;
-          case 50: genstartadress[opmenuoldal] = electpiano1loop; break;
-          case 51: genstartadress[opmenuoldal] = electpiano2loop; break;
-          case 52: genstartadress[opmenuoldal] = claviloop; break;
-          case 53: genstartadress[opmenuoldal] = hapsichordloop; break;
-          case 54: genstartadress[opmenuoldal] = electbassloop1; break;
-          case 55: genstartadress[opmenuoldal] = acusticbassloop; break;
-          case 56: genstartadress[opmenuoldal] = electbassloop2; break;
-          case 57: genstartadress[opmenuoldal] = violinloop; break;
+      
+           case 13: genstartadress[opmenuoldal] = nailfile; break;
+           case 14: genstartadress[opmenuoldal] = pick; break;
+           case 15: genstartadress[opmenuoldal] = lowpiano; break;
+           case 16: genstartadress[opmenuoldal] = midpiano; break;
+           case 17: genstartadress[opmenuoldal] = highpiano; break;
+           case 18: genstartadress[opmenuoldal] = hapsichord; break;
+           case 19: genstartadress[opmenuoldal] = harp; break;
+           case 20: genstartadress[opmenuoldal] = organpercus; break;
+           case 21: genstartadress[opmenuoldal] = steelstrings; break;
+           case 22: genstartadress[opmenuoldal] = nylonstrings; break;
+           case 23: genstartadress[opmenuoldal] = electgitar1; break;
+           case 24: genstartadress[opmenuoldal] = electgitar2; break;
+           case 25: genstartadress[opmenuoldal] = dirtygitar; break;
+           case 26: genstartadress[opmenuoldal] = pickbass; break;
+           case 27: genstartadress[opmenuoldal] = popbass; break;
+           case 28: genstartadress[opmenuoldal] = thump; break;
+           case 29: genstartadress[opmenuoldal] = klarinet; break;
+           case 30: genstartadress[opmenuoldal] = breath; break;
+           case 31: genstartadress[opmenuoldal] = popbass; break;
+           case 32: genstartadress[opmenuoldal] = steamer; break;
+           case 33: genstartadress[opmenuoldal] = steamer; break;
+           case 34: genstartadress[opmenuoldal] = steamer; break;
+           case 35: genstartadress[opmenuoldal] = steamer; break;
+           case 36: genstartadress[opmenuoldal] = steamer; break;
+           case 37: genstartadress[opmenuoldal] = steamer; break;
+           case 38: genstartadress[opmenuoldal] = steamer; break;
+           case 39: genstartadress[opmenuoldal] = steamer; break;
+           case 40: genstartadress[opmenuoldal] = steamer; break;
+           case 41: genstartadress[opmenuoldal] = steamer; break;
+           case 42: genstartadress[opmenuoldal] = steamer; break;
+           case 43: genstartadress[opmenuoldal] = steamer; break;
+           case 44: genstartadress[opmenuoldal] = steamer; break;
+           case 45: genstartadress[opmenuoldal] = steamer; break;
+           case 46: genstartadress[opmenuoldal] = steamer; break;
+           case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
+           case 48: genstartadress[opmenuoldal] = highorganloop; break;
+           case 49: genstartadress[opmenuoldal] = loworganloop; break;
+           case 50: genstartadress[opmenuoldal] = electpiano1loop; break;
+           case 51: genstartadress[opmenuoldal] = electpiano2loop; break;
+           case 52: genstartadress[opmenuoldal] = claviloop; break;
+           case 53: genstartadress[opmenuoldal] = hapsichordloop; break;
+           case 54: genstartadress[opmenuoldal] = electbassloop1; break;
+           case 55: genstartadress[opmenuoldal] = acusticbassloop; break;
+           case 56: genstartadress[opmenuoldal] = electbassloop2; break;
+           case 57: genstartadress[opmenuoldal] = violinloop; break;
       
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
@@ -686,6 +729,33 @@ void parametersysexchanged() {
       case 43:
         lfofreq[1] = value;
         Serial.println("CHORUSFREQ U: " + String(lfofreq[1] ));
+        break;
+      case 22:
+        f02orig = expgains128[value] >> 1 + 1;
+        f02 = f02orig;
+        eqkiszamol2();
+        Serial.println("f0orig: " + String(f0orig));
+        break;
+      case 23:
+        Q2 = value / 10.0;
+        eqkiszamol2();
+        Serial.println("Q2: " + String(Q2));
+        break;
+      case 24:
+        eqlevel2 = value;
+        Serial.println("eqlevel2: " + String(eqlevel2));
+        break;
+      case 26:
+        lfofreq[3] = value;
+        Serial.println(" lfofreq2: " + String(lfofreq[3]));
+        break;
+      case 27:
+        lfo3level = value;
+        Serial.println(" lfofreq2: " + String(lfo3level));
+        break;
+      case 28:
+        lfo3sync = value;
+        Serial.println(" lfofreq3: " + String(lfo3sync));
         break;
       case 44:
         chorusLevelRight = value;
@@ -943,11 +1013,11 @@ void parametersysexchanged() {
         break;
       case 91:
         lfo2level = value;
-        Serial.println(" lfofreq2: " + String(lfofreq[2]));
+        Serial.println(" lfofreq2: " + String(lfo2level));
         break;
-      case 94:
+      case 92:
         lfo2sync = value;
-        Serial.println(" lfofreq2: " + String(lfofreq[2]));
+        Serial.println(" lfo2sync: " + String(lfo2sync));
         break;
       case 106:
         switch (value) {
@@ -1371,6 +1441,9 @@ void keyon(byte noteByte) {
   if (lfo2sync == 2) {
     lfoarrayindex[2] = 0;
   }
+  if (lfo3sync == 2) {
+    lfoarrayindex[3] = 0;
+  }
 }
 
 void keyoff(byte noteByte) {
@@ -1497,7 +1570,6 @@ void serialEvent() {
   }
 }
 
-
 void setup() {
   // Set up Serial Monitor
   Serial.begin(115200);
@@ -1541,8 +1613,6 @@ void setup() {
   eqkiszamol();
 }
 
-
-
 /*
   uint32_t egyopgenA(uint32_t freqmutato1, long op1level, byte lep)
   {
@@ -1550,13 +1620,8 @@ void setup() {
   }
 */
 
-
-
-
-
-
 void loop() {
- if (MIDI_SYNC == 2)
+  if (MIDI_SYNC == 2)
   {
     chasearpeggio();
   }
@@ -1570,7 +1635,10 @@ void loop() {
   if (true) {
     f0 = f0orig + (lfovalue[2] * lfo2level);
     eqkiszamol();
-
+  }
+  if (true) {
+    f02 = f02orig + (lfovalue[3] * lfo3level);
+    eqkiszamol2();
   }
   // Serial.println(String(f0));
 
@@ -1682,7 +1750,11 @@ void loop() {
         break;
     }
     parametereqleft();
-    bufferbe[0] = (bufferbe[0] - lastbuffer[3] * eqlevel) / (eqlevel + 1);
+    //bufferbe[0] = ((bufferbe[0]*(100-eqlevel)) - ((bufferbe[0] - lastbuffer[3])* eqlevel))>>7;
+    //bufferbe[0] =(100*bufferbe[0]-2*bufferbe[0]*eqlevel+lastbuffer[3]*eqlevel)>>7;
+    bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
+    parametereqright();
+    bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
     chorusleft();
     chorusright();
     reverbleft();
