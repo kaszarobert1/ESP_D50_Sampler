@@ -361,7 +361,7 @@ void maxsize() {
   sizes[13] = sizeof(nailfile) >> 1;
   sizes[14] = sizeof(pick) >> 1;
   sizes[15] = sizeof(lowpiano) >> 1;
-  sizes[16] = sizeof(pianosample) >> 1;
+  //sizes[16] = sizeof(pianosample) >> 1;
   sizes[17] = sizeof(highpiano) >> 1;
   sizes[18] = sizeof(hapsichord) >> 1;
   sizes[19] = sizeof(harp) >> 1;
@@ -445,7 +445,7 @@ void setPCMWave() {
     case 13: genstartadress[opmenuoldal] = nailfile; break;
     case 14: genstartadress[opmenuoldal] = pick; break;
     case 15: genstartadress[opmenuoldal] = lowpiano; break;
-    case 16: genstartadress[opmenuoldal] = pianosample; break;
+  //  case 16: genstartadress[opmenuoldal] = pianosample; break;
     case 17: genstartadress[opmenuoldal] = highpiano; break;
     case 18: genstartadress[opmenuoldal] = hapsichord; break;
     case 19: genstartadress[opmenuoldal] = harp; break;
