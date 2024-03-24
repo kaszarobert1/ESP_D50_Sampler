@@ -135,7 +135,7 @@ byte LFOMode[4] = { 0, 0, 0, 0 };
 byte PENVMode[4] = { 0, 0, 0, 0 };
 byte BENDERMode[4] = { 0, 0, 0, 0 };
 byte Waveform[4] = { 0, 1, 0, 1 };
-byte PCMWaveNo[4] = { 74, 72, 74, 32 };
+byte PCMWaveNo[4] = { 75, 72, 75, 32 };
 byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
@@ -420,7 +420,10 @@ void maxsize() {
   sizes[71] = (sizeof(vibraphone)+ sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass))>> 1;
   sizes[72] = (sizeof(xilophone1)+sizeof(xilophone2)) >> 1;
   sizes[73] = (sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass)) >> 1;
-  sizes[74] = (sizeof(xilophone2)+sizeof(logbass)) >> 1;
+  sizes[74] = (sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)) >> 1;
+  sizes[75] = (sizeof(xilophone2)+sizeof(logbass)) >> 1;
+  sizes[76] = (sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)) >> 1;
+  sizes[77] = (sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)) >> 1;
   
 
   
@@ -519,7 +522,10 @@ void setPCMWave() {
     case 71: genstartadress[opmenuoldal] = vibraphone; break;
     case 72: genstartadress[opmenuoldal] = xilophone1; break;
     case 73: genstartadress[opmenuoldal] = xilophone1; break;
-    case 74: genstartadress[opmenuoldal] = xilophone2; break;
+    case 74: genstartadress[opmenuoldal] = xilophone1; break;
+    case 75: genstartadress[opmenuoldal] = xilophone2; break;
+    case 76: genstartadress[opmenuoldal] = xilophone2; break;
+    case 77: genstartadress[opmenuoldal] = xilophone2; break;
    // case 72: genstartadress[opmenuoldal] = logbass; break;
 
 
