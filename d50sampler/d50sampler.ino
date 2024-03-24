@@ -192,7 +192,7 @@ float b2 = ((1 + cos(w0)) / 2) ;
 
 //parametric eq left init:
 void eqkiszamol() {
-  float cosw0=cos(w0);
+  float cosw0 = cos(w0);
   w0 = 2 * Pi * f0 / Fs;
   alpha = sin(w0) / (2 * Q);
   a0 = (1 + alpha) * 100 ;
@@ -236,7 +236,7 @@ float b22 = ((1 + cos(w02)) / 2) ;
 
 //parametric eq2 right init:
 void eqkiszamol2() {
-  float cosw02=cos(w02);
+  float cosw02 = cos(w02);
   w02 = 2 * Pi * f02 / Fs;
   alpha2 = sin(w02) / (2 * Q2);
   a02 = (1 + alpha2) * 100 ;
@@ -345,8 +345,8 @@ void notetune() {
 
 uint16_t sizes[128];
 void maxsize() {
-  sizes[0] = sizeof(marimba) >>1 ;
-  sizes[1] = sizeof(vibraphone)>> 1;
+  sizes[0] = sizeof(marimba) >> 1 ;
+  sizes[1] = sizeof(vibraphone) >> 1;
   sizes[2] = sizeof(xilophone1) >> 1;
   sizes[3] = sizeof(xilophone2) >> 1;
   sizes[4] = sizeof(logbass) >> 1;
@@ -360,9 +360,9 @@ void maxsize() {
   sizes[12] = sizeof(bells) >> 1;
   sizes[13] = sizeof(nailfile) >> 1;
   sizes[14] = sizeof(pick) >> 1;
- // sizes[15] = sizeof(lowpiano) >> 1;
+  // sizes[15] = sizeof(lowpiano) >> 1;
   //sizes[16] = sizeof(pianosample) >> 1;
- // sizes[17] = sizeof(highpiano) >> 1;
+  // sizes[17] = sizeof(highpiano) >> 1;
   sizes[18] = sizeof(hapsichord) >> 1;
   sizes[19] = sizeof(harp) >> 1;
   sizes[20] = sizeof(organpercus) >> 1;
@@ -414,30 +414,30 @@ void maxsize() {
   sizes[66] = sizeof(maleloop) >> 1;
   sizes[67] = sizeof(spectrum1loop) >> 1;
   //loop
-  sizes[68] = (sizeof(marimba)+sizeof(vibraphone)) >>1 ;
-  sizes[69] = (sizeof(vibraphone)+ sizeof(xilophone1))>> 1;
-  sizes[70] = (sizeof(vibraphone)+ sizeof(xilophone1)+sizeof(xilophone2))>> 1;
-  sizes[71] = (sizeof(vibraphone)+ sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass))>> 1;
-  sizes[72] = (sizeof(xilophone1)+sizeof(xilophone2)) >> 1;
-  sizes[73] = (sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass)) >> 1;
-  sizes[74] = (sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)) >> 1;
-  sizes[75] = (sizeof(xilophone2)+sizeof(logbass)) >> 1;
-  sizes[76] = (sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)) >> 1;
-  sizes[77] = (sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)) >> 1;
-  sizes[78] = (sizeof(logbass)+sizeof(hammer)) >> 1;
-  sizes[79] = (sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)) >> 1;
-  sizes[80] = (sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)+sizeof(kalimba)) >> 1;
-  sizes[81] = (sizeof(hammer)+sizeof(japanesedrum)) >> 1;
-  sizes[82] = (sizeof(hammer)+sizeof(japanesedrum)+sizeof(kalimba)) >> 1;
-  sizes[83] = (sizeof(hammer)+sizeof(japanesedrum)+sizeof(kalimba)+sizeof(pluck1)) >> 1;
-  sizes[84] = (+sizeof(japanesedrum)+sizeof(kalimba)) >> 1;
-  sizes[85] = (+sizeof(japanesedrum)+sizeof(kalimba)+sizeof(pluck1)) >> 1;
-  sizes[86] = (+sizeof(japanesedrum)+sizeof(kalimba)+sizeof(pluck1)+sizeof(chink)) >> 1;
- 
+  sizes[68] = (sizeof(marimba) + sizeof(vibraphone)) >> 1 ;
+  sizes[69] = (sizeof(vibraphone) + sizeof(xilophone1)) >> 1;
+  sizes[70] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
+  sizes[71] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
+  sizes[72] = (sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
+  sizes[73] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
+  sizes[74] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
+  sizes[75] = (sizeof(xilophone2) + sizeof(logbass)) >> 1;
+  sizes[76] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
+  sizes[77] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
+  sizes[78] = (sizeof(logbass) + sizeof(hammer)) >> 1;
+  sizes[79] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
+  sizes[80] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[81] = (sizeof(hammer) + sizeof(japanesedrum)) >> 1;
+  sizes[82] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[83] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
+  sizes[84] = (+sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[85] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
+  sizes[86] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
 
-  
 
-  
+
+
+
   //sizes[74] = sizeof(maleloop2) >> 1;
 }
 
@@ -472,9 +472,9 @@ void setPCMWave() {
     case 12: genstartadress[opmenuoldal] = bells; break;
     case 13: genstartadress[opmenuoldal] = nailfile; break;
     case 14: genstartadress[opmenuoldal] = pick; break;
-  //  case 15: genstartadress[opmenuoldal] = lowpiano; break;
-  //  case 16: genstartadress[opmenuoldal] = pianosample; break;
-  //  case 17: genstartadress[opmenuoldal] = highpiano; break;
+    //  case 15: genstartadress[opmenuoldal] = lowpiano; break;
+    //  case 16: genstartadress[opmenuoldal] = pianosample; break;
+    //  case 17: genstartadress[opmenuoldal] = highpiano; break;
     case 18: genstartadress[opmenuoldal] = hapsichord; break;
     case 19: genstartadress[opmenuoldal] = harp; break;
     case 20: genstartadress[opmenuoldal] = organpercus; break;
@@ -525,7 +525,7 @@ void setPCMWave() {
     case 64: genstartadress[opmenuoldal] = aahloop; break;
     case 65: genstartadress[opmenuoldal] = oohloop; break;
     case 66: genstartadress[opmenuoldal] = maleloop; break;
-    case 67: genstartadress[opmenuoldal] = spectrum1loop; break; 
+    case 67: genstartadress[opmenuoldal] = spectrum1loop; break;
     //loop
     case 68: genstartadress[opmenuoldal] = marimba; break;
     case 69: genstartadress[opmenuoldal] = vibraphone; break;
@@ -546,12 +546,12 @@ void setPCMWave() {
     case 84: genstartadress[opmenuoldal] = japanesedrum; break;
     case 85: genstartadress[opmenuoldal] = japanesedrum; break;
     case 86: genstartadress[opmenuoldal] = japanesedrum; break;
-   
 
 
 
 
-//    case 74: genstartadress[opmenuoldal] = maleloop2; break;
+
+      //    case 74: genstartadress[opmenuoldal] = maleloop2; break;
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -566,6 +566,16 @@ void setLFOWave() {
   LFOadress[5] = lfotriangle;
   LFOadress[6] = lfosine;
   LFOadress[7] = lfotriangle;
+}
+
+//--------------LCD-------------------------------
+void lcdprint(int pages) {
+
+  if (pages == 0) {
+    lcd.setCursor(0, 1);
+    String kiir ="Wave:"+ String(PCMWaveNo[0]) +" "+String(PCMWaveNo[1]) + " " + String(PCMWaveNo[2]) + " " + String(PCMWaveNo[3]);
+    lcd.print(kiir);
+  }
 }
 
 //--------------MIDI SYSEX PARAMETER CONTROL------
@@ -603,6 +613,8 @@ void parametersysexchanged() {
         Serial.println("PCMWaveNo U1: " + String(PCMWaveNo[2]));
         opmenuoldal = 2;
         setPCMWave();
+        //lcd
+        lcdprint(0);
         break;
       case 35:
         volume[2] = value;
@@ -701,6 +713,8 @@ void parametersysexchanged() {
         Serial.println("PCMWaveNo U2: " + String(PCMWaveNo[3]));
         opmenuoldal = 3;
         setPCMWave();
+        //lcd
+        lcdprint(0);
         break;
       case 99:
         volume[3] = value;
@@ -857,6 +871,9 @@ void parametersysexchanged() {
         Serial.println("PCMWaveNo" + String(0) + ": " + String(PCMWaveNo[0]));
         opmenuoldal = 0;
         setPCMWave();
+        //lcd       
+        lcdprint(0);
+
         break;
       case 99:
         volume[0] = value;
@@ -972,6 +989,8 @@ void parametersysexchanged() {
         Serial.println("PCMWaveNo L2: " + String(PCMWaveNo[1]));
         opmenuoldal = 1;
         setPCMWave();
+        //lcd
+        lcdprint(0);
         break;
 
       case 35:
@@ -1478,11 +1497,11 @@ void chorusright() {
   chorusindex2 = (lfovalue[1] + chorusbufferindex2) % chorusbuffersize2;
   //Serial.println("CHORUSINDEX2: " + String( chorusindex2 ));
 
-atlagchorus1 += (((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7) + atlagchorus1) >> 1;
+  atlagchorus1 += (((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7) + atlagchorus1) >> 1;
   bufferbe[1] = bufferbe[1] + atlagchorus1;
   atlagchorus1 = atlagchorus1 >> 1;
 
-  
+
   //bufferbe[1] = (bufferbe[1] + ((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7));
 }
 
