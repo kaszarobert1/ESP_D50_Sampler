@@ -135,7 +135,7 @@ byte LFOMode[4] = { 0, 0, 0, 0 };
 byte PENVMode[4] = { 0, 0, 0, 0 };
 byte BENDERMode[4] = { 0, 0, 0, 0 };
 byte Waveform[4] = { 0, 1, 0, 1 };
-byte PCMWaveNo[4] = { 50, 51, 50, 51 };
+byte PCMWaveNo[4] = { 74, 72, 74, 32 };
 byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
