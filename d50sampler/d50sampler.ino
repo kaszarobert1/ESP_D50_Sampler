@@ -424,6 +424,17 @@ void maxsize() {
   sizes[75] = (sizeof(xilophone2)+sizeof(logbass)) >> 1;
   sizes[76] = (sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)) >> 1;
   sizes[77] = (sizeof(xilophone2)+sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)) >> 1;
+  sizes[78] = (sizeof(logbass)+sizeof(hammer)) >> 1;
+  sizes[79] = (sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)) >> 1;
+  sizes[80] = (sizeof(logbass)+sizeof(hammer)+sizeof(japanesedrum)+sizeof(kalimba)) >> 1;
+  sizes[81] = (sizeof(hammer)+sizeof(japanesedrum)) >> 1;
+  sizes[82] = (sizeof(hammer)+sizeof(japanesedrum)+sizeof(kalimba)) >> 1;
+  sizes[83] = (sizeof(hammer)+sizeof(japanesedrum)+sizeof(kalimba)+sizeof(pluck1)) >> 1;
+  sizes[84] = (+sizeof(japanesedrum)+sizeof(kalimba)) >> 1;
+  sizes[85] = (+sizeof(japanesedrum)+sizeof(kalimba)+sizeof(pluck1)) >> 1;
+  sizes[86] = (+sizeof(japanesedrum)+sizeof(kalimba)+sizeof(pluck1)+sizeof(chink)) >> 1;
+ 
+
   
 
   
@@ -526,7 +537,16 @@ void setPCMWave() {
     case 75: genstartadress[opmenuoldal] = xilophone2; break;
     case 76: genstartadress[opmenuoldal] = xilophone2; break;
     case 77: genstartadress[opmenuoldal] = xilophone2; break;
-   // case 72: genstartadress[opmenuoldal] = logbass; break;
+    case 78: genstartadress[opmenuoldal] = logbass; break;
+    case 79: genstartadress[opmenuoldal] = logbass; break;
+    case 80: genstartadress[opmenuoldal] = logbass; break;
+    case 81: genstartadress[opmenuoldal] = hammer; break;
+    case 82: genstartadress[opmenuoldal] = hammer; break;
+    case 83: genstartadress[opmenuoldal] = hammer; break;
+    case 84: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 85: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 86: genstartadress[opmenuoldal] = japanesedrum; break;
+   
 
 
 
