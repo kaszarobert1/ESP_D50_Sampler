@@ -436,6 +436,25 @@ void maxsize() {
   sizes[80] = (sizeof(kalimba) + sizeof(pluck1)) >> 1;
   sizes[81] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
   sizes[82] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)+sizeof(agogo)) >> 1;
+  sizes[83] = (sizeof(pluck1) + sizeof(chink)) >> 1;
+  sizes[84] = (sizeof(pluck1) + sizeof(chink)+sizeof(agogo)) >> 1;
+  sizes[85] = (sizeof(pluck1) + sizeof(chink)+sizeof(agogo)+sizeof(triangle)) >> 1;
+  sizes[86] = (sizeof(chink)+sizeof(agogo)) >> 1;
+  sizes[87] = (sizeof(chink)+sizeof(agogo)+sizeof(triangle)) >> 1;
+  sizes[88] = (sizeof(chink)+sizeof(agogo)+sizeof(triangle)+sizeof(bells)) >> 1;
+  sizes[89] = (sizeof(agogo)+sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
+  sizes[90] = (sizeof(agogo)+sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
+  sizes[91] = (sizeof(agogo)+sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
+  sizes[92] = (sizeof(triangle)+sizeof(bells)) >> 1;
+  sizes[93] = (sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
+  sizes[94] = (sizeof(triangle)+sizeof(bells)+sizeof(nailfile)+sizeof(pick)) >> 1;
+  sizes[95] = (sizeof(bells)+sizeof(nailfile)) >> 1;
+  sizes[96] = (sizeof(bells)+sizeof(nailfile)+sizeof(pick)) >> 1;
+  sizes[97] = (sizeof(bells)+sizeof(nailfile)+sizeof(pick)+sizeof(lowpiano)) >> 1;
+  sizes[98] = (sizeof(nailfile)+sizeof(pick)) >> 1;
+  sizes[99] = (sizeof(nailfile)+sizeof(pick)+sizeof(lowpiano)) >> 1;
+  //sizes[100] = (sizeof(nailfile)+sizeof(pick)+sizeof(lowpiano)+sizeof(midpiano)) >> 1;
+  
 
 
 
@@ -552,6 +571,23 @@ void setPCMWave() {
     case 80: genstartadress[opmenuoldal] = kalimba; break;
     case 81: genstartadress[opmenuoldal] = kalimba; break;
     case 82: genstartadress[opmenuoldal] = kalimba; break;
+    case 83: genstartadress[opmenuoldal] = pluck1; break;
+    case 84: genstartadress[opmenuoldal] = pluck1; break;
+    case 85: genstartadress[opmenuoldal] = pluck1; break;
+    case 86: genstartadress[opmenuoldal] = chink; break;
+    case 87: genstartadress[opmenuoldal] = chink; break;
+    case 88: genstartadress[opmenuoldal] = chink; break;
+    case 89: genstartadress[opmenuoldal] = agogo; break;
+    case 90: genstartadress[opmenuoldal] = agogo; break;
+    case 91: genstartadress[opmenuoldal] = agogo; break;
+    case 92: genstartadress[opmenuoldal] = triangle; break;
+    case 93: genstartadress[opmenuoldal] = triangle; break;
+    case 94: genstartadress[opmenuoldal] = triangle; break;
+    case 95: genstartadress[opmenuoldal] = bells; break;
+    case 96: genstartadress[opmenuoldal] = bells; break;
+    case 97: genstartadress[opmenuoldal] = bells; break;
+    case 98: genstartadress[opmenuoldal] = nailfile; break;
+    case 99: genstartadress[opmenuoldal] = nailfile; break;
 
 
 
