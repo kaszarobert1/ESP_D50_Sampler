@@ -135,7 +135,7 @@ byte LFOMode[4] = { 0, 0, 0, 0 };
 byte PENVMode[4] = { 0, 0, 0, 0 };
 byte BENDERMode[4] = { 0, 0, 0, 0 };
 byte Waveform[4] = { 0, 1, 0, 1 };
-byte PCMWaveNo[4] = { 75, 72, 75, 32 };
+byte PCMWaveNo[4] = { 69, 68, 69, 32 };
 byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
@@ -414,25 +414,28 @@ void maxsize() {
   sizes[66] = sizeof(maleloop) >> 1;
   sizes[67] = sizeof(spectrum1loop) >> 1;
   //loop
-  sizes[68] = (sizeof(marimba) + sizeof(vibraphone)) >> 1 ;
-  sizes[69] = (sizeof(vibraphone) + sizeof(xilophone1)) >> 1;
-  sizes[70] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
-  sizes[71] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
-  sizes[72] = (sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
-  sizes[73] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
-  sizes[74] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
-  sizes[75] = (sizeof(xilophone2) + sizeof(logbass)) >> 1;
-  sizes[76] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
-  sizes[77] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
-  sizes[78] = (sizeof(logbass) + sizeof(hammer)) >> 1;
-  sizes[79] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
-  sizes[80] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
-  sizes[81] = (sizeof(hammer) + sizeof(japanesedrum)) >> 1;
-  sizes[82] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
-  sizes[83] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
-  sizes[84] = (+sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
-  sizes[85] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
-  sizes[86] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
+  //sizes[68] = (sizeof(marimba) + sizeof(vibraphone)) >> 1 ;
+  sizes[68] = (sizeof(vibraphone) + sizeof(xilophone1)) >> 1;
+ // sizes[70] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
+ // sizes[71] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
+  sizes[69] = (sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
+  //sizes[73] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
+ // sizes[74] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
+ // sizes[75] = (sizeof(xilophone2) + sizeof(logbass)) >> 1;
+ // sizes[76] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
+  sizes[70] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
+  sizes[71] = (sizeof(logbass) + sizeof(hammer)) >> 1;
+  sizes[72] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
+  sizes[73] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[74] = (sizeof(hammer) + sizeof(japanesedrum)) >> 1;
+  sizes[75] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[76] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
+  sizes[77] = (+sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[78] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
+  sizes[79] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
+  sizes[80] = (sizeof(kalimba) + sizeof(pluck1)) >> 1;
+  sizes[81] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
+  sizes[82] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)+sizeof(agogo)) >> 1;
 
 
 
@@ -527,25 +530,28 @@ void setPCMWave() {
     case 66: genstartadress[opmenuoldal] = maleloop; break;
     case 67: genstartadress[opmenuoldal] = spectrum1loop; break;
     //loop
-    case 68: genstartadress[opmenuoldal] = marimba; break;
-    case 69: genstartadress[opmenuoldal] = vibraphone; break;
-    case 70: genstartadress[opmenuoldal] = vibraphone; break;
-    case 71: genstartadress[opmenuoldal] = vibraphone; break;
-    case 72: genstartadress[opmenuoldal] = xilophone1; break;
-    case 73: genstartadress[opmenuoldal] = xilophone1; break;
-    case 74: genstartadress[opmenuoldal] = xilophone1; break;
-    case 75: genstartadress[opmenuoldal] = xilophone2; break;
-    case 76: genstartadress[opmenuoldal] = xilophone2; break;
-    case 77: genstartadress[opmenuoldal] = xilophone2; break;
-    case 78: genstartadress[opmenuoldal] = logbass; break;
-    case 79: genstartadress[opmenuoldal] = logbass; break;
-    case 80: genstartadress[opmenuoldal] = logbass; break;
-    case 81: genstartadress[opmenuoldal] = hammer; break;
-    case 82: genstartadress[opmenuoldal] = hammer; break;
-    case 83: genstartadress[opmenuoldal] = hammer; break;
-    case 84: genstartadress[opmenuoldal] = japanesedrum; break;
-    case 85: genstartadress[opmenuoldal] = japanesedrum; break;
-    case 86: genstartadress[opmenuoldal] = japanesedrum; break;
+  //  case 68: genstartadress[opmenuoldal] = marimba; break;
+    case 68: genstartadress[opmenuoldal] = vibraphone; break;
+  //  case 70: genstartadress[opmenuoldal] = vibraphone; break;
+   // case 71: genstartadress[opmenuoldal] = vibraphone; break;
+    case 69: genstartadress[opmenuoldal] = xilophone1; break;
+   // case 73: genstartadress[opmenuoldal] = xilophone1; break;
+   // case 74: genstartadress[opmenuoldal] = xilophone1; break;
+   // case 75: genstartadress[opmenuoldal] = xilophone2; break;
+   // case 76: genstartadress[opmenuoldal] = xilophone2; break;
+    case 70: genstartadress[opmenuoldal] = xilophone2; break;
+    case 71: genstartadress[opmenuoldal] = logbass; break;
+    case 72: genstartadress[opmenuoldal] = logbass; break;
+    case 73: genstartadress[opmenuoldal] = logbass; break;
+    case 74: genstartadress[opmenuoldal] = hammer; break;
+    case 75: genstartadress[opmenuoldal] = hammer; break;
+    case 76: genstartadress[opmenuoldal] = hammer; break;
+    case 77: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 78: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 79: genstartadress[opmenuoldal] = japanesedrum; break;
+    case 80: genstartadress[opmenuoldal] = kalimba; break;
+    case 81: genstartadress[opmenuoldal] = kalimba; break;
+    case 82: genstartadress[opmenuoldal] = kalimba; break;
 
 
 
