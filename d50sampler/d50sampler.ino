@@ -101,7 +101,7 @@ byte delaystep = 0;
 byte delay2step = 0;
 byte delaytime = 1;
 byte delay2time = 1;
-byte reverblevel = 60;
+byte reverblevel = 20;
 byte reverbdiffusion = 22;
 uint16_t reverbtime = delaybuffersize;
 uint16_t reverbtime2 = delaybuffersize;
@@ -345,8 +345,8 @@ void notetune() {
 
 uint16_t sizes[128];
 void maxsize() {
-  sizes[0] = sizeof(marimba) >> 1;
-  sizes[1] = sizeof(vibraphone) >> 1;
+  sizes[0] = sizeof(marimba) >>1 ;
+  sizes[1] = sizeof(vibraphone)>> 1;
   sizes[2] = sizeof(xilophone1) >> 1;
   sizes[3] = sizeof(xilophone2) >> 1;
   sizes[4] = sizeof(logbass) >> 1;
@@ -360,9 +360,9 @@ void maxsize() {
   sizes[12] = sizeof(bells) >> 1;
   sizes[13] = sizeof(nailfile) >> 1;
   sizes[14] = sizeof(pick) >> 1;
-  sizes[15] = sizeof(lowpiano) >> 1;
+ // sizes[15] = sizeof(lowpiano) >> 1;
   //sizes[16] = sizeof(pianosample) >> 1;
-  sizes[17] = sizeof(highpiano) >> 1;
+ // sizes[17] = sizeof(highpiano) >> 1;
   sizes[18] = sizeof(hapsichord) >> 1;
   sizes[19] = sizeof(harp) >> 1;
   sizes[20] = sizeof(organpercus) >> 1;
@@ -413,7 +413,18 @@ void maxsize() {
   sizes[65] = sizeof(oohloop) >> 1;
   sizes[66] = sizeof(maleloop) >> 1;
   sizes[67] = sizeof(spectrum1loop) >> 1;
-  sizes[74] = sizeof(maleloop2) >> 1;
+  //loop
+  sizes[68] = (sizeof(marimba)+sizeof(vibraphone)) >>1 ;
+  sizes[69] = (sizeof(vibraphone)+ sizeof(xilophone1))>> 1;
+  sizes[70] = (sizeof(vibraphone)+ sizeof(xilophone1)+sizeof(xilophone2))>> 1;
+  sizes[71] = (sizeof(vibraphone)+ sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass))>> 1;
+  sizes[72] = (sizeof(xilophone1)+sizeof(xilophone2)) >> 1;
+  sizes[73] = (sizeof(xilophone1)+sizeof(xilophone2)+sizeof(logbass)) >> 1;
+  sizes[74] = (sizeof(xilophone2)+sizeof(logbass)) >> 1;
+  
+
+  
+  //sizes[74] = sizeof(maleloop2) >> 1;
 }
 
 void setsamplesize() {
@@ -426,6 +437,9 @@ void setsamplesize() {
   Serial.println(String(samplesize[2]));
   Serial.println(String(samplesize[3]));
 }
+
+//"marimba","vibraphone","xilophone1","xilophone2","logbass","hammer","japanesedrum","kalimba","pluck1","chink","agogo","triangle","bells","pick","lowpiano","pianosample","highpiano","hapsichord","harp","organpercus",
+//"steelstrings","nylonstrings","electgitar1","electgitar2","dirtygitar","pickbass","popbass","thump","klarinet","breath","popbass","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer",
 
 void setPCMWave() {
   switch (PCMWaveNo[opmenuoldal]) {
@@ -444,9 +458,9 @@ void setPCMWave() {
     case 12: genstartadress[opmenuoldal] = bells; break;
     case 13: genstartadress[opmenuoldal] = nailfile; break;
     case 14: genstartadress[opmenuoldal] = pick; break;
-    case 15: genstartadress[opmenuoldal] = lowpiano; break;
+  //  case 15: genstartadress[opmenuoldal] = lowpiano; break;
   //  case 16: genstartadress[opmenuoldal] = pianosample; break;
-    case 17: genstartadress[opmenuoldal] = highpiano; break;
+  //  case 17: genstartadress[opmenuoldal] = highpiano; break;
     case 18: genstartadress[opmenuoldal] = hapsichord; break;
     case 19: genstartadress[opmenuoldal] = harp; break;
     case 20: genstartadress[opmenuoldal] = organpercus; break;
@@ -476,6 +490,7 @@ void setPCMWave() {
     case 44: genstartadress[opmenuoldal] = steamer; break;
     case 45: genstartadress[opmenuoldal] = violins; break;
     case 46: genstartadress[opmenuoldal] = pidzicart; break;
+    //"drawbarsloop","highorganloop","loworganloop","electpiano1loop","electpiano2loop","claviloop","hapsichordloop","electbassloop1","acusticbassloop","electbassloop2","electbassloop3","electgitarloop","chelloloop","violinloop","reedloop","saxloop1","saxloop2","aahloop","oohloop","maleloop","spectrum1loop",""
     case 47: genstartadress[opmenuoldal] = drawbarsloop; break;
     case 48: genstartadress[opmenuoldal] = highorganloop; break;
     case 49: genstartadress[opmenuoldal] = loworganloop; break;
@@ -497,7 +512,20 @@ void setPCMWave() {
     case 65: genstartadress[opmenuoldal] = oohloop; break;
     case 66: genstartadress[opmenuoldal] = maleloop; break;
     case 67: genstartadress[opmenuoldal] = spectrum1loop; break; 
-    case 74: genstartadress[opmenuoldal] = maleloop2; break;
+    //loop
+    case 68: genstartadress[opmenuoldal] = marimba; break;
+    case 69: genstartadress[opmenuoldal] = vibraphone; break;
+    case 70: genstartadress[opmenuoldal] = vibraphone; break;
+    case 71: genstartadress[opmenuoldal] = vibraphone; break;
+    case 72: genstartadress[opmenuoldal] = xilophone1; break;
+    case 73: genstartadress[opmenuoldal] = xilophone1; break;
+    case 74: genstartadress[opmenuoldal] = xilophone2; break;
+   // case 72: genstartadress[opmenuoldal] = logbass; break;
+
+
+
+
+//    case 74: genstartadress[opmenuoldal] = maleloop2; break;
   }
   Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
@@ -1400,6 +1428,8 @@ void chorusleft() {
   chorusindex = (lfovalue[0] + chorusbufferindex) % chorusbuffersize;
   //     Serial.println("CHORUSINDEX: " + String( chorusindex ));
 
+
+
   atlagchorus0 += (((chorusbufferleft[chorusindex] * chorusLevelLeft) >> 7) + atlagchorus0) >> 1;
   bufferbe[0] = bufferbe[0] + atlagchorus0;
   atlagchorus0 = atlagchorus0 >> 1;
@@ -1421,7 +1451,13 @@ void chorusright() {
   chorusbufferindex2 &= (chorusbuffersize2);
   chorusindex2 = (lfovalue[1] + chorusbufferindex2) % chorusbuffersize2;
   //Serial.println("CHORUSINDEX2: " + String( chorusindex2 ));
-  bufferbe[1] = (bufferbe[1] + ((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7));
+
+atlagchorus1 += (((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7) + atlagchorus1) >> 1;
+  bufferbe[1] = bufferbe[1] + atlagchorus1;
+  atlagchorus1 = atlagchorus1 >> 1;
+
+  
+  //bufferbe[1] = (bufferbe[1] + ((chorusbufferright[chorusindex2] * chorusLevelRight) >> 7));
 }
 
 
