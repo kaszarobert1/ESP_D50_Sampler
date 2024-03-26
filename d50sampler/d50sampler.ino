@@ -139,8 +139,8 @@ byte PCMWaveNo[4] = { 69, 68, 69, 32 };
 byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
-byte STRUCTURE_L = 5;
-byte STRUCTURE_U = 5;
+byte STRUCTURE_L = 4;
+byte STRUCTURE_U = 4;
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {7, 10, 22, 22, 22, 22, 22, 22};
@@ -416,13 +416,13 @@ void maxsize() {
   //loop
   //sizes[68] = (sizeof(marimba) + sizeof(vibraphone)) >> 1 ;
   sizes[68] = (sizeof(vibraphone) + sizeof(xilophone1)) >> 1;
- // sizes[70] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
- // sizes[71] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
+  // sizes[70] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
+  // sizes[71] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
   sizes[69] = (sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
   //sizes[73] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
- // sizes[74] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
- // sizes[75] = (sizeof(xilophone2) + sizeof(logbass)) >> 1;
- // sizes[76] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
+  // sizes[74] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
+  // sizes[75] = (sizeof(xilophone2) + sizeof(logbass)) >> 1;
+  // sizes[76] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
   sizes[70] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
   sizes[71] = (sizeof(logbass) + sizeof(hammer)) >> 1;
   sizes[72] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
@@ -435,26 +435,26 @@ void maxsize() {
   sizes[79] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
   sizes[80] = (sizeof(kalimba) + sizeof(pluck1)) >> 1;
   sizes[81] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)) >> 1;
-  sizes[82] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink)+sizeof(agogo)) >> 1;
+  sizes[82] = (sizeof(kalimba) + sizeof(pluck1) + sizeof(chink) + sizeof(agogo)) >> 1;
   sizes[83] = (sizeof(pluck1) + sizeof(chink)) >> 1;
-  sizes[84] = (sizeof(pluck1) + sizeof(chink)+sizeof(agogo)) >> 1;
-  sizes[85] = (sizeof(pluck1) + sizeof(chink)+sizeof(agogo)+sizeof(triangle)) >> 1;
-  sizes[86] = (sizeof(chink)+sizeof(agogo)) >> 1;
-  sizes[87] = (sizeof(chink)+sizeof(agogo)+sizeof(triangle)) >> 1;
-  sizes[88] = (sizeof(chink)+sizeof(agogo)+sizeof(triangle)+sizeof(bells)) >> 1;
-  sizes[89] = (sizeof(agogo)+sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
-  sizes[90] = (sizeof(agogo)+sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
-  sizes[91] = (sizeof(agogo)+sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
-  sizes[92] = (sizeof(triangle)+sizeof(bells)) >> 1;
-  sizes[93] = (sizeof(triangle)+sizeof(bells)+sizeof(nailfile)) >> 1;
-  sizes[94] = (sizeof(triangle)+sizeof(bells)+sizeof(nailfile)+sizeof(pick)) >> 1;
-  sizes[95] = (sizeof(bells)+sizeof(nailfile)) >> 1;
-  sizes[96] = (sizeof(bells)+sizeof(nailfile)+sizeof(pick)) >> 1;
-  sizes[97] = (sizeof(bells)+sizeof(nailfile)+sizeof(pick)+sizeof(lowpiano)) >> 1;
-  sizes[98] = (sizeof(nailfile)+sizeof(pick)) >> 1;
-  sizes[99] = (sizeof(nailfile)+sizeof(pick)+sizeof(lowpiano)) >> 1;
+  sizes[84] = (sizeof(pluck1) + sizeof(chink) + sizeof(agogo)) >> 1;
+  sizes[85] = (sizeof(pluck1) + sizeof(chink) + sizeof(agogo) + sizeof(triangle)) >> 1;
+  sizes[86] = (sizeof(chink) + sizeof(agogo)) >> 1;
+  sizes[87] = (sizeof(chink) + sizeof(agogo) + sizeof(triangle)) >> 1;
+  sizes[88] = (sizeof(chink) + sizeof(agogo) + sizeof(triangle) + sizeof(bells)) >> 1;
+  sizes[89] = (sizeof(agogo) + sizeof(triangle) + sizeof(bells) + sizeof(nailfile)) >> 1;
+  sizes[90] = (sizeof(agogo) + sizeof(triangle) + sizeof(bells) + sizeof(nailfile)) >> 1;
+  sizes[91] = (sizeof(agogo) + sizeof(triangle) + sizeof(bells) + sizeof(nailfile)) >> 1;
+  sizes[92] = (sizeof(triangle) + sizeof(bells)) >> 1;
+  sizes[93] = (sizeof(triangle) + sizeof(bells) + sizeof(nailfile)) >> 1;
+  sizes[94] = (sizeof(triangle) + sizeof(bells) + sizeof(nailfile) + sizeof(pick)) >> 1;
+  sizes[95] = (sizeof(bells) + sizeof(nailfile)) >> 1;
+  sizes[96] = (sizeof(bells) + sizeof(nailfile) + sizeof(pick)) >> 1;
+  sizes[97] = (sizeof(bells) + sizeof(nailfile) + sizeof(pick) + sizeof(lowpiano)) >> 1;
+  sizes[98] = (sizeof(nailfile) + sizeof(pick)) >> 1;
+  sizes[99] = (sizeof(nailfile) + sizeof(pick) + sizeof(lowpiano)) >> 1;
   //sizes[100] = (sizeof(nailfile)+sizeof(pick)+sizeof(lowpiano)+sizeof(midpiano)) >> 1;
-  
+
 
 
 
@@ -549,15 +549,15 @@ void setPCMWave() {
     case 66: genstartadress[opmenuoldal] = maleloop; break;
     case 67: genstartadress[opmenuoldal] = spectrum1loop; break;
     //loop
-  //  case 68: genstartadress[opmenuoldal] = marimba; break;
+    //  case 68: genstartadress[opmenuoldal] = marimba; break;
     case 68: genstartadress[opmenuoldal] = vibraphone; break;
-  //  case 70: genstartadress[opmenuoldal] = vibraphone; break;
-   // case 71: genstartadress[opmenuoldal] = vibraphone; break;
+    //  case 70: genstartadress[opmenuoldal] = vibraphone; break;
+    // case 71: genstartadress[opmenuoldal] = vibraphone; break;
     case 69: genstartadress[opmenuoldal] = xilophone1; break;
-   // case 73: genstartadress[opmenuoldal] = xilophone1; break;
-   // case 74: genstartadress[opmenuoldal] = xilophone1; break;
-   // case 75: genstartadress[opmenuoldal] = xilophone2; break;
-   // case 76: genstartadress[opmenuoldal] = xilophone2; break;
+    // case 73: genstartadress[opmenuoldal] = xilophone1; break;
+    // case 74: genstartadress[opmenuoldal] = xilophone1; break;
+    // case 75: genstartadress[opmenuoldal] = xilophone2; break;
+    // case 76: genstartadress[opmenuoldal] = xilophone2; break;
     case 70: genstartadress[opmenuoldal] = xilophone2; break;
     case 71: genstartadress[opmenuoldal] = logbass; break;
     case 72: genstartadress[opmenuoldal] = logbass; break;
@@ -615,7 +615,7 @@ void lcdprint(int pages) {
 
   if (pages == 0) {
     lcd.setCursor(0, 1);
-    String kiir ="Wave:"+ String(PCMWaveNo[0]) +" "+String(PCMWaveNo[1]) + " " + String(PCMWaveNo[2]) + " " + String(PCMWaveNo[3]);
+    String kiir = "Wave:" + String(PCMWaveNo[0]) + " " + String(PCMWaveNo[1]) + " " + String(PCMWaveNo[2]) + " " + String(PCMWaveNo[3]);
     lcd.print(kiir);
   }
 }
@@ -913,7 +913,7 @@ void parametersysexchanged() {
         Serial.println("PCMWaveNo" + String(0) + ": " + String(PCMWaveNo[0]));
         opmenuoldal = 0;
         setPCMWave();
-        //lcd       
+        //lcd
         lcdprint(0);
 
         break;
@@ -1915,88 +1915,139 @@ void loop() {
 
 
   //--2 SOUND LEFT, 2 SOUND RIGHT, 6  POLYFONI!!!!--
-  for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
-    bufferbe[0] = 0;
-    bufferbe[1] = 0;
-    bufferbe[2] = 0;
-    bufferbe[3] = 0;
-    bufferbe[4] = 0;
-    bufferbe[5] = 0;
 
-    for (int j = 0; j < polyphony; j++) {
+  //STRUCTURES
 
-      if ((freqmutato[0][j] >> step) < sampleend[0] - 1) {
+ //--------------4---------4------------------
+ if (STRUCTURE_U == 4 && STRUCTURE_L == 4)
+  {
+    for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
+      bufferbe[0] = 0;
+      bufferbe[1] = 0;
+      bufferbe[2] = 0;
+      bufferbe[3] = 0;     
+      for (int j = 0; j < polyphony; j++) {
+        //if end of sample
+        if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
+          freqmutato[0][j] += pich[0][j];
+        } else if (loopsample[0]) {
+
+          freqmutato[0][j] = samplebegin[0] << step;
+        }
+        if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
+          freqmutato[1][j] += pich[1][j];
+        } else if (loopsample[1]) {
+
+          freqmutato[1][j] = samplebegin[1] << step;
+        }
+        if (((freqmutato[2][j] >> step) < sampleend[2] - 1 ) ) {
+          freqmutato[2][j] += pich[2][j];
+        } else if (loopsample[2]) {
+
+          freqmutato[2][j] = samplebegin[2] << step;
+        }
+        if (((freqmutato[3][j] >> step) < sampleend[3] - 1 )  ) {
+          freqmutato[3][j] += pich[3][j];
+        } else if (loopsample[3]) {
+
+          freqmutato[3][j] = samplebegin[3] << step;
+        }
+        //buffers left
+        
+          //strukt 5
+          tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
+          bufferbe[2] += (tempbuffer0 * generatorvolume[0][j]) >> 6;
+
+          tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));
+          bufferbe[0] += ((tempbuffer1 * generatorvolume[1][j]) >> 6);
+          //buffers right
+          tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> step));
+          bufferbe[3] += (tempbuffer2 * generatorvolume[2][j]) >> 6;
+
+          tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
+          bufferbe[1] += (tempbuffer3 * generatorvolume[3][j]) >> 6;            
+      }
+      //freqstep
+      parametereqleft();     
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
+      parametereqright();
+      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
+      //choruslfo
+      chorusleft();
+      chorusright();
+      reverbleft();
+      reverbright();
+      lowpassfilterleft();
+      lowpassfilterright();
+      sBuffer[i] = bufferbe[0];
+      sBuffer[i + 1] = bufferbe[1];
+    }
+  }  
+  //--------------5---------5------------------
+  if (STRUCTURE_U == 5 && STRUCTURE_L == 5)
+  {
+    for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
+      bufferbe[0] = 0;
+      bufferbe[1] = 0;
+      bufferbe[2] = 0;
+      bufferbe[3] = 0;     
+      for (int j = 0; j < polyphony; j++) {
+        //if end of sample
+        if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
+          freqmutato[0][j] += pich[0][j];
+        } else if (loopsample[0]) {
+
+          freqmutato[0][j] = samplebegin[0] << step;
+        }
+        if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
+          freqmutato[1][j] += pich[1][j];
+        } else if (loopsample[1]) {
+
+          freqmutato[1][j] = samplebegin[1] << step;
+        }
+        if (((freqmutato[2][j] >> step) < sampleend[2] - 1 ) ) {
+          freqmutato[2][j] += pich[2][j];
+        } else if (loopsample[2]) {
+
+          freqmutato[2][j] = samplebegin[2] << step;
+        }
+        if (((freqmutato[3][j] >> step) < sampleend[3] - 1 )  ) {
+          freqmutato[3][j] += pich[3][j];
+        } else if (loopsample[3]) {
+
+          freqmutato[3][j] = samplebegin[3] << step;
+        }               
         tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
-        bufferbe[2] += (tempbuffer0 * generatorvolume[0][j]) >> 6;
-        freqmutato[0][j] += pich[0][j];
-      } else if (loopsample[0]) {
-        freqmutato[0][j] = samplebegin[0] << step;
-      }
+        bufferbe[2] = (tempbuffer0 * generatorvolume[0][j]) >> 8;
 
-      if ((freqmutato[1][j] >> step) < sampleend[1]) {
-        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));
-        bufferbe[4] += ((tempbuffer1 * generatorvolume[1][j]) >> 6);
-        freqmutato[1][j] += pich[1][j];
-      } else if (loopsample[1]) {
-        freqmutato[1][j] = samplebegin[1] << step;
-      }
-
-
-      if ((freqmutato[2][j] >> step) < sampleend[2]) {
+        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));       
+        bufferbe[0] += (((tempbuffer1 * generatorvolume[1][j]) >> 8) * bufferbe[2]) >> 9;
+        //buffers right
         tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> step));
-        bufferbe[3] += (tempbuffer2 * generatorvolume[2][j]) >> 6;
-        freqmutato[2][j] += pich[2][j];
-      } else if (loopsample[2]) {
-        freqmutato[2][j] = samplebegin[2] << step;
+        bufferbe[3] = (tempbuffer2 * generatorvolume[2][j]) >> 8;
+
+        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));        
+        bufferbe[1] += (((tempbuffer3 * generatorvolume[3][j]) >> 8) * bufferbe[3]) >> 9;
       }
-
-      if ((freqmutato[3][j] >> step) < sampleend[3]) {
-        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
-        bufferbe[5] += (tempbuffer3 * generatorvolume[3][j]) >> 6;
-        freqmutato[3][j] += pich[3][j];
-      } else if (loopsample[3]) {
-        freqmutato[3][j] = samplebegin[3] << step;
-      }
-
-
+      //freqstep
+      parametereqleft();     
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
+      parametereqright();
+      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
+      //choruslfo
+      chorusleft();
+      chorusright();
+      reverbleft();
+      reverbright();
+      lowpassfilterleft();
+      lowpassfilterright();
+      sBuffer[i] = bufferbe[0];
+      sBuffer[i + 1] = bufferbe[1];
     }
-    switch (STRUCTURE_L) {
-      case 5:
-        bufferbe[0] += (bufferbe[2] + bufferbe[4]) >> 3;
-        break;
-      case 6:
-        bufferbe[0] += (((bufferbe[2] >> 4) * (bufferbe[4] >> 4)) >> 8);
-        break;
-    }
-    switch (STRUCTURE_U) {
-      case 5:
-        bufferbe[1] += (bufferbe[3] + bufferbe[5]) >> 3;
-        break;
-      case 6:
-        bufferbe[1] += (((bufferbe[3] >> 4) * (bufferbe[5] >> 4)) >> 8);
-        break;
-    }
-
-
-
-    parametereqleft();
-    //bufferbe[0] = ((bufferbe[0]*(100-eqlevel)) - ((bufferbe[0] - lastbuffer[3])* eqlevel))>>7;
-    //bufferbe[0] =(100*bufferbe[0]-2*bufferbe[0]*eqlevel+lastbuffer[3]*eqlevel)>>7;
-    bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
-    parametereqright();
-    bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
-    //choruslfo
-
-    chorusleft();
-    chorusright();
-
-    reverbleft();
-    reverbright();
-    lowpassfilterleft();
-    lowpassfilterright();
-    sBuffer[i] = bufferbe[0];
-    sBuffer[i + 1] = bufferbe[1];
   }
+
+
+  
   //BUFFER WRITE DAC
   i2s_write(I2S_PORT, &sBuffer, bufferLen, &i2s_bytes_write, portMAX_DELAY);
 }
