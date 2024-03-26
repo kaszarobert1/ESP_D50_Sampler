@@ -1965,7 +1965,7 @@ void loop() {
           bufferbe[3] += (tempbuffer2 * generatorvolume[2][j]) >> 6;
 
           tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
-          bufferbe[1] += (((tempbuffer3 * generatorvolume[3][j]) >> 6)+bufferbe[3]>>3);            
+          bufferbe[1] += (((tempbuffer3 * generatorvolume[3][j]) >> 6)+bufferbe[3])>>3;            
       }
       //freqstep
       parametereqleft();     
