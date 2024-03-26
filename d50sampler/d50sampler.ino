@@ -139,8 +139,8 @@ byte PCMWaveNo[4] = { 69, 68, 69, 32 };
 byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
-byte STRUCTURE_L = 4;
-byte STRUCTURE_U = 4;
+byte STRUCTURE_L = 5;
+byte STRUCTURE_U = 5;
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {7, 10, 22, 22, 22, 22, 22, 22};
@@ -1918,14 +1918,16 @@ void loop() {
 
   //STRUCTURES
 
- //--------------4---------4------------------
- if (STRUCTURE_U == 4 && STRUCTURE_L == 4)
+  //--------------4---------4------------------
+  if (STRUCTURE_U == 4 && STRUCTURE_L == 4)
   {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       bufferbe[0] = 0;
       bufferbe[1] = 0;
       bufferbe[2] = 0;
-      bufferbe[3] = 0;     
+      bufferbe[3] = 0;
+      bufferbe[4] = 0;
+      bufferbe[5] = 0;
       for (int j = 0; j < polyphony; j++) {
         //if end of sample
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
@@ -1953,22 +1955,45 @@ void loop() {
           freqmutato[3][j] = samplebegin[3] << step;
         }
         //buffers left
-        
-          //strukt 5
+
+
+
+//strukt 5
           tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
           bufferbe[2] += (tempbuffer0 * generatorvolume[0][j]) >> 6;
 
           tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));
-          bufferbe[0] += (((tempbuffer1 * generatorvolume[1][j]) >> 6)+bufferbe[2])>>3;
+          bufferbe[4] += ((tempbuffer1 * generatorvolume[1][j]) >> 6);
           //buffers right
           tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> step));
           bufferbe[3] += (tempbuffer2 * generatorvolume[2][j]) >> 6;
 
           tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
-          bufferbe[1] += (((tempbuffer3 * generatorvolume[3][j]) >> 6)+bufferbe[3])>>3;            
+          bufferbe[5] += (tempbuffer3 * generatorvolume[3][j]) >> 6;     
+
+
+
+/*
+        //strukt 5
+        tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
+        bufferbe[2] += (tempbuffer0 * generatorvolume[0][j]) >> 6;
+
+        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));
+        bufferbe[4] += ((((tempbuffer1 * generatorvolume[1][j]) >> 6) + bufferbe[2]) >> 3);
+        //buffers right
+        tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> step));
+        bufferbe[3] += (tempbuffer2 * generatorvolume[2][j]) >> 6;
+
+        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
+        bufferbe[5] += ((((tempbuffer3 * generatorvolume[3][j]) >> 6) + bufferbe[3]) >> 3);
+        */
       }
+
+      bufferbe[0] += (bufferbe[2] + bufferbe[4]) >> 3;
+      bufferbe[1] += (bufferbe[3] + bufferbe[5]) >> 3;
+      
       //freqstep
-      parametereqleft();     
+      parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
@@ -1982,7 +2007,7 @@ void loop() {
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
-  }  
+  }
   //--------------5---------5------------------
   if (STRUCTURE_U == 5 && STRUCTURE_L == 5)
   {
@@ -1990,7 +2015,7 @@ void loop() {
       bufferbe[0] = 0;
       bufferbe[1] = 0;
       bufferbe[2] = 0;
-      bufferbe[3] = 0;     
+      bufferbe[3] = 0;
       for (int j = 0; j < polyphony; j++) {
         //if end of sample
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
@@ -2016,21 +2041,21 @@ void loop() {
         } else if (loopsample[3]) {
 
           freqmutato[3][j] = samplebegin[3] << step;
-        }               
+        }
         tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
         bufferbe[2] = (tempbuffer0 * generatorvolume[0][j]) >> 8;
 
-        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));       
+        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));
         bufferbe[0] += (((tempbuffer1 * generatorvolume[1][j]) >> 8) * bufferbe[2]) >> 9;
         //buffers right
         tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> step));
         bufferbe[3] = (tempbuffer2 * generatorvolume[2][j]) >> 8;
 
-        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));        
+        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
         bufferbe[1] += (((tempbuffer3 * generatorvolume[3][j]) >> 8) * bufferbe[3]) >> 9;
       }
       //freqstep
-      parametereqleft();     
+      parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
@@ -2047,7 +2072,7 @@ void loop() {
   }
 
 
-  
+
   //BUFFER WRITE DAC
   i2s_write(I2S_PORT, &sBuffer, bufferLen, &i2s_bytes_write, portMAX_DELAY);
 }
