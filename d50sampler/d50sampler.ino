@@ -140,7 +140,7 @@ byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
 byte STRUCTURE_U = 4;
-byte STRUCTURE_L = 4;
+byte STRUCTURE_L = 5;
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {7, 10, 22, 22, 22, 22, 22, 22};
@@ -1918,7 +1918,7 @@ void loop() {
 
   //STRUCTURES
 
-  //---5---4---------------------
+  //------------------4-------------------4---------------------
   
    if (STRUCTURE_U == 4 && STRUCTURE_L == 4)
   {
@@ -1981,7 +1981,7 @@ void loop() {
       sBuffer[i + 1] = bufferbe[1];
     }
   }
-//---4---5---------------------
+//--------------------4-------------------5---------------------
   
    if (STRUCTURE_U == 4 && STRUCTURE_L == 5)
   {
@@ -2046,7 +2046,7 @@ void loop() {
   }
 
 
-//---5---4---------------------
+//--------------------5-------------------4---------------------
   
    if (STRUCTURE_U == 5 && STRUCTURE_L == 4)
   {
@@ -2111,7 +2111,7 @@ void loop() {
   }
   
   
-  //--------------5---------5------------------
+  //-----------------5-------------------5------------------
   if (STRUCTURE_U == 5 && STRUCTURE_L == 5)
   {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
