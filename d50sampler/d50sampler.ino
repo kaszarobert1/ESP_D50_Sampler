@@ -140,7 +140,7 @@ byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
 byte STRUCTURE_U = 5;
-byte STRUCTURE_L = 6;
+byte STRUCTURE_L = 5;
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte lfofreq[LFOnumber] = {7, 10, 22, 22, 22, 22, 22, 22};
