@@ -67,7 +67,7 @@ void i2s_install() {
 //----------------DAC SETUP END------------
 
 //----------------------PROGRAM VARIABLES-----------
-const byte polyphony = 10;
+const byte polyphony = 8;
 uint32_t freqmutato[4][polyphony];
 uint32_t pich[4][polyphony];
 byte generatornumber = 1;
@@ -121,7 +121,7 @@ byte ENV_T1[4] = { 100, 100, 100, 100 };
 byte ENV_L1[4] = { 100, 100, 100, 100 };
 byte ENV_T2[4] = { 1, 1, 1, 1 };
 byte ENV_L2[4] = { 80, 80, 80, 80 };
-//byte ENV_L3[4] = { 80, 80, 80, 80 };
+byte ENV_L3[4] = { 80, 80, 80, 80 }; //not used more
 byte ENV_T3[4] = { 1, 1, 1, 1 };
 byte ENV_LSUS[4] = { 50, 50, 50, 50 };
 byte ENV_T4[4] = { 1, 1, 1, 1 };
@@ -689,9 +689,13 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 U1:" + String(ENV_T4[2]));
         break;
       case 43:
-        step = samplesize[2] / 100;
-        sampleend[2] = value * step;
-        Serial.println("SAMPLE END U1: " + String(sampleend[2]));
+        /*
+          step = samplesize[2] / 100;
+          sampleend[2] = value * step;
+          Serial.println("SAMPLE END U1: " + String(sampleend[2]));
+        */
+        ENV_T5[2] = value;
+        Serial.println("ENV_T5 U1:" + String(ENV_T5[2]));
         break;
       case 44:
         ENV_L1[2] = value;
@@ -702,9 +706,13 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 U1:" + String(ENV_L2[2]));
         break;
       case 46:
-        step = samplesize[2] / 100;
-        samplebegin[2] = value * step;
-        Serial.println("SAMPLE BEGIN U1: " + String(samplebegin[2]));
+        /*
+          step = samplesize[2] / 100;
+          samplebegin[2] = value * step;
+          Serial.println("SAMPLE BEGIN U1: " + String(samplebegin[2]));
+        */
+        ENV_L3[2] = value;
+        Serial.println("ENV_L3 U1:" + String(ENV_L3[2]));
         break;
       case 47:
         ENV_LSUS[2] = value;
@@ -789,10 +797,15 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 U2:" + String(ENV_T4[3]));
         break;
       case 107:
-        step = samplesize[3] / 100;
-        sampleend[3] = value * step;
-        Serial.println("SAMPLE END U2: " + String(sampleend[3]));
+        /*
+          step = samplesize[3] / 100;
+          sampleend[3] = value * step;
+          Serial.println("SAMPLE END U2: " + String(sampleend[3]));
+        */
+        ENV_T5[3] = value;
+        Serial.println("ENV_T5 U2:" + String(ENV_T5[3]));
         break;
+
       case 108:
         ENV_L1[3] = value;
         Serial.println("ENV_L1 U2: " + String(ENV_L1[3]));
@@ -802,9 +815,13 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 U2: " + String(ENV_L2[3]));
         break;
       case 110:
-        step = samplesize[3] / 100;
-        samplebegin[3] = value * step;
-        Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[3]));
+        /*
+          step = samplesize[3] / 100;
+          samplebegin[3] = value * step;
+          Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[3]));
+        */
+        ENV_L3[3] = value;
+        Serial.println("ENV_L3 U2: " + String(ENV_L3[3]));
         break;
       case 111:
         ENV_LSUS[3] = value;
@@ -948,9 +965,13 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 L1" + String(ENV_T4[0]));
         break;
       case 107:
-        step = samplesize[0] / 100;
-        sampleend[0] = value * step;
-        Serial.println("SAMPLE END L1: " + String(sampleend[0]));
+        /*
+          step = samplesize[0] / 100;
+          sampleend[0] = value * step;
+          Serial.println("SAMPLE END L1: " + String(sampleend[0]));
+        */
+        ENV_T5[0] = value;
+        Serial.println("ENV_T5 L1" + String(ENV_T5[0]));
         break;
       case 108:
         ENV_L1[0] = value;
@@ -961,9 +982,13 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 L1: " + String(ENV_L2[0]));
         break;
       case 110:
-        step = samplesize[0] / 100;
-        samplebegin[0] = value * step;
-        Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
+        /*
+          step = samplesize[0] / 100;
+          samplebegin[0] = value * step;
+          Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
+        */
+        ENV_L3[0] = value;
+        Serial.println("ENV_L3 L1: " + String(ENV_L3[0]));
         break;
       case 111:
         ENV_LSUS[0] = value;
@@ -1066,9 +1091,13 @@ void parametersysexchanged() {
         Serial.println("ENV_T4 L2" + String(ENV_T4[1]));
         break;
       case 43:
-        step = samplesize[1] / 100;
-        sampleend[1] = value * step;
-        Serial.println("SAMPLE END L2: " + String(sampleend[1]));
+        /*
+          step = samplesize[1] / 100;
+          sampleend[1] = value * step;
+          Serial.println("SAMPLE END L2: " + String(sampleend[1]));
+        */
+        ENV_T5[1] = value;
+        Serial.println("ENV_T5 L2" + String(ENV_T5[1]));
         break;
       case 44:
         ENV_L1[1] = value;
@@ -1079,9 +1108,13 @@ void parametersysexchanged() {
         Serial.println("ENV_L2 L2: " + String(ENV_L2[1]));
         break;
       case 46:
-        step = samplesize[1] / 100;
-        samplebegin[1] = value * step;
-        Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
+        /*
+          step = samplesize[1] / 100;
+          samplebegin[1] = value * step;
+          Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
+        */
+        ENV_L3[1] = value;
+        Serial.println("ENV_L3 L2: " + String(ENV_L3[1]));
         break;
       case 47:
         ENV_LSUS[1] = value;
@@ -1104,22 +1137,23 @@ void parametersysexchanged() {
         }
         break;
       case 50:
-        if (value == 4) {
-          sampleend[1]++;
-          if (samplesize[1] < sampleend[1]) {
-            sampleend[1] = samplesize[1];
+        /*
+          if (value == 4) {
+            sampleend[1]++;
+            if (samplesize[1] < sampleend[1]) {
+              sampleend[1] = samplesize[1];
+            }
           }
-        }
 
-        Serial.println("SAMPLE END L1: " + String(sampleend[1]));
-        if (value == 1) {
-          samplebegin[1]++;
-          if (samplesize[1] < samplebegin[1]) {
-            samplebegin[1] = samplesize[1];
+          Serial.println("SAMPLE END L1: " + String(sampleend[1]));
+          if (value == 1) {
+            samplebegin[1]++;
+            if (samplesize[1] < samplebegin[1]) {
+              samplebegin[1] = samplesize[1];
+            }
           }
-        }
-        Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
-
+          Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
+        */
         break;
       case 74:
         STRUCTURE_L = value;
@@ -1190,6 +1224,18 @@ void parametersysexchanged() {
             LFOadress[0] = lfosine;
             LFOadress[1] = lfosine;
             break;
+          case 7:
+            //chorus6
+            chorusbuffersize = 255;
+            LFOadress[0] = lfotriangle;
+            LFOadress[1] = lfotriangle;
+            break;
+          case 8:
+            //chorus6
+            chorusbuffersize = 127;
+            LFOadress[0] = lfosine;
+            LFOadress[1] = lfosine;
+            break;
 
         }
         break;
@@ -1214,115 +1260,157 @@ void parametersysexchanged() {
       case 30:
         switch (value) {
           case 0:
-            delaybuffersize = 1024;
+            delaybuffersize = 256;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
             Serial.println("Small Hall");
             break;
           case 1:
+            delaybuffersize = 512;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 60;
+            Serial.println("1. Medium Hall");
+            break;
+          case 2:
+            delaybuffersize = 1024;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 60;
+            Serial.println("2. Large Hall");
+            break;
+          case 3:
             delaybuffersize = 2048;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            Serial.println("Medium Hall");
-            break;
-          case 2:
-            delaybuffersize = 4096;
-            delaytime = 1;
-            delay2time = 1;
-            reverblevel = 60;
-            Serial.println("Large Hall");
-            break;
-          case 3:
-            delaybuffersize = 8192;
-            delaytime = 1;
-            delay2time = 1;
-            reverblevel = 60;
-            Serial.println("Chapel");
+            Serial.println("3. Chapel");
             break;
           case 4:
             delaybuffersize = 4096;
             delaytime = 1;
-            delay2time = 2;
-            reverblevel = 60;
-            Serial.println("SmallHall");
+            delay2time = 1;
+            reverblevel = 40;
+            Serial.println("4. SmallHall");
             break;
           case 5:
-            delaybuffersize = 512;
+            delaybuffersize = 128;
             delaytime = 2;
             delay2time = 1;
-            reverblevel = 60;
-            Serial.println("Box");
+            reverblevel = 40;
+            Serial.println("5. Box");
             break;
           case 6:
             delaybuffersize = 8192;
-            delaytime = 2;
+            delaytime = 1;
             delay2time = 1;
-            reverblevel = 60;
-            Serial.println("Small Metal Room");
+            reverblevel = 40;
+            Serial.println("5. Small Metal Room");
             break;
           case 7:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 2;
-            reverblevel = 60;
-            Serial.println("Small Room");
+            reverblevel = 40;
+            Serial.println("6. Small Room");
             break;
           case 8:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 2;
-            reverblevel = 60;
-            Serial.println("Room");
+            reverblevel = 40;
+            Serial.println("7. Room");
             break;
           case 9:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 2;
-            reverblevel = 60;
-            Serial.println("Medium Room");
+            reverblevel = 40;
+            Serial.println("8. Medium Room");
             break;
           case 10:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 3;
-            reverblevel = 60;
-            Serial.println("Medium Large Room");
+            reverblevel = 40;
+            Serial.println("9. Medium Large Room");
             break;
           case 11:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 4;
-            reverblevel = 60;
-            Serial.println("Large Room");
+            reverblevel = 40;
+            Serial.println("10. Large Room");
             break;
           case 12:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 4;
-            reverblevel = 60;
-            Serial.println("Single Delay 102ms");
+            reverblevel = 40;
+            Serial.println("11. Single Delay 102ms");
             break;
           case 13:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 4;
-            reverblevel = 60;
-            Serial.println("Cross Delay 180ms");
+            reverblevel = 40;
+            Serial.println("12. Cross Delay 180ms");
             break;
           case 14:
             delaybuffersize = 8192;
             delaytime = 4;
             delay2time = 4;
-            reverblevel = 60;
-            Serial.println("Cross Delay 148-256msec");
+            reverblevel = 40;
+            Serial.println("13. Cross Delay 148-256msec");
             break;
           case 15:
             delaybuffersize = 8192;
             delaytime = 5;
             delay2time = 6;
-            reverblevel = 60;
+            reverblevel = 40;
+            Serial.println("14. Short Gate");
+            break;
+          case 16:
+            delaybuffersize = 8192;
+            delaytime = 6;
+            delay2time = 7;
+            reverblevel = 40;
+            Serial.println("15. Long Gate");
+            break;
+          case 17:
+            delaybuffersize = 8192;
+            delaytime = 7;
+            delay2time = 8;
+            reverblevel = 40;
+            Serial.println("Cross Delay 148-256msec");
+            break;
+          case 18:
+            delaybuffersize = 8192;
+            delaytime = 8;
+            delay2time = 9;
+            reverblevel = 40;
+            Serial.println("Cross Delay 148-256msec");
+            break;
+          case 19:
+            delaybuffersize = 8192;
+            delaytime = 9;
+            delay2time = 10;
+            reverblevel = 40;
+            Serial.println("Cross Delay 148-256msec");
+            break;
+          case 20:
+            delaybuffersize = 8192;
+            delaytime = 10;
+            delay2time = 10;
+            reverblevel = 40;
+            Serial.println("Cross Delay 148-256msec");
+            break;
+          case 21:
+            delaybuffersize = 8192;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 40;
             Serial.println("Cross Delay 148-256msec");
             break;
         }
@@ -1525,7 +1613,7 @@ void chorusleft() {
 
 //--------------------------CHORUS RIGHT------------------------------
 
-int16_t chorusbufferright[512];
+int chorusbufferright[512];
 uint16_t chorusbufferindex2 = 0;
 uint16_t chorusindex2;
 int16_t atlagchorus1 = 0;
@@ -1713,24 +1801,28 @@ void serialEvent() {
           Serial.print(String(MIDI2.getSysExArray()[i]) + " ");
         }
         Serial.println();
+        //prefix: 240 65 0 20 18 0
         if (MIDI2.getSysExArray()[0] == 240 && MIDI2.getSysExArray()[1] == 65 && MIDI2.getSysExArray()[2] == 0 && MIDI2.getSysExArray()[3] == 20 && MIDI2.getSysExArray()[4] == 18 && MIDI2.getSysExArray()[5] == 0)
         {
+          //single sysex: array[6] array[7] array[8]
           if (MIDI2.getSysExArrayLength() <= 11)
           {
             localParameterByte = MIDI2.getSysExArray()[6];
             noteByte = MIDI2.getSysExArray()[7];
             velocityByte = MIDI2.getSysExArray()[8];
             parametersysexchanged();
-          } else {
+          }
+          //not single sysex 3-3-3-3...-3to-->arraylength:
+          else {
             localParameterByte = MIDI2.getSysExArray()[6];
             noteByte = MIDI2.getSysExArray()[7];
             velocityByte = MIDI2.getSysExArray()[8];
-            //  Serial.println("Localvalue:" + String(localParameterByte) + " Commandsysex:" + String(noteByte) + " Datasysex:" + String(velocityByte));
+            Serial.println("Localvalue:" + String(localParameterByte) + " Commandsysex:" + String(noteByte) + " Datasysex:" + String(velocityByte));
             parametersysexchanged();
             for (int i = 9; i < MIDI2.getSysExArrayLength() - 2; i++) {
               noteByte++ ;
               velocityByte = MIDI2.getSysExArray()[i];
-              //  Serial.println("Localvalue:" + String(localParameterByte) + " Commandsysex:" + String(noteByte) + " Datasysex:" + String(velocityByte));
+              Serial.println("Localvalue:" + String(localParameterByte) + " Commandsysex:" + String(noteByte) + " Datasysex:" + String(velocityByte));
               parametersysexchanged();
             }
 
@@ -1819,7 +1911,7 @@ void loop() {
 
   //TVA ENVELOPE
   for (int i = 0; i < 4; i++) {
-    if (TVA[i] == 1) {
+    if (TVA[i] > 0) {
       for (int j = 0; j < polyphony; j++) {
         switch (generatorstatus[i][j]) {
           case 0:
@@ -1901,7 +1993,13 @@ void loop() {
             TVAvolume[i][j] = 0;
             break;
         }
-        generatorvolume[i][j] = (TVAvolume[i][j] * volume[i] * wavebias[i][j]) >> 10;
+        if (TVA[i] == 1) {
+          generatorvolume[i][j] = (TVAvolume[i][j] * volume[i] * wavebias[i][j]) >> 10;
+        }
+        if (TVA[i] == 2) {
+          generatorvolume[i][j] = (volume[i] * wavebias[i][j]>>TVAvolume[i][j] ) >> 5;
+        }
+        
       }
       //  Serial.println("Generator" + String(i) + "statusz: " + String(TVAvolume[i][0]) + " " + String(TVAvolume[i][1]) + " " + String(TVAvolume[i][2]) + " " + String(TVAvolume[i][3]) + " " + String(TVAvolume[i][4]) + " " + String(TVAvolume[i][5]));
     } else
@@ -1919,8 +2017,8 @@ void loop() {
   //STRUCTURES
 
   //------------------5-------------------5---------------------
-  
-   if (STRUCTURE_U == 5 && STRUCTURE_L == 5)
+
+  if (STRUCTURE_U == 5 && STRUCTURE_L == 5)
   {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       bufferbe[0] = 0;
@@ -1981,9 +2079,9 @@ void loop() {
       sBuffer[i + 1] = bufferbe[1];
     }
   }
-//--------------------5-------------------6---------------------
-  
-   if (STRUCTURE_U == 5 && STRUCTURE_L == 6)
+  //--------------------5-------------------6---------------------
+
+  if (STRUCTURE_U == 5 && STRUCTURE_L == 6)
   {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       bufferbe[0] = 0;
@@ -2046,9 +2144,9 @@ void loop() {
   }
 
 
-//--------------------6-------------------5---------------------
-  
-   if (STRUCTURE_U == 6 && STRUCTURE_L == 5)
+  //--------------------6-------------------5---------------------
+
+  if (STRUCTURE_U == 6 && STRUCTURE_L == 5)
   {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       bufferbe[0] = 0;
@@ -2109,8 +2207,8 @@ void loop() {
       sBuffer[i + 1] = bufferbe[1];
     }
   }
-  
-  
+
+
   //-----------------6-------------------6------------------
   if (STRUCTURE_U == 6 && STRUCTURE_L == 6)
   {
@@ -2124,25 +2222,21 @@ void loop() {
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
           freqmutato[0][j] += pich[0][j];
         } else if (loopsample[0]) {
-
           freqmutato[0][j] = samplebegin[0] << step;
         }
         if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
           freqmutato[1][j] += pich[1][j];
         } else if (loopsample[1]) {
-
           freqmutato[1][j] = samplebegin[1] << step;
         }
         if (((freqmutato[2][j] >> step) < sampleend[2] - 1 ) ) {
           freqmutato[2][j] += pich[2][j];
         } else if (loopsample[2]) {
-
           freqmutato[2][j] = samplebegin[2] << step;
         }
         if (((freqmutato[3][j] >> step) < sampleend[3] - 1 )  ) {
           freqmutato[3][j] += pich[3][j];
         } else if (loopsample[3]) {
-
           freqmutato[3][j] = samplebegin[3] << step;
         }
         tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
