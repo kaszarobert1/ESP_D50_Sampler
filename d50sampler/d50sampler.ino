@@ -81,8 +81,11 @@ uint16_t samplebegin[4] = { 0, 0, 0, 0 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
-int step = 16;
-uint16_t GLOBAL_TUNE = 472;
+//int step = 16;
+//uint16_t GLOBAL_TUNE = 472;
+
+int step = 22;
+uint16_t GLOBAL_TUNE = 15104;
 byte COARSE[4] = { 48, 48, 48, 48 };
 byte FINE[4] = { 50, 50, 50, 50 };
 byte szorzo[4] = {1, 1, 1, 1};
@@ -622,7 +625,7 @@ void lcdprint(int pages) {
 
 //--------------MIDI SYSEX PARAMETER CONTROL------
 void parametersysexchanged() {
-  byte step = 1;
+  //byte step = 1;
   byte value = velocityByte;
   if (localParameterByte == 0)
     switch (noteByte) {
@@ -1253,9 +1256,36 @@ void parametersysexchanged() {
   }
   if (localParameterByte == 3) {
     switch (noteByte) {
+
       case 25:
         GLOBAL_TUNE = 422 + value;
         notetune();
+        break;
+      case 27:
+        step = value;
+        switch (step) {
+          case 7: GLOBAL_TUNE = 1; break;
+          case 8: GLOBAL_TUNE = 2; break;
+          case 9: GLOBAL_TUNE = 4; break;
+          case 10: GLOBAL_TUNE = 7; break;
+          case 11: GLOBAL_TUNE = 14; break;
+          case 12: GLOBAL_TUNE = 28; break;
+          case 13: GLOBAL_TUNE = 59; break;
+          case 14: GLOBAL_TUNE = 118; break;
+          case 15: GLOBAL_TUNE = 236; break;
+          case 16: GLOBAL_TUNE = 472; break;
+          case 17: GLOBAL_TUNE = 944; break;
+          case 18: GLOBAL_TUNE = 1888; break;
+          case 19: GLOBAL_TUNE = 3776; break;
+          case 20: GLOBAL_TUNE = 7552; break;
+          case 21: GLOBAL_TUNE = 15104; break;
+          case 22: GLOBAL_TUNE = 30208; break;
+          case 23: GLOBAL_TUNE = 60416; break;
+          case 24: GLOBAL_TUNE = 120832; break;
+        }//
+        notetune();
+        Serial.println(" Step: " + String(step));
+        Serial.println(" GLOBAL_TUNE: " + String(GLOBAL_TUNE));
         break;
       case 30:
         switch (value) {
@@ -1995,11 +2025,12 @@ void loop() {
         }
         if (TVA[i] == 1) {
           generatorvolume[i][j] = (TVAvolume[i][j] * volume[i] * wavebias[i][j]) >> 10;
+          // generatorvolume[i][j] = ((volume[i] * wavebias[i][j])<<TVAvolume[i][j]) >> 5;
         }
         if (TVA[i] == 2) {
-          generatorvolume[i][j] = (volume[i] * wavebias[i][j]>>TVAvolume[i][j] ) >> 5;
+          generatorvolume[i][j] = ((volume[i] * wavebias[i][j]) >> TVAvolume[i][j] ) >> 5;
         }
-        
+
       }
       //  Serial.println("Generator" + String(i) + "statusz: " + String(TVAvolume[i][0]) + " " + String(TVAvolume[i][1]) + " " + String(TVAvolume[i][2]) + " " + String(TVAvolume[i][3]) + " " + String(TVAvolume[i][4]) + " " + String(TVAvolume[i][5]));
     } else
