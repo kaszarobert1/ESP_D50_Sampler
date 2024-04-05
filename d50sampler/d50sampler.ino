@@ -926,7 +926,7 @@ void parametersysexchanged() {
         break;
       case 67:
         TVA[0] = value;
-        Serial.println("TVA L1: " + String(TVA[0]));
+        Serial.println("TVA L1 ON-OFF: " + String(TVA[0]));
         break;
       case 71:
         PCMWaveNo[0] = value;
