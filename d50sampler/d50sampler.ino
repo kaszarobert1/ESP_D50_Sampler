@@ -81,6 +81,7 @@ uint16_t samplebegin[4] = { 0, 0, 0, 0 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
+bool LCD_ON = true;
 //int step = 16;
 //uint16_t GLOBAL_TUNE = 472;
 
@@ -162,7 +163,7 @@ byte CHASE_LEVEL = 4;
 uint32_t ido;
 long elozoido;
 byte lastchase = 0;
-byte CaseArray[16];
+byte CaseArray[32];
 byte chaseindex = 0;
 byte MIDI_SYNC = 1;
 byte sixteen = 0;
@@ -363,9 +364,9 @@ void maxsize() {
   sizes[12] = sizeof(bells) >> 1;
   sizes[13] = sizeof(nailfile) >> 1;
   sizes[14] = sizeof(pick) >> 1;
-  // sizes[15] = sizeof(lowpiano) >> 1;
-  //sizes[16] = sizeof(pianosample) >> 1;
-  // sizes[17] = sizeof(highpiano) >> 1;
+  sizes[15] = sizeof(lowpiano) >> 1;
+  sizes[16] = sizeof(pianosample) >> 1;
+  sizes[17] = sizeof(highpiano) >> 1;
   sizes[18] = sizeof(hapsichord) >> 1;
   sizes[19] = sizeof(harp) >> 1;
   sizes[20] = sizeof(organpercus) >> 1;
@@ -497,9 +498,9 @@ void setPCMWave() {
     case 12: genstartadress[opmenuoldal] = bells; break;
     case 13: genstartadress[opmenuoldal] = nailfile; break;
     case 14: genstartadress[opmenuoldal] = pick; break;
-    //  case 15: genstartadress[opmenuoldal] = lowpiano; break;
-    //  case 16: genstartadress[opmenuoldal] = pianosample; break;
-    //  case 17: genstartadress[opmenuoldal] = highpiano; break;
+    case 15: genstartadress[opmenuoldal] = lowpiano; break;
+    case 16: genstartadress[opmenuoldal] = pianosample; break;
+    case 17: genstartadress[opmenuoldal] = highpiano; break;
     case 18: genstartadress[opmenuoldal] = hapsichord; break;
     case 19: genstartadress[opmenuoldal] = harp; break;
     case 20: genstartadress[opmenuoldal] = organpercus; break;
@@ -591,14 +592,9 @@ void setPCMWave() {
     case 97: genstartadress[opmenuoldal] = bells; break;
     case 98: genstartadress[opmenuoldal] = nailfile; break;
     case 99: genstartadress[opmenuoldal] = nailfile; break;
-
-
-
-
-
       //    case 74: genstartadress[opmenuoldal] = maleloop2; break;
   }
-  Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
+  //Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
   setsamplesize();
 }
 
@@ -614,36 +610,56 @@ void setLFOWave() {
 }
 
 //--------------LCD-------------------------------
-void lcdprint(int pages) {
-
-  if (pages == 0) {
+void lcdprint(String szoveg) {
+  if (LCD_ON)
+  {
     lcd.setCursor(0, 1);
-    String kiir = "Wave:" + String(PCMWaveNo[0]) + " " + String(PCMWaveNo[1]) + " " + String(PCMWaveNo[2]) + " " + String(PCMWaveNo[3]);
-    lcd.print(kiir);
+    int hiany = 16 - szoveg.length();
+    for (int i = 0; i < hiany; i++) 
+    {
+      szoveg += " ";
+    }
+    lcd.print(szoveg);
   }
 }
 
+String lcdprint2(int cc)
+{
+  String eredmeny = "";
+  eredmeny += (cc % 100) / 10;
+  eredmeny += cc % 10;
+  return eredmeny;
+}
+String lcdprint3(int cc)
+{
+  String eredmeny = "";
+  eredmeny += cc / 100;
+  eredmeny += (cc % 100) / 10;
+  eredmeny += cc % 10;
+  return eredmeny;
+}
 //--------------MIDI SYSEX PARAMETER CONTROL------
 void parametersysexchanged() {
   //byte step = 1;
   byte value = velocityByte;
+  String line = "";
   if (localParameterByte == 0)
     switch (noteByte) {
       case 0:
         //couarse u1
         COARSE[2] = value;
-        Serial.println("COARSE U1: " + String(COARSE[2]));
+        line = "COARSE U1: " + lcdprint3(COARSE[2]);
         notetune();
         break;
       case 1:
         //couarse u1
         FINE[2] = value;
-        Serial.println("COARSE U1: " + String(FINE[2]));
+        line = "COARSE U1: " + lcdprint3(FINE[2]);
         notetune();
         break;
       case 2:
         KEYFollow[2] = value;
-        Serial.println("KEYFollow U1: " + String(KEYFollow[2]));
+        line = "KEYFollow U1: " + lcdprint2(KEYFollow[2]);
         notetune();
         break;
       case 3:
@@ -651,45 +667,45 @@ void parametersysexchanged() {
         break;
       case 4:
         TVA[2] = value;
-        Serial.println("TVA U1: " + String(TVA[1]));
+        line = "TVA U1: " + lcdprint3(TVA[1]);
         break;
       case 7:
         PCMWaveNo[2] = value;
-        Serial.println("PCMWaveNo U1: " + String(PCMWaveNo[2]));
+        line = "PCMWaveNo U1: " + lcdprint3(PCMWaveNo[2]);
+
+        //
         opmenuoldal = 2;
         setPCMWave();
-        //lcd
-        lcdprint(0);
         break;
       case 35:
         volume[2] = value;
-        Serial.println("Level U1: " + String(volume[2]));
+        line = "Level U1: " + lcdprint3(volume[2]);
         break;
       case 37:
         BiasPoint[2] = value;
-        Serial.println("BiasPoint U1: " + String(BiasPoint[2]));
+        line = "BiasPoint U1: " + lcdprint3(BiasPoint[2]);
         notebias();
         break;
       case 38:
         BiasLevel[2] = value;
-        Serial.println("bieasLevel U1: " + String(BiasLevel[2]));
+        line = "bieasLevel U1: " + lcdprint3(BiasLevel[2]);
         notebias();
         break;
       case 39:
-        ENV_T1[2] = value;
-        Serial.println("ENV_T1 U1: " + String(ENV_T1[2]));
+        ENV_T1[2] = 100-value;
+        line = "ENV_T1 U1: " + lcdprint3(ENV_T1[2]);
         break;
       case 40:
-        ENV_T2[2] = value;
-        Serial.println("ENV_T2 U1:" + String(ENV_T2[2]));
+        ENV_T2[2] =100- value;
+        line = "ENV_T2 U1:" + lcdprint3(ENV_T2[2]);
         break;
       case 41:
-        ENV_T3[2] = value;
-        Serial.println("ENV_T3 U1:" + String(ENV_T3[2]));
+        ENV_T3[2] =100- value;
+        line = "ENV_T3 U1:" + lcdprint3(ENV_T3[2]);
         break;
       case 42:
-        ENV_T4[2] = value;
-        Serial.println("ENV_T4 U1:" + String(ENV_T4[2]));
+        ENV_T4[2] =100- value;
+        line = "ENV_T4 U1:" + lcdprint3(ENV_T4[2]);
         break;
       case 43:
         /*
@@ -697,16 +713,16 @@ void parametersysexchanged() {
           sampleend[2] = value * step;
           Serial.println("SAMPLE END U1: " + String(sampleend[2]));
         */
-        ENV_T5[2] = value;
-        Serial.println("ENV_T5 U1:" + String(ENV_T5[2]));
+        ENV_T5[2] =100- value;
+        line = "ENV_T5 U1:" + lcdprint3(ENV_T5[2]);
         break;
       case 44:
         ENV_L1[2] = value;
-        Serial.println("ENV_L1 U1:" + String(ENV_L1[2]));
+        line = "ENV_L1 U1:" + lcdprint3(ENV_L1[2]);
         break;
       case 45:
         ENV_L2[2] = value;
-        Serial.println("ENV_L2 U1:" + String(ENV_L2[2]));
+        line = "ENV_L2 U1:" + String(ENV_L2[2]);
         break;
       case 46:
         /*
@@ -715,43 +731,43 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN U1: " + String(samplebegin[2]));
         */
         ENV_L3[2] = value;
-        Serial.println("ENV_L3 U1:" + String(ENV_L3[2]));
+        line = "ENV_L3 U1:" + lcdprint3(ENV_L3[2]);
         break;
       case 47:
         ENV_LSUS[2] = value;
-        Serial.println("ENV_LSUS U1: " + String(ENV_LSUS[2]));
+        line = "ENV_LSUS U1: " + lcdprint3(ENV_LSUS[2]);
         break;
       case 48:
         ENV_LEND[2] = value;
-        Serial.println("ENV_LEND U1: " + String(ENV_LEND[2]));
+        line = "ENV_LEND U1: " + lcdprint3(ENV_LEND[2]);
         break;
       case 49:
         opmenuoldal = 2;
         if (value == 0) {
 
           loopsample[opmenuoldal] = false;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         if (value == 1) {
           loopsample[opmenuoldal] = true;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         break;
       case 64:
         //couarse u2
         COARSE[3] = value;
-        Serial.println("COARSE U2:" + String(COARSE[3]));
+        line = "COARSE U2:" + lcdprint3(COARSE[3]);
         notetune();
         break;
       case 65:
         //couarse u2
         FINE[3] = value;
-        Serial.println("COARSE U2:" + String(FINE[3]));
+        line = "COARSE U2:" + lcdprint3(FINE[3]);
         notetune();
         break;
       case 66:
         KEYFollow[3] = value;
-        Serial.println("KEYFollow U2:" + String(KEYFollow[3]));
+        line = "KEYFollow U2:" + lcdprint2(KEYFollow[3]);
         notetune();
         break;
       case 67:
@@ -759,45 +775,45 @@ void parametersysexchanged() {
         break;
       case 68:
         TVA[3] = value;
-        Serial.println("TVA U2: " + String(TVA[3]));
+        line = "TVA U2: " + lcdprint3(TVA[3]);
         break;
       case 71:
         PCMWaveNo[3] = value;
-        Serial.println("PCMWaveNo U2: " + String(PCMWaveNo[3]));
+        line = "PCMWaveNo U2: " + lcdprint3(PCMWaveNo[3]);
         opmenuoldal = 3;
         setPCMWave();
         //lcd
-        lcdprint(0);
+
         break;
       case 99:
         volume[3] = value;
-        Serial.println("Level U2: " + String(volume[3]));
+        line = "Level U2: " + lcdprint3(volume[3]);
         break;
       case 101:
         BiasPoint[3] = value;
-        Serial.println("BiasPoint L2: " + String(BiasPoint[3]));
+        line = "BiasPoint L2: " + lcdprint3(BiasPoint[3]);
         notebias();
         break;
       case 102:
         BiasLevel[3] = value;
-        Serial.println("bieasLevel L1: " + String(BiasLevel[3]));
+        line = "bieasLevel L1: " + lcdprint3(BiasLevel[3]);
         notebias();
         break;
       case 103:
-        ENV_T1[3] = value;
-        Serial.println("ENV_T1 U2: " + String(ENV_T1[3]));
+        ENV_T1[3] =100- value;
+        line = "ENV_T1 U2: " + lcdprint3(ENV_T1[3]);
         break;
       case 104:
-        ENV_T2[3] = value;
-        Serial.println("ENV_T2 U2:" + String(ENV_T2[3]));
+        ENV_T2[3] = 100-value;
+        line = "ENV_T2 U2:" + lcdprint3(ENV_T2[3]);
         break;
       case 105:
-        ENV_T3[3] = value;
-        Serial.println("ENV_T3 U2:" + String(ENV_T3[3]));
+        ENV_T3[3] =100- value;
+        line = "ENV_T3 U2:" + lcdprint3(ENV_T3[3]);
         break;
       case 106:
-        ENV_T4[3] = value;
-        Serial.println("ENV_T4 U2:" + String(ENV_T4[3]));
+        ENV_T4[3] =100- value;
+        line = "ENV_T4 U2:" + lcdprint3(ENV_T4[3]);
         break;
       case 107:
         /*
@@ -805,17 +821,17 @@ void parametersysexchanged() {
           sampleend[3] = value * step;
           Serial.println("SAMPLE END U2: " + String(sampleend[3]));
         */
-        ENV_T5[3] = value;
-        Serial.println("ENV_T5 U2:" + String(ENV_T5[3]));
+        ENV_T5[3] =100- value;
+        line = "ENV_T5 U2:" + lcdprint3(ENV_T5[3]);
         break;
 
       case 108:
         ENV_L1[3] = value;
-        Serial.println("ENV_L1 U2: " + String(ENV_L1[3]));
+        line = "ENV_L1 U2: " + lcdprint3(ENV_L1[3]);
         break;
       case 109:
         ENV_L2[3] = value;
-        Serial.println("ENV_L2 U2: " + String(ENV_L2[3]));
+        line = "ENV_L2 U2: " + lcdprint3(ENV_L2[3]);
         break;
       case 110:
         /*
@@ -824,26 +840,26 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[3]));
         */
         ENV_L3[3] = value;
-        Serial.println("ENV_L3 U2: " + String(ENV_L3[3]));
+        line = "ENV_L3 U2: " + lcdprint3(ENV_L3[3]);
         break;
       case 111:
         ENV_LSUS[3] = value;
-        Serial.println("ENV_LSUS U2" + String(ENV_LSUS[3]));
+        line = "ENV_LSUS U2" + lcdprint3(ENV_LSUS[3]);
         break;
       case 112:
         ENV_LEND[3] = value;
-        Serial.println("ENV_LEND U2: " + String(ENV_LEND[3]));
+        line = "ENV_LEND U2: " + lcdprint3(ENV_LEND[3]);
         break;
       case 113:
         opmenuoldal = 3;
         if (value == 0) {
 
           loopsample[opmenuoldal] = false;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + lcdprint3(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         if (value == 1) {
           loopsample[opmenuoldal] = true;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + lcdprint3(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         break;
     }
@@ -857,25 +873,25 @@ void parametersysexchanged() {
 
       case 3:
         LFOMode[0] = value;
-        Serial.println("LFOMode L1: " + String(LFOMode[0]));
+        line = "LFOMode L1: " + lcdprint3(LFOMode[0]);
         break;
       case 4:
         PENVMode[0] = value;
-        Serial.println("LFOMode L1: " + String(PENVMode[0]));
+        line = "LFOMode L1: " + lcdprint3(PENVMode[0]);
         break;
       case 5:
         BENDERMode[0] = value;
-        Serial.println("BENDERMode L1: " + String(BENDERMode[0] ));
+        line = "BENDERMode L1: " + lcdprint3(BENDERMode[0] );
         break;
       case 6:
         break;
       case 10:
         STRUCTURE_U = value;
-        Serial.println("STRUCTURE_U: " + String(STRUCTURE_U ));
+        line = "STRUCTURE_U: " + lcdprint3(STRUCTURE_U );
         break;
       case 43:
         lfofreq[1] = value;
-        Serial.println("CHORUSFREQ U: " + String(lfofreq[1] ));
+        line = "CHORUSFREQ U: " + lcdprint3(lfofreq[1] );
         break;
       case 22:
         f02orig = expgains128[value] >> 1 + 1;
@@ -894,123 +910,113 @@ void parametersysexchanged() {
         break;
       case 26:
         lfofreq[3] = value;
-        Serial.println(" lfofreq2: " + String(lfofreq[3]));
+        line = " lfofreq2: " + lcdprint3(lfofreq[3]);
         break;
       case 27:
         lfo3level = value;
-        Serial.println(" lfofreq2: " + String(lfo3level));
+        line = " lfofreq2: " + lcdprint3(lfo3level);
         break;
       case 28:
         lfo3sync = value;
-        Serial.println(" lfofreq3: " + String(lfo3sync));
+        line = " lfofreq3: " + lcdprint3(lfo3sync);
         break;
       case 44:
         chorusLevelRight = value;
-        Serial.println("CHORUSLEVEL U: " + String(chorusLevelRight ));
+        line = "CHORUSLEVEL U: " + lcdprint3(chorusLevelRight );
         break;
       case 64:
         COARSE[0] = value;
-        Serial.println("COARSE L1: " + String(COARSE[0]));
+        line = "COARSE L1: " + lcdprint3(COARSE[0]);
         notetune();
         break;
       case 65:
         FINE[0] = value;
-        Serial.println("FINE L1: " + String(FINE[0]));
+        line = "FINE L1: " + lcdprint3(FINE[0]);
         notetune();
         break;
       case 66:
         KEYFollow[0] = value;
-        Serial.println("KEYFollow L1: " + String(KEYFollow[0]));
+        line = "KEYFollow L1: " + lcdprint2(KEYFollow[0]);
         notetune();
 
         break;
       case 67:
         TVA[0] = value;
-        Serial.println("TVA L1 ON-OFF: " + String(TVA[0]));
+        line = "TVA L1 ON-OFF: " + lcdprint3(TVA[0]);
         break;
       case 71:
         PCMWaveNo[0] = value;
-        Serial.println("PCMWaveNo" + String(0) + ": " + String(PCMWaveNo[0]));
+        line = "PCMWaveNo L1: " + lcdprint3(PCMWaveNo[0]);
         opmenuoldal = 0;
         setPCMWave();
         //lcd
-        lcdprint(0);
+
 
         break;
       case 99:
         volume[0] = value;
-        Serial.println("Level L1: " + String(volume[0]));
+        line = "Level L1: " + lcdprint3(volume[0]);
         break;
       case 101:
         BiasPoint[0] = value;
-        Serial.println("BiasPoint L1: " + String(BiasPoint[0]));
+        line = "BiasPoint L1: " + lcdprint3(BiasPoint[0]);
         notebias();
         break;
       case 102:
         BiasLevel[0] = value;
-        Serial.println("bieasLevel L1: " + String(BiasLevel[0]));
+        line = "BieasLevel L1: " + lcdprint3(BiasLevel[0]);
         notebias();
         break;
       case 103:
-        ENV_T1[0] = value;
-        Serial.println("ENV_T1 L1: " + String(ENV_T1[0]));
+        ENV_T1[0] =100- value;
+        line = "ENV_T1 L1: " + lcdprint3(ENV_T1[0]);
         break;
       case 104:
-        ENV_T2[0] = value;
-        Serial.println("ENV_T2 L1:" + String(ENV_T2[0]));
+        ENV_T2[0] =100- value;
+        line = "ENV_T2 L1:" + lcdprint3(ENV_T2[0]);
         break;
       case 105:
-        ENV_T3[0] = value;
-        Serial.println("ENV_T3 L1:" + String(ENV_T3[0]));
+        ENV_T3[0] =100- value;
+        line = "ENV_T3 L1:" + lcdprint3(ENV_T3[0]);
         break;
       case 106:
-        ENV_T4[0] = value;
-        Serial.println("ENV_T4 L1" + String(ENV_T4[0]));
+        ENV_T4[0] =100- value;
+        line = "ENV_T4 L1" + lcdprint3(ENV_T4[0]);
         break;
       case 107:
-        /*
-          step = samplesize[0] / 100;
-          sampleend[0] = value * step;
-          Serial.println("SAMPLE END L1: " + String(sampleend[0]));
-        */
-        ENV_T5[0] = value;
-        Serial.println("ENV_T5 L1" + String(ENV_T5[0]));
+        ENV_T5[0] =100- value;
+        line = "ENV_T5 L1" + lcdprint3(ENV_T5[0]);
         break;
       case 108:
         ENV_L1[0] = value;
-        Serial.println("ENV_L1 L1: " + String(ENV_L1[0]));
+        line = "ENV_L1 L1: " + lcdprint3(ENV_L1[0]);
         break;
       case 109:
         ENV_L2[0] = value;
-        Serial.println("ENV_L2 L1: " + String(ENV_L2[0]));
+        line = "ENV_L2 L1: " + lcdprint3(ENV_L2[0]);
         break;
       case 110:
-        /*
-          step = samplesize[0] / 100;
-          samplebegin[0] = value * step;
-          Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
-        */
         ENV_L3[0] = value;
-        Serial.println("ENV_L3 L1: " + String(ENV_L3[0]));
+        line = "ENV_L3 L1: " + lcdprint3(ENV_L3[0]);
         break;
       case 111:
         ENV_LSUS[0] = value;
-        Serial.println("ENV_LSUS L1" + String(ENV_LSUS[0]));
+        line = "ENV_LSUS L1" + lcdprint3(ENV_LSUS[0]);
         break;
       case 112:
         ENV_LEND[0] = value;
-        Serial.println("ENV_LEND L1" + String(ENV_LEND[0]));
+        line = "ENV_LEND L1" + lcdprint3(ENV_LEND[0]);
         break;
       case 113:
         opmenuoldal = 0;
         if (value == 0) {
 
           loopsample[opmenuoldal] = false;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         if (value == 1) {
           loopsample[opmenuoldal] = true;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         break;
       case 114:
@@ -1021,14 +1027,14 @@ void parametersysexchanged() {
           }
         }
 
-        Serial.println("SAMPLE END L1: " + String(sampleend[0]));
+        line = "SAMPLE END L1: " + String(sampleend[0]);
         if (value == 1) {
           samplebegin[0]++;
           if (samplesize[0] < samplebegin[0]) {
             samplebegin[0] = samplesize[0];
           }
         }
-        Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[0]));
+        line = "SAMPLE BEGIN L1: " + String(samplebegin[0]);
 
         break;
     }
@@ -1037,61 +1043,61 @@ void parametersysexchanged() {
     switch (noteByte) {
       case 0:
         COARSE[1] = value;
-        Serial.println("COARSE L2: " + String(COARSE[1]));
+        line = "COARSE L2: " + lcdprint3(COARSE[1]);
         notetune();
         break;
       case 1:
         FINE[1] = value;
-        Serial.println("FINE L2: " + String(FINE[1]));
+        line = "FINE L2: " + lcdprint3(FINE[1]);
         notetune();
         break;
       case 2:
         KEYFollow[1] = value;
-        Serial.println("KEYFollow L2: " + String(KEYFollow[1]));
+        line = "KEYFollow L2: " + lcdprint2(KEYFollow[1]);
         notetune();
         break;
       case 4:
         TVA[1] = value;
-        Serial.println("TVA L2: " + String(TVA[1]));
+        line = "TVA L2: " + lcdprint3(TVA[1]);
         break;
       case 7:
         PCMWaveNo[1] = value;
-        Serial.println("PCMWaveNo L2: " + String(PCMWaveNo[1]));
+        line = "PCMWaveNo L2: " + lcdprint3(PCMWaveNo[1]);
         opmenuoldal = 1;
         setPCMWave();
         //lcd
-        lcdprint(0);
+
         break;
 
       case 35:
         volume[1] = value;
-        Serial.println("Level L2: " + String(volume[1]));
+        line = "Level L2: " + lcdprint3(volume[1]);
         break;
       case 37:
         BiasPoint[1] = value;
-        Serial.println("BiasPoint L2: " + String(BiasPoint[1]));
+        line = "BiasPoint L2: " + lcdprint3(BiasPoint[1]);
         notebias();
         break;
       case 38:
         BiasLevel[1] = value;
-        Serial.println("bieasLevel L2: " + String(BiasLevel[1]));
+        line = "bieasLevel L2: " + lcdprint3(BiasLevel[1]);
         notebias();
         break;
       case 39:
-        ENV_T1[1] = value;
-        Serial.println("ENV_T1 L2: " + String(ENV_T1[1]));
+        ENV_T1[1] =100- value;
+        line = "ENV_T1 L2: " + lcdprint3(ENV_T1[1]);
         break;
       case 40:
-        ENV_T2[1] = value;
-        Serial.println("ENV_T2 L2" + String(ENV_T2[1]));
+        ENV_T2[1] =100- value;
+        line = "ENV_T2 L2" + lcdprint3(ENV_T2[1]);
         break;
       case 41:
-        ENV_T3[1] = value;
-        Serial.println("ENV_T3 L2" + String(ENV_T3[1]));
+        ENV_T3[1] = 100-value;
+        line = "ENV_T3 L2" + lcdprint3(ENV_T3[1]);
         break;
       case 42:
-        ENV_T4[1] = value;
-        Serial.println("ENV_T4 L2" + String(ENV_T4[1]));
+        ENV_T4[1] = 100-value;
+        line = "ENV_T4 L2" + lcdprint3(ENV_T4[1]);
         break;
       case 43:
         /*
@@ -1099,16 +1105,16 @@ void parametersysexchanged() {
           sampleend[1] = value * step;
           Serial.println("SAMPLE END L2: " + String(sampleend[1]));
         */
-        ENV_T5[1] = value;
-        Serial.println("ENV_T5 L2" + String(ENV_T5[1]));
+        ENV_T5[1] =100- value;
+        line = "ENV_T5 L2" + lcdprint3(ENV_T5[1]);
         break;
       case 44:
         ENV_L1[1] = value;
-        Serial.println("ENV_L1 L2: " + String(ENV_L1[1]));
+        line = "ENV_L1 L2: " + lcdprint3(ENV_L1[1]);
         break;
       case 45:
         ENV_L2[1] = value;
-        Serial.println("ENV_L2 L2: " + String(ENV_L2[1]));
+        line = "ENV_L2 L2: " + lcdprint3(ENV_L2[1]);
         break;
       case 46:
         /*
@@ -1117,26 +1123,26 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
         */
         ENV_L3[1] = value;
-        Serial.println("ENV_L3 L2: " + String(ENV_L3[1]));
+        line = "ENV_L3 L2: " + lcdprint3(ENV_L3[1]);
         break;
       case 47:
         ENV_LSUS[1] = value;
-        Serial.println("ENV_LSUS L2: " + String(ENV_LSUS[1]));
+        line = "ENV_LSUS L2: " + lcdprint3(ENV_LSUS[1]);
         break;
       case 48:
         ENV_LEND[1] = value;
-        Serial.println("ENV_LEND L2: " + String(ENV_LEND[1]));
+        line = "ENV_LEND L2: " + lcdprint3(ENV_LEND[1]);
         break;
       case 49:
         opmenuoldal = 1;
         if (value == 0) {
 
           loopsample[opmenuoldal] = false;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         if (value == 1) {
           loopsample[opmenuoldal] = true;
-          Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
+          line = "loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]);
         }
         break;
       case 50:
@@ -1160,7 +1166,7 @@ void parametersysexchanged() {
         break;
       case 74:
         STRUCTURE_L = value;
-        Serial.println("STRUCTURE_L: " + String(STRUCTURE_L));
+        line = "STRUCTURE_L: " + lcdprint3(STRUCTURE_L);
         break;
       case 86:
         f0orig = expgains128[value] >> 1 + 1;
@@ -1179,15 +1185,15 @@ void parametersysexchanged() {
         break;
       case 90:
         lfofreq[2] = value;
-        Serial.println(" lfofreq2: " + String(lfofreq[2]));
+        line = " lfofreq2: " + lcdprint3(lfofreq[2]);
         break;
       case 91:
         lfo2level = value;
-        Serial.println(" lfofreq2: " + String(lfo2level));
+        line = " lfofreq2: " + lcdprint3(lfo2level);
         break;
       case 92:
         lfo2sync = value;
-        Serial.println(" lfo2sync: " + String(lfo2sync));
+        line = " lfo2sync: " + lcdprint3(lfo2sync);
         break;
       case 106:
         switch (value) {
@@ -1245,11 +1251,11 @@ void parametersysexchanged() {
       case 107:
         // chorusRate=value;
         lfofreq[0] = value;
-        Serial.println(" Chorus RATE L: " + String(lfofreq[0]));
+        line = " Chorus RATE L: " + lcdprint3(lfofreq[0]);
         break;
       case 108:
         chorusLevelLeft = value;
-        Serial.println(" Chorus LEVEL U: " + String( chorusLevelLeft));
+        line = " Chorus LEVEL U: " + lcdprint3( chorusLevelLeft);
         break;
 
     }
@@ -1284,8 +1290,8 @@ void parametersysexchanged() {
           case 24: GLOBAL_TUNE = 120832; break;
         }//
         notetune();
-        Serial.println(" Step: " + String(step));
-        Serial.println(" GLOBAL_TUNE: " + String(GLOBAL_TUNE));
+        line = " Step: " + String(step);
+        line = " GLOBAL_TUNE: " + String(GLOBAL_TUNE);
         break;
       case 30:
         switch (value) {
@@ -1294,177 +1300,183 @@ void parametersysexchanged() {
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            Serial.println("Small Hall");
+            line = "Small Hall";
             break;
           case 1:
             delaybuffersize = 512;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            Serial.println("1. Medium Hall");
+            line = "1. Medium Hall";
             break;
           case 2:
             delaybuffersize = 1024;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            Serial.println("2. Large Hall");
+            line = "2. Large Hall";
             break;
           case 3:
             delaybuffersize = 2048;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            Serial.println("3. Chapel");
+            line = "3. Chapel";
             break;
           case 4:
             delaybuffersize = 4096;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 40;
-            Serial.println("4. SmallHall");
+            line = "4. SmallHall";
             break;
           case 5:
             delaybuffersize = 128;
             delaytime = 2;
             delay2time = 1;
             reverblevel = 40;
-            Serial.println("5. Box");
+            line = "5. Box";
             break;
           case 6:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 40;
-            Serial.println("5. Small Metal Room");
+            line = "5. Small Metal Room";
             break;
           case 7:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 2;
             reverblevel = 40;
-            Serial.println("6. Small Room");
+            line = "6. Small Room";
             break;
           case 8:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 2;
             reverblevel = 40;
-            Serial.println("7. Room");
+            line = "7. Room";
             break;
           case 9:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 2;
             reverblevel = 40;
-            Serial.println("8. Medium Room");
+            line = "8. Medium Room";
             break;
           case 10:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 3;
             reverblevel = 40;
-            Serial.println("9. Medium Large Room");
+            line = "9. Medium Large Room";
             break;
           case 11:
             delaybuffersize = 8192;
             delaytime = 3;
             delay2time = 4;
             reverblevel = 40;
-            Serial.println("10. Large Room");
+            line = "10. Large Room";
             break;
           case 12:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 4;
             reverblevel = 40;
-            Serial.println("11. Single Delay 102ms");
+            line = "11. Single Delay 102ms";
             break;
           case 13:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 4;
             reverblevel = 40;
-            Serial.println("12. Cross Delay 180ms");
+            line = "12. Cross Delay 180ms";
             break;
           case 14:
             delaybuffersize = 8192;
             delaytime = 4;
             delay2time = 4;
             reverblevel = 40;
-            Serial.println("13. Cross Delay 148-256msec");
+            line = "13. Cross Delay 148-256msec";
             break;
           case 15:
             delaybuffersize = 8192;
             delaytime = 5;
             delay2time = 6;
             reverblevel = 40;
-            Serial.println("14. Short Gate");
+            line = "14. Short Gate";
             break;
           case 16:
             delaybuffersize = 8192;
             delaytime = 6;
             delay2time = 7;
             reverblevel = 40;
-            Serial.println("15. Long Gate");
+            line = "15. Long Gate";
             break;
           case 17:
             delaybuffersize = 8192;
             delaytime = 7;
             delay2time = 8;
             reverblevel = 40;
-            Serial.println("Cross Delay 148-256msec");
+            line = "Cross Delay 148-256msec";
             break;
           case 18:
             delaybuffersize = 8192;
             delaytime = 8;
             delay2time = 9;
             reverblevel = 40;
-            Serial.println("Cross Delay 148-256msec");
+            line = "Cross Delay 148-256msec";
             break;
           case 19:
             delaybuffersize = 8192;
             delaytime = 9;
             delay2time = 10;
             reverblevel = 40;
-            Serial.println("Cross Delay 148-256msec");
+            line = "Cross Delay 148-256msec";
             break;
           case 20:
             delaybuffersize = 8192;
             delaytime = 10;
             delay2time = 10;
             reverblevel = 40;
-            Serial.println("Cross Delay 148-256msec");
+            line = "Cross Delay 148-256msec";
             break;
           case 21:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 40;
-            Serial.println("Cross Delay 148-256msec");
+            line = "Cross Delay 148-256msec";
             break;
         }
         break;
       case 31:
         reverblevel = value;
-        Serial.println("ReverbLevel: " + String(reverblevel));
+        line = "ReverbLevel: " + lcdprint3(reverblevel);
         break;
       case 32:
 
         break;
       case 34:
         MIDI_SYNC = value;
-        Serial.println("MIDI_SYNC: " + String(MIDI_SYNC));
+        line = "MIDI_SYNC: " + lcdprint3(MIDI_SYNC);
         break;
       case 35:
         CHASE_LEVEL = value;
+        line = "CHASE LEVEL: " + lcdprint3(CHASE_LEVEL);
         break;
       case 36:
         CHASE_TIME = value;
+        line = "CHASE TIME: " + lcdprint3(CHASE_TIME);
         break;
 
     }
   }
+  //serial
+  Serial.println(line);
+  //lcd
+  lcdprint(line);
 }
 
 //--------------MIDI PARAMETER CONTROL-------------
@@ -1844,18 +1856,23 @@ void serialEvent() {
           }
           //not single sysex 3-3-3-3...-3to-->arraylength:
           else {
+            LCD_ON = false;
+            Serial.println("lcdki");
             localParameterByte = MIDI2.getSysExArray()[6];
             noteByte = MIDI2.getSysExArray()[7];
             velocityByte = MIDI2.getSysExArray()[8];
             Serial.println("Localvalue:" + String(localParameterByte) + " Commandsysex:" + String(noteByte) + " Datasysex:" + String(velocityByte));
+
             parametersysexchanged();
+
             for (int i = 9; i < MIDI2.getSysExArrayLength() - 2; i++) {
               noteByte++ ;
               velocityByte = MIDI2.getSysExArray()[i];
               Serial.println("Localvalue:" + String(localParameterByte) + " Commandsysex:" + String(noteByte) + " Datasysex:" + String(velocityByte));
               parametersysexchanged();
             }
-
+            LCD_ON = true;
+             Serial.println("lcdbe");
           }
         }
         break;
