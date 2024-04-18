@@ -615,7 +615,7 @@ void lcdprint(String szoveg) {
   {
     lcd.setCursor(0, 1);
     int hiany = 16 - szoveg.length();
-    for (int i = 0; i < hiany; i++) 
+    for (int i = 0; i < hiany; i++)
     {
       szoveg += " ";
     }
@@ -692,19 +692,19 @@ void parametersysexchanged() {
         notebias();
         break;
       case 39:
-        ENV_T1[2] = 100-value;
+        ENV_T1[2] = 100 - value;
         line = "ENV_T1 U1: " + lcdprint3(ENV_T1[2]);
         break;
       case 40:
-        ENV_T2[2] =100- value;
+        ENV_T2[2] = 100 - value;
         line = "ENV_T2 U1:" + lcdprint3(ENV_T2[2]);
         break;
       case 41:
-        ENV_T3[2] =100- value;
+        ENV_T3[2] = 100 - value;
         line = "ENV_T3 U1:" + lcdprint3(ENV_T3[2]);
         break;
       case 42:
-        ENV_T4[2] =100- value;
+        ENV_T4[2] = 100 - value;
         line = "ENV_T4 U1:" + lcdprint3(ENV_T4[2]);
         break;
       case 43:
@@ -713,7 +713,7 @@ void parametersysexchanged() {
           sampleend[2] = value * step;
           Serial.println("SAMPLE END U1: " + String(sampleend[2]));
         */
-        ENV_T5[2] =100- value;
+        ENV_T5[2] = 100 - value;
         line = "ENV_T5 U1:" + lcdprint3(ENV_T5[2]);
         break;
       case 44:
@@ -800,19 +800,19 @@ void parametersysexchanged() {
         notebias();
         break;
       case 103:
-        ENV_T1[3] =100- value;
+        ENV_T1[3] = 100 - value;
         line = "ENV_T1 U2: " + lcdprint3(ENV_T1[3]);
         break;
       case 104:
-        ENV_T2[3] = 100-value;
+        ENV_T2[3] = 100 - value;
         line = "ENV_T2 U2:" + lcdprint3(ENV_T2[3]);
         break;
       case 105:
-        ENV_T3[3] =100- value;
+        ENV_T3[3] = 100 - value;
         line = "ENV_T3 U2:" + lcdprint3(ENV_T3[3]);
         break;
       case 106:
-        ENV_T4[3] =100- value;
+        ENV_T4[3] = 100 - value;
         line = "ENV_T4 U2:" + lcdprint3(ENV_T4[3]);
         break;
       case 107:
@@ -821,7 +821,7 @@ void parametersysexchanged() {
           sampleend[3] = value * step;
           Serial.println("SAMPLE END U2: " + String(sampleend[3]));
         */
-        ENV_T5[3] =100- value;
+        ENV_T5[3] = 100 - value;
         line = "ENV_T5 U2:" + lcdprint3(ENV_T5[3]);
         break;
 
@@ -968,23 +968,23 @@ void parametersysexchanged() {
         notebias();
         break;
       case 103:
-        ENV_T1[0] =100- value;
+        ENV_T1[0] = 100 - value;
         line = "ENV_T1 L1: " + lcdprint3(ENV_T1[0]);
         break;
       case 104:
-        ENV_T2[0] =100- value;
+        ENV_T2[0] = 100 - value;
         line = "ENV_T2 L1:" + lcdprint3(ENV_T2[0]);
         break;
       case 105:
-        ENV_T3[0] =100- value;
+        ENV_T3[0] = 100 - value;
         line = "ENV_T3 L1:" + lcdprint3(ENV_T3[0]);
         break;
       case 106:
-        ENV_T4[0] =100- value;
+        ENV_T4[0] = 100 - value;
         line = "ENV_T4 L1" + lcdprint3(ENV_T4[0]);
         break;
       case 107:
-        ENV_T5[0] =100- value;
+        ENV_T5[0] = 100 - value;
         line = "ENV_T5 L1" + lcdprint3(ENV_T5[0]);
         break;
       case 108:
@@ -1084,19 +1084,19 @@ void parametersysexchanged() {
         notebias();
         break;
       case 39:
-        ENV_T1[1] =100- value;
+        ENV_T1[1] = 100 - value;
         line = "ENV_T1 L2: " + lcdprint3(ENV_T1[1]);
         break;
       case 40:
-        ENV_T2[1] =100- value;
+        ENV_T2[1] = 100 - value;
         line = "ENV_T2 L2" + lcdprint3(ENV_T2[1]);
         break;
       case 41:
-        ENV_T3[1] = 100-value;
+        ENV_T3[1] = 100 - value;
         line = "ENV_T3 L2" + lcdprint3(ENV_T3[1]);
         break;
       case 42:
-        ENV_T4[1] = 100-value;
+        ENV_T4[1] = 100 - value;
         line = "ENV_T4 L2" + lcdprint3(ENV_T4[1]);
         break;
       case 43:
@@ -1105,7 +1105,7 @@ void parametersysexchanged() {
           sampleend[1] = value * step;
           Serial.println("SAMPLE END L2: " + String(sampleend[1]));
         */
-        ENV_T5[1] =100- value;
+        ENV_T5[1] = 100 - value;
         line = "ENV_T5 L2" + lcdprint3(ENV_T5[1]);
         break;
       case 44:
@@ -1872,7 +1872,7 @@ void serialEvent() {
               parametersysexchanged();
             }
             LCD_ON = true;
-             Serial.println("lcdbe");
+            Serial.println("lcdbe");
           }
         }
         break;
@@ -1971,48 +1971,80 @@ void loop() {
             }
             break;
           case 1:
-            if (ENV_L2[i] < ENV_L1[i]) {
+            /*
+              if (ENV_L2[i] < ENV_L1[i]) {
               TVAvolume[i][j] = TVAvolume[i][j] - ENV_T2[i];
               if (TVAvolume[i][j] < ENV_L2[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
                 generatorstatus[i][j]++;
               }
-            }
-            if (ENV_L2[i] >= ENV_L1[i]) {
+              }
+              if (ENV_L2[i] >= ENV_L1[i]) {
               TVAvolume[i][j] = TVAvolume[i][j] + ENV_T2[i];
               if (TVAvolume[i][j] > ENV_L2[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
                 generatorstatus[i][j]++;
               }
+              }
+            */
+            TVAvolume[i][j] = ENV_L1[i] - linear[tvapointer[i][j] >> 18];
+            tvapointer[i][j] += ENV_T2[i] << 14;
+            if (TVAvolume[i][j] < ENV_L2[i] + ENV_T2[i])
+            {
+              TVAvolume[i][j] = ENV_L2[i];
+              tvapointer[i][j] = 0;
+              generatorstatus[i][j]++;
             }
             break;
           case 2:
-            if (ENV_LSUS[i] < ENV_L2[i]) {
+
+            /*if (ENV_LSUS[i] < ENV_L2[i]) {
               TVAvolume[i][j] = TVAvolume[i][j] - ENV_T3[i];
               if (TVAvolume[i][j] < ENV_LSUS[i])
               {
                 TVAvolume[i][j] = ENV_LSUS[i];
                 generatorstatus[i][j]++;
               }
-            }
-            if (ENV_LSUS[i] >= ENV_L2[i]) {
+              }
+              if (ENV_LSUS[i] >= ENV_L2[i]) {
               TVAvolume[i][j] = TVAvolume[i][j] + ENV_T3[i];
               if (TVAvolume[i][j] > ENV_LSUS[i])
               {
                 TVAvolume[i][j] = ENV_LSUS[i];
                 generatorstatus[i][j]++;
               }
+              }
+            */
+            TVAvolume[i][j] = ENV_L2[i] - linear[tvapointer[i][j] >> 18];
+            tvapointer[i][j] += ENV_T3[i] << 14;
+            if (TVAvolume[i][j] < ENV_L3[i] + ENV_T3[i])
+            {
+              TVAvolume[i][j] = ENV_L3[i];
+              tvapointer[i][j] = 0;
+              generatorstatus[i][j]++;
             }
             break;
           case 3:
-            TVAvolume[i][j] = ENV_LSUS[i];
+            // TVAvolume[i][j] = ENV_LSUS[i];
+            TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> 18];
+            tvapointer[i][j] += ENV_T4[i] << 14;
+            if (TVAvolume[i][j] < ENV_LSUS[i] + ENV_T4[i])
+            {
+              TVAvolume[i][j] = ENV_LSUS[i];
+              tvapointer[i][j] = 0;
+              generatorstatus[i][j]++;
+
+            }
+
+
             break;
           case 4:
             TVAvolume[i][j] = ENV_LSUS[i] - linear[tvapointer[i][j] >> 18];
-            tvapointer[i][j] += ENV_T4[i] << 14;
-            if (TVAvolume[i][j] < ENV_LEND[i] + ENV_T4[i]) {
+            tvapointer[i][j] += ENV_T5[i] << 14;
+            if (TVAvolume[i][j] < ENV_LEND[i] + ENV_T5[i]) 
+            {
               TVAvolume[i][j] = ENV_LEND[i];
               tvapointer[i][j] = 0;
               generatorstatus[i][j]++;
