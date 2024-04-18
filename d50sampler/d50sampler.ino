@@ -654,12 +654,12 @@ void parametersysexchanged() {
       case 1:
         //couarse u1
         FINE[2] = value;
-        line = "COARSE U1: " + lcdprint3(FINE[2]);
+        line = "U1: COARSE= " + lcdprint3(FINE[2]);
         notetune();
         break;
       case 2:
         KEYFollow[2] = value;
-        line = "KEYFollow U1: " + lcdprint2(KEYFollow[2]);
+        line = " U1: KEYFollow=" + lcdprint2(KEYFollow[2]);
         notetune();
         break;
       case 3:
@@ -667,11 +667,11 @@ void parametersysexchanged() {
         break;
       case 4:
         TVA[2] = value;
-        line = "TVA U1: " + lcdprint3(TVA[1]);
+        line = "U1: TVA=" + lcdprint3(TVA[1]);
         break;
       case 7:
         PCMWaveNo[2] = value;
-        line = "PCMWaveNo U1: " + lcdprint3(PCMWaveNo[2]);
+        line = "U1: PCMWaveNo=" + lcdprint3(PCMWaveNo[2]);
 
         //
         opmenuoldal = 2;
@@ -679,33 +679,33 @@ void parametersysexchanged() {
         break;
       case 35:
         volume[2] = value;
-        line = "Level U1: " + lcdprint3(volume[2]);
+        line = "U1: Level=" + lcdprint3(volume[2]);
         break;
       case 37:
         BiasPoint[2] = value;
-        line = "BiasPoint U1: " + lcdprint3(BiasPoint[2]);
+        line = "U1: BiasPoint=" + lcdprint3(BiasPoint[2]);
         notebias();
         break;
       case 38:
         BiasLevel[2] = value;
-        line = "bieasLevel U1: " + lcdprint3(BiasLevel[2]);
+        line = "U1: bieasLevel=" + lcdprint3(BiasLevel[2]);
         notebias();
         break;
       case 39:
         ENV_T1[2] = 100 - value;
-        line = "ENV_T1 U1: " + lcdprint3(ENV_T1[2]);
+        line = "U1: ENV_T1=" + lcdprint3(ENV_T1[2]);
         break;
       case 40:
         ENV_T2[2] = 100 - value;
-        line = "ENV_T2 U1:" + lcdprint3(ENV_T2[2]);
+        line = "U1: ENV_T2=" + lcdprint3(ENV_T2[2]);
         break;
       case 41:
         ENV_T3[2] = 100 - value;
-        line = "ENV_T3 U1:" + lcdprint3(ENV_T3[2]);
+        line = "U1: ENV_T3=" + lcdprint3(ENV_T3[2]);
         break;
       case 42:
         ENV_T4[2] = 100 - value;
-        line = "ENV_T4 U1:" + lcdprint3(ENV_T4[2]);
+        line = "U1: ENV_T4=" + lcdprint3(ENV_T4[2]);
         break;
       case 43:
         /*
@@ -714,15 +714,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE END U1: " + String(sampleend[2]));
         */
         ENV_T5[2] = 100 - value;
-        line = "ENV_T5 U1:" + lcdprint3(ENV_T5[2]);
+        line = "U1: ENV_T5=" + lcdprint3(ENV_T5[2]);
         break;
       case 44:
         ENV_L1[2] = value;
-        line = "ENV_L1 U1:" + lcdprint3(ENV_L1[2]);
+        line = "U1: ENV_L1" + lcdprint3(ENV_L1[2]);
         break;
       case 45:
         ENV_L2[2] = value;
-        line = "ENV_L2 U1:" + String(ENV_L2[2]);
+        line = "U1: ENV_L2=" + String(ENV_L2[2]);
         break;
       case 46:
         /*
@@ -731,15 +731,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN U1: " + String(samplebegin[2]));
         */
         ENV_L3[2] = value;
-        line = "ENV_L3 U1:" + lcdprint3(ENV_L3[2]);
+        line = "U1: ENV_L3=" + lcdprint3(ENV_L3[2]);
         break;
       case 47:
         ENV_LSUS[2] = value;
-        line = "ENV_LSUS U1: " + lcdprint3(ENV_LSUS[2]);
+        line = "U1: ENV_LSUS=" + lcdprint3(ENV_LSUS[2]);
         break;
       case 48:
         ENV_LEND[2] = value;
-        line = "ENV_LEND U1: " + lcdprint3(ENV_LEND[2]);
+        line = "U1: ENV_LEND=" + lcdprint3(ENV_LEND[2]);
         break;
       case 49:
         opmenuoldal = 2;
@@ -756,18 +756,18 @@ void parametersysexchanged() {
       case 64:
         //couarse u2
         COARSE[3] = value;
-        line = "COARSE U2:" + lcdprint3(COARSE[3]);
+        line = "U2: COARSE=" + lcdprint3(COARSE[3]);
         notetune();
         break;
       case 65:
         //couarse u2
         FINE[3] = value;
-        line = "COARSE U2:" + lcdprint3(FINE[3]);
+        line = "U2: COARSE=" + lcdprint3(FINE[3]);
         notetune();
         break;
       case 66:
         KEYFollow[3] = value;
-        line = "KEYFollow U2:" + lcdprint2(KEYFollow[3]);
+        line = "U2: KEYFollow=" + lcdprint2(KEYFollow[3]);
         notetune();
         break;
       case 67:
@@ -775,11 +775,11 @@ void parametersysexchanged() {
         break;
       case 68:
         TVA[3] = value;
-        line = "TVA U2: " + lcdprint3(TVA[3]);
+        line = "U2: TVA=" + lcdprint3(TVA[3]);
         break;
       case 71:
         PCMWaveNo[3] = value;
-        line = "PCMWaveNo U2: " + lcdprint3(PCMWaveNo[3]);
+        line = "U2: PCMWaveNo=" + lcdprint3(PCMWaveNo[3]);
         opmenuoldal = 3;
         setPCMWave();
         //lcd
@@ -787,33 +787,33 @@ void parametersysexchanged() {
         break;
       case 99:
         volume[3] = value;
-        line = "Level U2: " + lcdprint3(volume[3]);
+        line = "U2: Level=" + lcdprint3(volume[3]);
         break;
       case 101:
         BiasPoint[3] = value;
-        line = "BiasPoint L2: " + lcdprint3(BiasPoint[3]);
+        line = "L2: BiasPoint=" + lcdprint3(BiasPoint[3]);
         notebias();
         break;
       case 102:
         BiasLevel[3] = value;
-        line = "bieasLevel L1: " + lcdprint3(BiasLevel[3]);
+        line = "L1: bieasLevel=" + lcdprint3(BiasLevel[3]);
         notebias();
         break;
       case 103:
         ENV_T1[3] = 100 - value;
-        line = "ENV_T1 U2: " + lcdprint3(ENV_T1[3]);
+        line = "U2: ENV_T1=" + lcdprint3(ENV_T1[3]);
         break;
       case 104:
         ENV_T2[3] = 100 - value;
-        line = "ENV_T2 U2:" + lcdprint3(ENV_T2[3]);
+        line = "U2: ENV_T2=" + lcdprint3(ENV_T2[3]);
         break;
       case 105:
         ENV_T3[3] = 100 - value;
-        line = "ENV_T3 U2:" + lcdprint3(ENV_T3[3]);
+        line = "U2: ENV_T3=" + lcdprint3(ENV_T3[3]);
         break;
       case 106:
         ENV_T4[3] = 100 - value;
-        line = "ENV_T4 U2:" + lcdprint3(ENV_T4[3]);
+        line = "U2: ENV_T4=" + lcdprint3(ENV_T4[3]);
         break;
       case 107:
         /*
@@ -822,16 +822,16 @@ void parametersysexchanged() {
           Serial.println("SAMPLE END U2: " + String(sampleend[3]));
         */
         ENV_T5[3] = 100 - value;
-        line = "ENV_T5 U2:" + lcdprint3(ENV_T5[3]);
+        line = "U2: ENV_T5=" + lcdprint3(ENV_T5[3]);
         break;
 
       case 108:
         ENV_L1[3] = value;
-        line = "ENV_L1 U2: " + lcdprint3(ENV_L1[3]);
+        line = "U2: ENV_L1=" + lcdprint3(ENV_L1[3]);
         break;
       case 109:
         ENV_L2[3] = value;
-        line = "ENV_L2 U2: " + lcdprint3(ENV_L2[3]);
+        line = "U2: ENV_L2=" + lcdprint3(ENV_L2[3]);
         break;
       case 110:
         /*
@@ -840,15 +840,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN L1: " + String(samplebegin[3]));
         */
         ENV_L3[3] = value;
-        line = "ENV_L3 U2: " + lcdprint3(ENV_L3[3]);
+        line = "U2: ENV_L3=" + lcdprint3(ENV_L3[3]);
         break;
       case 111:
         ENV_LSUS[3] = value;
-        line = "ENV_LSUS U2" + lcdprint3(ENV_LSUS[3]);
+        line = "U2: ENV_LSUS=" + lcdprint3(ENV_LSUS[3]);
         break;
       case 112:
         ENV_LEND[3] = value;
-        line = "ENV_LEND U2: " + lcdprint3(ENV_LEND[3]);
+        line = "U2: ENV_LEND=" + lcdprint3(ENV_LEND[3]);
         break;
       case 113:
         opmenuoldal = 3;
@@ -873,15 +873,15 @@ void parametersysexchanged() {
 
       case 3:
         LFOMode[0] = value;
-        line = "LFOMode L1: " + lcdprint3(LFOMode[0]);
+        line = "L1: LFOMode=" + lcdprint3(LFOMode[0]);
         break;
       case 4:
         PENVMode[0] = value;
-        line = "LFOMode L1: " + lcdprint3(PENVMode[0]);
+        line = "L1: LFOMode=" + lcdprint3(PENVMode[0]);
         break;
       case 5:
         BENDERMode[0] = value;
-        line = "BENDERMode L1: " + lcdprint3(BENDERMode[0] );
+        line = "L1:  BENDERMode=" + lcdprint3(BENDERMode[0] );
         break;
       case 6:
         break;
@@ -891,7 +891,7 @@ void parametersysexchanged() {
         break;
       case 43:
         lfofreq[1] = value;
-        line = "CHORUSFREQ U: " + lcdprint3(lfofreq[1] );
+        line = "U: CHORUSFREQ=" + lcdprint3(lfofreq[1] );
         break;
       case 22:
         f02orig = expgains128[value] >> 1 + 1;
@@ -922,31 +922,31 @@ void parametersysexchanged() {
         break;
       case 44:
         chorusLevelRight = value;
-        line = "CHORUSLEVEL U: " + lcdprint3(chorusLevelRight );
+        line = "U: CHORUSLEVEL=" + lcdprint3(chorusLevelRight );
         break;
       case 64:
         COARSE[0] = value;
-        line = "COARSE L1: " + lcdprint3(COARSE[0]);
+        line = "L1: COARSE=" + lcdprint3(COARSE[0]);
         notetune();
         break;
       case 65:
         FINE[0] = value;
-        line = "FINE L1: " + lcdprint3(FINE[0]);
+        line = "L1: FINE=" + lcdprint3(FINE[0]);
         notetune();
         break;
       case 66:
         KEYFollow[0] = value;
-        line = "KEYFollow L1: " + lcdprint2(KEYFollow[0]);
+        line = "L1: KEYFollow=" + lcdprint2(KEYFollow[0]);
         notetune();
 
         break;
       case 67:
         TVA[0] = value;
-        line = "TVA L1 ON-OFF: " + lcdprint3(TVA[0]);
+        line = "L1: TVA ON-OFF=" + lcdprint3(TVA[0]);
         break;
       case 71:
         PCMWaveNo[0] = value;
-        line = "PCMWaveNo L1: " + lcdprint3(PCMWaveNo[0]);
+        line = "L1: PCMWaveNo=" + lcdprint3(PCMWaveNo[0]);
         opmenuoldal = 0;
         setPCMWave();
         //lcd
@@ -955,57 +955,57 @@ void parametersysexchanged() {
         break;
       case 99:
         volume[0] = value;
-        line = "Level L1: " + lcdprint3(volume[0]);
+        line = "L1: Level=" + lcdprint3(volume[0]);
         break;
       case 101:
         BiasPoint[0] = value;
-        line = "BiasPoint L1: " + lcdprint3(BiasPoint[0]);
+        line = "L1: BiasPoint=" + lcdprint3(BiasPoint[0]);
         notebias();
         break;
       case 102:
         BiasLevel[0] = value;
-        line = "BieasLevel L1: " + lcdprint3(BiasLevel[0]);
+        line = "L1: BieasLevel=" + lcdprint3(BiasLevel[0]);
         notebias();
         break;
       case 103:
         ENV_T1[0] = 100 - value;
-        line = "ENV_T1 L1: " + lcdprint3(ENV_T1[0]);
+        line = "L1: ENV_T1=" + lcdprint3(ENV_T1[0]);
         break;
       case 104:
         ENV_T2[0] = 100 - value;
-        line = "ENV_T2 L1:" + lcdprint3(ENV_T2[0]);
+        line = "L1: ENV_T2=" + lcdprint3(ENV_T2[0]);
         break;
       case 105:
         ENV_T3[0] = 100 - value;
-        line = "ENV_T3 L1:" + lcdprint3(ENV_T3[0]);
+        line = "L1: ENV_T3=" + lcdprint3(ENV_T3[0]);
         break;
       case 106:
         ENV_T4[0] = 100 - value;
-        line = "ENV_T4 L1" + lcdprint3(ENV_T4[0]);
+        line = "L1 ENV_T4=" + lcdprint3(ENV_T4[0]);
         break;
       case 107:
         ENV_T5[0] = 100 - value;
-        line = "ENV_T5 L1" + lcdprint3(ENV_T5[0]);
+        line = "L1 ENV_T5=" + lcdprint3(ENV_T5[0]);
         break;
       case 108:
         ENV_L1[0] = value;
-        line = "ENV_L1 L1: " + lcdprint3(ENV_L1[0]);
+        line = "L1: ENV_L1=" + lcdprint3(ENV_L1[0]);
         break;
       case 109:
         ENV_L2[0] = value;
-        line = "ENV_L2 L1: " + lcdprint3(ENV_L2[0]);
+        line = "L1: ENV_L2=" + lcdprint3(ENV_L2[0]);
         break;
       case 110:
         ENV_L3[0] = value;
-        line = "ENV_L3 L1: " + lcdprint3(ENV_L3[0]);
+        line = "L1: ENV_L3=" + lcdprint3(ENV_L3[0]);
         break;
       case 111:
         ENV_LSUS[0] = value;
-        line = "ENV_LSUS L1" + lcdprint3(ENV_LSUS[0]);
+        line = "L1: ENV_LSUS=" + lcdprint3(ENV_LSUS[0]);
         break;
       case 112:
         ENV_LEND[0] = value;
-        line = "ENV_LEND L1" + lcdprint3(ENV_LEND[0]);
+        line = "L1: ENV_LEND=" + lcdprint3(ENV_LEND[0]);
         break;
       case 113:
         opmenuoldal = 0;
@@ -1027,14 +1027,14 @@ void parametersysexchanged() {
           }
         }
 
-        line = "SAMPLE END L1: " + String(sampleend[0]);
+        line = "L1: SAMPLE END=" + String(sampleend[0]);
         if (value == 1) {
           samplebegin[0]++;
           if (samplesize[0] < samplebegin[0]) {
             samplebegin[0] = samplesize[0];
           }
         }
-        line = "SAMPLE BEGIN L1: " + String(samplebegin[0]);
+        line = "L1: SAMPLE BEGIN=" + String(samplebegin[0]);
 
         break;
     }
@@ -1043,26 +1043,26 @@ void parametersysexchanged() {
     switch (noteByte) {
       case 0:
         COARSE[1] = value;
-        line = "COARSE L2: " + lcdprint3(COARSE[1]);
+        line = "L2: COARSE=" + lcdprint3(COARSE[1]);
         notetune();
         break;
       case 1:
         FINE[1] = value;
-        line = "FINE L2: " + lcdprint3(FINE[1]);
+        line = "L2:  FINE=" + lcdprint3(FINE[1]);
         notetune();
         break;
       case 2:
         KEYFollow[1] = value;
-        line = "KEYFollow L2: " + lcdprint2(KEYFollow[1]);
+        line = "L2: KEYFollow=" + lcdprint2(KEYFollow[1]);
         notetune();
         break;
       case 4:
         TVA[1] = value;
-        line = "TVA L2: " + lcdprint3(TVA[1]);
+        line = "L2: TVA=" + lcdprint3(TVA[1]);
         break;
       case 7:
         PCMWaveNo[1] = value;
-        line = "PCMWaveNo L2: " + lcdprint3(PCMWaveNo[1]);
+        line = "L2: PCMWaveNo=" + lcdprint3(PCMWaveNo[1]);
         opmenuoldal = 1;
         setPCMWave();
         //lcd
@@ -1071,7 +1071,7 @@ void parametersysexchanged() {
 
       case 35:
         volume[1] = value;
-        line = "Level L2: " + lcdprint3(volume[1]);
+        line = "L2: Level=" + lcdprint3(volume[1]);
         break;
       case 37:
         BiasPoint[1] = value;
@@ -1080,24 +1080,24 @@ void parametersysexchanged() {
         break;
       case 38:
         BiasLevel[1] = value;
-        line = "bieasLevel L2: " + lcdprint3(BiasLevel[1]);
+        line = "L2: bieasLevel=" + lcdprint3(BiasLevel[1]);
         notebias();
         break;
       case 39:
         ENV_T1[1] = 100 - value;
-        line = "ENV_T1 L2: " + lcdprint3(ENV_T1[1]);
+        line = "L2: ENV_T1=" + lcdprint3(ENV_T1[1]);
         break;
       case 40:
         ENV_T2[1] = 100 - value;
-        line = "ENV_T2 L2" + lcdprint3(ENV_T2[1]);
+        line = "L2: ENV_T2=" + lcdprint3(ENV_T2[1]);
         break;
       case 41:
         ENV_T3[1] = 100 - value;
-        line = "ENV_T3 L2" + lcdprint3(ENV_T3[1]);
+        line = "L2: ENV_T3=" + lcdprint3(ENV_T3[1]);
         break;
       case 42:
         ENV_T4[1] = 100 - value;
-        line = "ENV_T4 L2" + lcdprint3(ENV_T4[1]);
+        line = "L2: ENV_T4=" + lcdprint3(ENV_T4[1]);
         break;
       case 43:
         /*
@@ -1106,15 +1106,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE END L2: " + String(sampleend[1]));
         */
         ENV_T5[1] = 100 - value;
-        line = "ENV_T5 L2" + lcdprint3(ENV_T5[1]);
+        line = "L2: ENV_T5=" + lcdprint3(ENV_T5[1]);
         break;
       case 44:
         ENV_L1[1] = value;
-        line = "ENV_L1 L2: " + lcdprint3(ENV_L1[1]);
+        line = "L2: ENV_L1=" + lcdprint3(ENV_L1[1]);
         break;
       case 45:
         ENV_L2[1] = value;
-        line = "ENV_L2 L2: " + lcdprint3(ENV_L2[1]);
+        line = "L2: ENV_L2=" + lcdprint3(ENV_L2[1]);
         break;
       case 46:
         /*
@@ -1123,15 +1123,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN L2: " + String(samplebegin[1]));
         */
         ENV_L3[1] = value;
-        line = "ENV_L3 L2: " + lcdprint3(ENV_L3[1]);
+        line = "L2: ENV_L3=" + lcdprint3(ENV_L3[1]);
         break;
       case 47:
         ENV_LSUS[1] = value;
-        line = "ENV_LSUS L2: " + lcdprint3(ENV_LSUS[1]);
+        line = "L2: ENV_LSUS=" + lcdprint3(ENV_LSUS[1]);
         break;
       case 48:
         ENV_LEND[1] = value;
-        line = "ENV_LEND L2: " + lcdprint3(ENV_LEND[1]);
+        line = "L2: ENV_LEND=" + lcdprint3(ENV_LEND[1]);
         break;
       case 49:
         opmenuoldal = 1;
@@ -1251,11 +1251,11 @@ void parametersysexchanged() {
       case 107:
         // chorusRate=value;
         lfofreq[0] = value;
-        line = " Chorus RATE L: " + lcdprint3(lfofreq[0]);
+        line = "L: Chorus RATE=" + lcdprint3(lfofreq[0]);
         break;
       case 108:
         chorusLevelLeft = value;
-        line = " Chorus LEVEL U: " + lcdprint3( chorusLevelLeft);
+        line = "U: Chorus LEVEL=" + lcdprint3( chorusLevelLeft);
         break;
 
     }
@@ -1290,8 +1290,8 @@ void parametersysexchanged() {
           case 24: GLOBAL_TUNE = 120832; break;
         }//
         notetune();
-        line = " Step: " + String(step);
-        line = " GLOBAL_TUNE: " + String(GLOBAL_TUNE);
+        line = "STEP WAVE PART=" + String(step);
+        line = "GLOBAL_TUNE=" + String(GLOBAL_TUNE);
         break;
       case 30:
         switch (value) {
@@ -1300,63 +1300,63 @@ void parametersysexchanged() {
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            line = "Small Hall";
+            line = "1. Small Hall";
             break;
           case 1:
             delaybuffersize = 512;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            line = "1. Medium Hall";
+            line = "2. Medium Hall";
             break;
           case 2:
             delaybuffersize = 1024;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            line = "2. Large Hall";
+            line = "3. Large Hall";
             break;
           case 3:
             delaybuffersize = 2048;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 60;
-            line = "3. Chapel";
+            line = "4. Chapel";
             break;
           case 4:
             delaybuffersize = 4096;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 40;
-            line = "4. SmallHall";
+            line = "5. Box";
             break;
           case 5:
             delaybuffersize = 128;
             delaytime = 2;
             delay2time = 1;
             reverblevel = 40;
-            line = "5. Box";
+            line = "6. Small Metal Room";
             break;
           case 6:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 1;
             reverblevel = 40;
-            line = "5. Small Metal Room";
+            line = "7. Small Room ";
             break;
           case 7:
             delaybuffersize = 8192;
             delaytime = 1;
             delay2time = 2;
             reverblevel = 40;
-            line = "6. Small Room";
+            line = "8. Small Room";
             break;
           case 8:
             delaybuffersize = 8192;
             delaytime = 2;
             delay2time = 2;
             reverblevel = 40;
-            line = "7. Room";
+            line = "9. Room";
             break;
           case 9:
             delaybuffersize = 8192;
@@ -1460,15 +1460,15 @@ void parametersysexchanged() {
         break;
       case 34:
         MIDI_SYNC = value;
-        line = "MIDI_SYNC: " + lcdprint3(MIDI_SYNC);
+        line = "MIDI_SYNC=" + lcdprint3(MIDI_SYNC);
         break;
       case 35:
         CHASE_LEVEL = value;
-        line = "CHASE LEVEL: " + lcdprint3(CHASE_LEVEL);
+        line = "CHASE LEVEL=" + lcdprint3(CHASE_LEVEL);
         break;
       case 36:
         CHASE_TIME = value;
-        line = "CHASE TIME: " + lcdprint3(CHASE_TIME);
+        line = "CHASE TIME=" + lcdprint3(CHASE_TIME);
         break;
 
     }
@@ -1971,79 +1971,118 @@ void loop() {
             }
             break;
           case 1:
-            /*
-              if (ENV_L2[i] < ENV_L1[i]) {
-              TVAvolume[i][j] = TVAvolume[i][j] - ENV_T2[i];
-              if (TVAvolume[i][j] < ENV_L2[i])
-              {
-                TVAvolume[i][j] = ENV_L2[i];
-                generatorstatus[i][j]++;
-              }
-              }
-              if (ENV_L2[i] >= ENV_L1[i]) {
-              TVAvolume[i][j] = TVAvolume[i][j] + ENV_T2[i];
+/*
+                        if (ENV_L2> ENV_L1)
+                        {
+                            opgorbe[i] = ENV_L1 + linear[tvapointer >> 18];
+                            tvapointer += ENV_T2 << 14;
+                            if (opgorbe[i] > ENV_L2)
+                            {
+                                opgorbe[i] = ENV_L2;
+                                tvapointer = 0;
+                                generatorstatus++;                              
+                            }
+                        } else                   
+                        {
+                            opgorbe[i] = ENV_L1 - linear[tvapointer >> 18];
+                            tvapointer += ENV_T2 << 14;
+                            if (opgorbe[i] < ENV_L2)
+                            {
+                                opgorbe[i] = ENV_L2;
+                                tvapointer = 0;
+                                generatorstatus++;                               
+                            }
+                        }
+*/
+
+          
+            if (ENV_L2[i] > ENV_L1[i])
+            {
+              TVAvolume[i][j] = ENV_L1[i] + linear[tvapointer[i][j] >> 18];
+              tvapointer[i][j] += ENV_T2[i] << 16;
               if (TVAvolume[i][j] > ENV_L2[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
+                tvapointer[i][j] = 0;
                 generatorstatus[i][j]++;
               }
-              }
-            */
-            TVAvolume[i][j] = ENV_L1[i] - linear[tvapointer[i][j] >> 18];
-            tvapointer[i][j] += ENV_T2[i] << 14;
-            if (TVAvolume[i][j] < ENV_L2[i] + ENV_T2[i])
+            } else
             {
-              TVAvolume[i][j] = ENV_L2[i];
-              tvapointer[i][j] = 0;
-              generatorstatus[i][j]++;
+              TVAvolume[i][j] = ENV_L1[i] - linear[tvapointer[i][j] >> 18];
+              tvapointer [i][j] += ENV_T2[i] << 16;
+              if (TVAvolume[i][j] < ENV_L2[i])
+              {
+                TVAvolume[i][j] = ENV_L2[i];
+                tvapointer[i][j] = 0;
+                generatorstatus[i][j]++;
+              }
             }
             break;
           case 2:
-
-            /*if (ENV_LSUS[i] < ENV_L2[i]) {
-              TVAvolume[i][j] = TVAvolume[i][j] - ENV_T3[i];
-              if (TVAvolume[i][j] < ENV_LSUS[i])
-              {
-                TVAvolume[i][j] = ENV_LSUS[i];
-                generatorstatus[i][j]++;
-              }
-              }
-              if (ENV_LSUS[i] >= ENV_L2[i]) {
-              TVAvolume[i][j] = TVAvolume[i][j] + ENV_T3[i];
-              if (TVAvolume[i][j] > ENV_LSUS[i])
-              {
-                TVAvolume[i][j] = ENV_LSUS[i];
-                generatorstatus[i][j]++;
-              }
-              }
-            */
-            TVAvolume[i][j] = ENV_L2[i] - linear[tvapointer[i][j] >> 18];
-            tvapointer[i][j] += ENV_T3[i] << 14;
-            if (TVAvolume[i][j] < ENV_L3[i] + ENV_T3[i])
+            if (ENV_L3[i] > ENV_L2[i])
             {
-              TVAvolume[i][j] = ENV_L3[i];
-              tvapointer[i][j] = 0;
-              generatorstatus[i][j]++;
+              TVAvolume[i][j] = ENV_L2[i] + linear[tvapointer[i][j] >> 18];
+              tvapointer[i][j] += ENV_T3[i] << 16;
+              if (TVAvolume[i][j] > ENV_L3[i])
+              {
+                TVAvolume[i][j] = ENV_L3[i];
+                tvapointer[i][j] = 0;
+                generatorstatus[i][j]++;
+              }
+            } else
+            {
+              TVAvolume[i][j] = ENV_L2[i] - linear[tvapointer[i][j] >> 18];
+              tvapointer [i][j] += ENV_T3[i] << 16;
+              if (TVAvolume[i][j] < ENV_L3[i])
+              {
+                TVAvolume[i][j] = ENV_L3[i];
+                tvapointer[i][j] = 0;
+                generatorstatus[i][j]++;
+              }
             }
             break;
           case 3:
-            // TVAvolume[i][j] = ENV_LSUS[i];
-            TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> 18];
-            tvapointer[i][j] += ENV_T4[i] << 14;
-            if (TVAvolume[i][j] < ENV_LSUS[i] + ENV_T4[i])
+            if (ENV_LSUS[i] > ENV_L3[i])
             {
-              TVAvolume[i][j] = ENV_LSUS[i];
-              tvapointer[i][j] = 0;
-              generatorstatus[i][j]++;
-
+              TVAvolume[i][j] = ENV_L3[i] + linear[tvapointer[i][j] >> 18];
+              tvapointer[i][j] += ENV_T4[i] << 16;
+              if (TVAvolume[i][j] > ENV_LSUS[i])
+              {
+                TVAvolume[i][j] = ENV_LSUS[i];
+                tvapointer[i][j] = 0;
+              //  generatorstatus[i][j]++;
+              }
+            } else
+            {
+              TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> 18];
+              tvapointer [i][j] += ENV_T4[i] << 16;
+              if (TVAvolume[i][j] < ENV_LSUS[i])
+              {
+                TVAvolume[i][j] = ENV_LSUS[i];
+                tvapointer[i][j] = 0;
+                //generatorstatus[i][j]++;
+              }
             }
 
+            /*
 
+                        // TVAvolume[i][j] = ENV_LSUS[i];
+                        TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> 18];
+                        tvapointer[i][j] += ENV_T4[i] << 14;
+                        if (TVAvolume[i][j] < ENV_LSUS[i] + ENV_T4[i])
+                        {
+                          TVAvolume[i][j] = ENV_LSUS[i];
+                          tvapointer[i][j] = 0;
+                          generatorstatus[i][j]++;
+
+                        }
+
+            */
             break;
           case 4:
             TVAvolume[i][j] = ENV_LSUS[i] - linear[tvapointer[i][j] >> 18];
             tvapointer[i][j] += ENV_T5[i] << 14;
-            if (TVAvolume[i][j] < ENV_LEND[i] + ENV_T5[i]) 
+            if (TVAvolume[i][j] < ENV_LEND[i] + ENV_T5[i])
             {
               TVAvolume[i][j] = ENV_LEND[i];
               tvapointer[i][j] = 0;
@@ -2081,7 +2120,7 @@ void loop() {
         }
 
       }
-      //  Serial.println("Generator" + String(i) + "statusz: " + String(TVAvolume[i][0]) + " " + String(TVAvolume[i][1]) + " " + String(TVAvolume[i][2]) + " " + String(TVAvolume[i][3]) + " " + String(TVAvolume[i][4]) + " " + String(TVAvolume[i][5]));
+      
     } else
     {
       for (int j = 0; j < polyphony; j++) {
@@ -2089,6 +2128,7 @@ void loop() {
       }
     }
   }
+//Serial.println("Generator" + String(generatorstatus[0][0]) + "statusz: " + String(TVAvolume[0][0]) + " " + String(TVAvolume[0][1]) + " " + String(TVAvolume[0][2]) + " " + String(TVAvolume[0][3]) + " " + String(TVAvolume[0][4]) + " " + String(TVAvolume[0][5]));
   //release
 
 
