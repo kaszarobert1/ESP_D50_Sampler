@@ -1963,7 +1963,7 @@ void loop() {
         switch (generatorstatus[i][j]) {
           case 0:
             TVAvolume[i][j] = linear[tvapointer[i][j] >> 18];
-            tvapointer[i][j] += ENV_T1[i] << 16;
+            tvapointer[i][j] += ENV_T1[i] << 14;
             if (TVAvolume[i][j] > ENV_L1[i] - ENV_T1[i]) {
               TVAvolume[i][j] = ENV_L1[i];
               tvapointer[i][j] = 0;
@@ -1999,8 +1999,8 @@ void loop() {
             if (ENV_L2[i] > ENV_L1[i])
             {
               TVAvolume[i][j] = ENV_L1[i] + linear[tvapointer[i][j] >> 18];
-              tvapointer[i][j] += ENV_T2[i] << 16;
-              if (TVAvolume[i][j] > ENV_L2[i])
+              tvapointer[i][j] += ENV_T2[i] << 14;
+              if (TVAvolume[i][j] > ENV_L2[i]-ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
                 tvapointer[i][j] = 0;
@@ -2009,8 +2009,8 @@ void loop() {
             } else
             {
               TVAvolume[i][j] = ENV_L1[i] - linear[tvapointer[i][j] >> 18];
-              tvapointer [i][j] += ENV_T2[i] << 16;
-              if (TVAvolume[i][j] < ENV_L2[i])
+              tvapointer [i][j] += ENV_T2[i] << 14;
+              if (TVAvolume[i][j] < ENV_L2[i]+ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
                 tvapointer[i][j] = 0;
@@ -2022,8 +2022,8 @@ void loop() {
             if (ENV_L3[i] > ENV_L2[i])
             {
               TVAvolume[i][j] = ENV_L2[i] + linear[tvapointer[i][j] >> 18];
-              tvapointer[i][j] += ENV_T3[i] << 16;
-              if (TVAvolume[i][j] > ENV_L3[i])
+              tvapointer[i][j] += ENV_T3[i] << 14;
+              if (TVAvolume[i][j] > ENV_L3[i]-ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L3[i];
                 tvapointer[i][j] = 0;
@@ -2032,8 +2032,8 @@ void loop() {
             } else
             {
               TVAvolume[i][j] = ENV_L2[i] - linear[tvapointer[i][j] >> 18];
-              tvapointer [i][j] += ENV_T3[i] << 16;
-              if (TVAvolume[i][j] < ENV_L3[i])
+              tvapointer [i][j] += ENV_T3[i] << 14;
+              if (TVAvolume[i][j] < ENV_L3[i]+ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L3[i];
                 tvapointer[i][j] = 0;
@@ -2045,8 +2045,8 @@ void loop() {
             if (ENV_LSUS[i] > ENV_L3[i])
             {
               TVAvolume[i][j] = ENV_L3[i] + linear[tvapointer[i][j] >> 18];
-              tvapointer[i][j] += ENV_T4[i] << 16;
-              if (TVAvolume[i][j] > ENV_LSUS[i])
+              tvapointer[i][j] += ENV_T4[i] << 14;
+              if (TVAvolume[i][j] > ENV_LSUS[i]-ENV_T4[i])
               {
                 TVAvolume[i][j] = ENV_LSUS[i];
                 tvapointer[i][j] = 0;
@@ -2055,8 +2055,8 @@ void loop() {
             } else
             {
               TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> 18];
-              tvapointer [i][j] += ENV_T4[i] << 16;
-              if (TVAvolume[i][j] < ENV_LSUS[i])
+              tvapointer [i][j] += ENV_T4[i] << 14;
+              if (TVAvolume[i][j] < ENV_LSUS[i]+-ENV_T4[i])
               {
                 TVAvolume[i][j] = ENV_LSUS[i];
                 tvapointer[i][j] = 0;
