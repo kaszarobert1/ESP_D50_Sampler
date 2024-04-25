@@ -70,6 +70,7 @@ void i2s_install() {
 const byte polyphony = 8;
 uint32_t freqmutato[4][polyphony];
 uint32_t pich[4][polyphony];
+uint32_t pichcount[4][polyphony];
 byte generatornumber = 1;
 uint32_t wavefreq[4][polyphony];
 byte wavebias[4][polyphony];
@@ -131,6 +132,8 @@ byte ENV_LSUS[4] = { 50, 50, 50, 50 };
 byte ENV_T4[4] = { 1, 1, 1, 1 };
 byte ENV_T5[4] = { 1, 1, 1, 1 };
 byte ENV_LEND[4] = { 0, 0, 0, 0 };
+byte TVA_Slide = 19;
+
 byte generatorstatus[4][polyphony];
 byte TVAvolume[4][polyphony];
 byte TVA[4] = {1, 1, 1, 1};
@@ -158,6 +161,10 @@ byte lfo2level = 2;
 byte lfo2sync = 2;
 byte lfo3level = 2;
 byte lfo3sync = 2;
+byte lfo4level = 2;
+byte lfo4sync = 2;
+byte lfo5level = 2;
+byte lfo5sync = 2;
 byte CHASE_TIME = 0;
 byte CHASE_LEVEL = 4;
 uint32_t ido;
@@ -910,11 +917,11 @@ void parametersysexchanged() {
         break;
       case 26:
         lfofreq[3] = value;
-        line = " lfofreq2: " + lcdprint3(lfofreq[3]);
+        line = " lfofreq3: " + lcdprint3(lfofreq[3]);
         break;
       case 27:
         lfo3level = value;
-        line = " lfofreq2: " + lcdprint3(lfo3level);
+        line = " lfofreq3: " + lcdprint3(lfo3level);
         break;
       case 28:
         lfo3sync = value;
@@ -1020,22 +1027,22 @@ void parametersysexchanged() {
         }
         break;
       case 114:
-        if (value == 4) {
-          sampleend[0]++;
-          if (samplesize[0] < sampleend[0]) {
-            sampleend[0] = samplesize[0];
-          }
+        if (value == 0) {
+          TVA_Slide = 16;
         }
-
-        line = "L1: SAMPLE END=" + String(sampleend[0]);
         if (value == 1) {
-          samplebegin[0]++;
-          if (samplesize[0] < samplebegin[0]) {
-            samplebegin[0] = samplesize[0];
-          }
+          TVA_Slide = 17;
         }
-        line = "L1: SAMPLE BEGIN=" + String(samplebegin[0]);
-
+        if (value == 2) {
+          TVA_Slide = 18;
+        }
+        if (value == 3) {
+          TVA_Slide = 19;
+        }
+        if (value == 4) {
+          TVA_Slide = 20;
+        }
+        line = "G: TVA_SLIDE=" + lcdprint3(TVA_Slide);
         break;
     }
 
@@ -1195,6 +1202,25 @@ void parametersysexchanged() {
         lfo2sync = value;
         line = " lfo2sync: " + lcdprint3(lfo2sync);
         break;
+
+      case 94:
+        lfofreq[4] = value;
+        line = " lfofreq4: " + lcdprint3(lfofreq[4]);
+        break;
+      case 95:
+        lfo4level = value;
+        line = " lfo4level: " + lcdprint3(lfo4level);
+        break;
+      case 98:
+        lfofreq[5] = value;
+        line = " lfofreq5: " + lcdprint3(lfofreq[5]);
+        break;
+      case 99:
+        lfo5level = value;
+        line = " lfo5level: " + lcdprint3(lfo5level);
+        break;
+
+
       case 106:
         switch (value) {
           case 1:
@@ -1930,6 +1956,9 @@ void setup() {
   }
 */
 uint32_t tvapointer[4][polyphony];
+
+
+
 void loop() {
   if (MIDI_SYNC == 2)
   {
@@ -1941,6 +1970,16 @@ void loop() {
   for (int i = 2; i < LFOnumber; i++) {
     lfovalue[i] = *(LFOadress[i] + (lfoarrayindex[i] >> 23));
     lfoarrayindex[i] += (lfofreq[i] << 19);
+  }
+
+
+  if (true) {
+    for (int j = 0; j < polyphony; j++)
+    {
+      pichcount[0][j] = pich[0][j] + (lfovalue[4] * lfo4level<<8);
+      pichcount[1][j] = pich[1][j] + (lfovalue[5] * lfo5level<<8);
+    }
+
   }
 
 
@@ -1971,36 +2010,36 @@ void loop() {
             }
             break;
           case 1:
-/*
-                        if (ENV_L2> ENV_L1)
-                        {
-                            opgorbe[i] = ENV_L1 + linear[tvapointer >> 18];
-                            tvapointer += ENV_T2 << 14;
-                            if (opgorbe[i] > ENV_L2)
-                            {
-                                opgorbe[i] = ENV_L2;
-                                tvapointer = 0;
-                                generatorstatus++;                              
-                            }
-                        } else                   
-                        {
-                            opgorbe[i] = ENV_L1 - linear[tvapointer >> 18];
-                            tvapointer += ENV_T2 << 14;
-                            if (opgorbe[i] < ENV_L2)
-                            {
-                                opgorbe[i] = ENV_L2;
-                                tvapointer = 0;
-                                generatorstatus++;                               
-                            }
-                        }
-*/
+            /*
+                                    if (ENV_L2> ENV_L1)
+                                    {
+                                        opgorbe[i] = ENV_L1 + linear[tvapointer >> 18];
+                                        tvapointer += ENV_T2 << 14;
+                                        if (opgorbe[i] > ENV_L2)
+                                        {
+                                            opgorbe[i] = ENV_L2;
+                                            tvapointer = 0;
+                                            generatorstatus++;
+                                        }
+                                    } else
+                                    {
+                                        opgorbe[i] = ENV_L1 - linear[tvapointer >> 18];
+                                        tvapointer += ENV_T2 << 14;
+                                        if (opgorbe[i] < ENV_L2)
+                                        {
+                                            opgorbe[i] = ENV_L2;
+                                            tvapointer = 0;
+                                            generatorstatus++;
+                                        }
+                                    }
+            */
 
-          
+
             if (ENV_L2[i] > ENV_L1[i])
             {
-              TVAvolume[i][j] = ENV_L1[i] + linear[tvapointer[i][j] >> 18];
+              TVAvolume[i][j] = ENV_L1[i] + linear[tvapointer[i][j] >> TVA_Slide];
               tvapointer[i][j] += ENV_T2[i] << 14;
-              if (TVAvolume[i][j] > ENV_L2[i]-ENV_T3[i])
+              if (TVAvolume[i][j] > ENV_L2[i] - ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
                 tvapointer[i][j] = 0;
@@ -2008,9 +2047,9 @@ void loop() {
               }
             } else
             {
-              TVAvolume[i][j] = ENV_L1[i] - linear[tvapointer[i][j] >> 18];
+              TVAvolume[i][j] = ENV_L1[i] - linear[tvapointer[i][j] >> TVA_Slide];
               tvapointer [i][j] += ENV_T2[i] << 14;
-              if (TVAvolume[i][j] < ENV_L2[i]+ENV_T3[i])
+              if (TVAvolume[i][j] < ENV_L2[i] + ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L2[i];
                 tvapointer[i][j] = 0;
@@ -2021,9 +2060,9 @@ void loop() {
           case 2:
             if (ENV_L3[i] > ENV_L2[i])
             {
-              TVAvolume[i][j] = ENV_L2[i] + linear[tvapointer[i][j] >> 18];
+              TVAvolume[i][j] = ENV_L2[i] + linear[tvapointer[i][j] >> TVA_Slide];
               tvapointer[i][j] += ENV_T3[i] << 14;
-              if (TVAvolume[i][j] > ENV_L3[i]-ENV_T3[i])
+              if (TVAvolume[i][j] > ENV_L3[i] - ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L3[i];
                 tvapointer[i][j] = 0;
@@ -2031,9 +2070,9 @@ void loop() {
               }
             } else
             {
-              TVAvolume[i][j] = ENV_L2[i] - linear[tvapointer[i][j] >> 18];
+              TVAvolume[i][j] = ENV_L2[i] - linear[tvapointer[i][j] >> TVA_Slide];
               tvapointer [i][j] += ENV_T3[i] << 14;
-              if (TVAvolume[i][j] < ENV_L3[i]+ENV_T3[i])
+              if (TVAvolume[i][j] < ENV_L3[i] + ENV_T3[i])
               {
                 TVAvolume[i][j] = ENV_L3[i];
                 tvapointer[i][j] = 0;
@@ -2044,19 +2083,19 @@ void loop() {
           case 3:
             if (ENV_LSUS[i] > ENV_L3[i])
             {
-              TVAvolume[i][j] = ENV_L3[i] + linear[tvapointer[i][j] >> 18];
+              TVAvolume[i][j] = ENV_L3[i] + linear[tvapointer[i][j] >> TVA_Slide];
               tvapointer[i][j] += ENV_T4[i] << 14;
-              if (TVAvolume[i][j] > ENV_LSUS[i]-ENV_T4[i])
+              if (TVAvolume[i][j] > ENV_LSUS[i] - ENV_T4[i])
               {
                 TVAvolume[i][j] = ENV_LSUS[i];
                 tvapointer[i][j] = 0;
-              //  generatorstatus[i][j]++;
+                //  generatorstatus[i][j]++;
               }
             } else
             {
-              TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> 18];
+              TVAvolume[i][j] = ENV_L3[i] - linear[tvapointer[i][j] >> TVA_Slide];
               tvapointer [i][j] += ENV_T4[i] << 14;
-              if (TVAvolume[i][j] < ENV_LSUS[i]+-ENV_T4[i])
+              if (TVAvolume[i][j] < ENV_LSUS[i] + -ENV_T4[i])
               {
                 TVAvolume[i][j] = ENV_LSUS[i];
                 tvapointer[i][j] = 0;
@@ -2080,7 +2119,7 @@ void loop() {
             */
             break;
           case 4:
-            TVAvolume[i][j] = ENV_LSUS[i] - linear[tvapointer[i][j] >> 18];
+            TVAvolume[i][j] = ENV_LSUS[i] - linear[tvapointer[i][j] >> TVA_Slide];
             tvapointer[i][j] += ENV_T5[i] << 14;
             if (TVAvolume[i][j] < ENV_LEND[i] + ENV_T5[i])
             {
@@ -2120,7 +2159,7 @@ void loop() {
         }
 
       }
-      
+
     } else
     {
       for (int j = 0; j < polyphony; j++) {
@@ -2128,7 +2167,7 @@ void loop() {
       }
     }
   }
-//Serial.println("Generator" + String(generatorstatus[0][0]) + "statusz: " + String(TVAvolume[0][0]) + " " + String(TVAvolume[0][1]) + " " + String(TVAvolume[0][2]) + " " + String(TVAvolume[0][3]) + " " + String(TVAvolume[0][4]) + " " + String(TVAvolume[0][5]));
+  //Serial.println("Generator" + String(generatorstatus[0][0]) + "statusz: " + String(TVAvolume[0][0]) + " " + String(TVAvolume[0][1]) + " " + String(TVAvolume[0][2]) + " " + String(TVAvolume[0][3]) + " " + String(TVAvolume[0][4]) + " " + String(TVAvolume[0][5]));
   //release
 
 
@@ -2148,13 +2187,13 @@ void loop() {
       for (int j = 0; j < polyphony; j++) {
         //if end of sample
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
-          freqmutato[0][j] += pich[0][j];
+          freqmutato[0][j] += pichcount[0][j];
         } else if (loopsample[0]) {
 
           freqmutato[0][j] = samplebegin[0] << step;
         }
         if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
-          freqmutato[1][j] += pich[1][j];
+          freqmutato[1][j] += pichcount[1][j];
         } else if (loopsample[1]) {
 
           freqmutato[1][j] = samplebegin[1] << step;
@@ -2211,13 +2250,13 @@ void loop() {
       for (int j = 0; j < polyphony; j++) {
         //if end of sample
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
-          freqmutato[0][j] += pich[0][j];
+          freqmutato[0][j] += pichcount[0][j];
         } else if (loopsample[0]) {
 
           freqmutato[0][j] = samplebegin[0] << step;
         }
         if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
-          freqmutato[1][j] += pich[1][j];
+          freqmutato[1][j] += pichcount[1][j];
         } else if (loopsample[1]) {
 
           freqmutato[1][j] = samplebegin[1] << step;
@@ -2276,13 +2315,13 @@ void loop() {
       for (int j = 0; j < polyphony; j++) {
         //if end of sample
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
-          freqmutato[0][j] += pich[0][j];
+          freqmutato[0][j] += pichcount[0][j];
         } else if (loopsample[0]) {
 
           freqmutato[0][j] = samplebegin[0] << step;
         }
         if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
-          freqmutato[1][j] += pich[1][j];
+          freqmutato[1][j] += pichcount[1][j];
         } else if (loopsample[1]) {
 
           freqmutato[1][j] = samplebegin[1] << step;
@@ -2340,12 +2379,12 @@ void loop() {
       for (int j = 0; j < polyphony; j++) {
         //if end of sample
         if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
-          freqmutato[0][j] += pich[0][j];
+          freqmutato[0][j] += pichcount[0][j];
         } else if (loopsample[0]) {
           freqmutato[0][j] = samplebegin[0] << step;
         }
         if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
-          freqmutato[1][j] += pich[1][j];
+          freqmutato[1][j] += pichcount[1][j];
         } else if (loopsample[1]) {
           freqmutato[1][j] = samplebegin[1] << step;
         }
