@@ -1577,12 +1577,18 @@ void parametersysexchanged() {
         chorusLevelLeft = value;
         line = "U: Chorus LEVEL=" + lcdprint3( chorusLevelLeft);
         break;
-
     }
   }
   if (localParameterByte == 3) {
     switch (noteByte) {
-
+      case 22:
+        UKeyShift = value;
+        line = "U: KeyShift=" + lcdprint3(UKeyShift);
+        break;
+      case 23:
+        LKeyShift = value;
+        line = "L: KeyShift=" + lcdprint3(LKeyShift);
+        break;
       case 25:
         GLOBAL_TUNE = 422 + value;
         notetune();
@@ -2124,13 +2130,12 @@ void lowpassfilterright() {
 void keyon(byte noteByte) {
   wavefreq[0][generatornumber] = noteertek[0][noteByte  + LKeyShift];
   wavebias[0][generatornumber] = Bias[0][noteByte  + LKeyShift];
-  //Serial.println("wavefreq0: " + String(wavefreq[0][generatornumber]));
-  wavefreq[1][generatornumber] = noteertek[1][noteByte  + UKeyShift];
+  wavefreq[1][generatornumber] = noteertek[1][noteByte  + LKeyShift];
   wavebias[1][generatornumber] = Bias[1][noteByte  + LKeyShift];
-  wavefreq[2][generatornumber] = noteertek[2][noteByte  + LKeyShift];
-  wavebias[2][generatornumber] = Bias[2][noteByte  + LKeyShift];
+  wavefreq[2][generatornumber] = noteertek[2][noteByte  + UKeyShift];
+  wavebias[2][generatornumber] = Bias[2][noteByte  + UKeyShift];
   wavefreq[3][generatornumber] = noteertek[3][noteByte  + UKeyShift];
-  wavebias[3][generatornumber] = Bias[3][noteByte  + LKeyShift];
+  wavebias[3][generatornumber] = Bias[3][noteByte  + UKeyShift];
   oldnoteByte[generatornumber] = noteByte;
   CaseArray[chaseindex] = noteByte;
   pich[0][generatornumber] = wavefreq[0][generatornumber];
@@ -2276,7 +2281,7 @@ void chasearpeggio() {
 void handleNoteOn(byte channel, byte note, byte velocity) {
   if (channel == midichan) { // <--- A szűrő kapuja
     if (velocity > 0 && note >= 12) {
-      
+
       keyon(note);
     } else {
       keyoff(note);
@@ -2616,292 +2621,604 @@ void loop() {
 
   //STRUCTURES
 
-  //------------------0-------------------0---------------------PWM------------------------------------
-  if (STRUCTURE_U == 0 && STRUCTURE_L == 0)
-  {
+  //------------------0-------------------0---------------------PWM+PWM PWM+PWM------------------------------------
+  if (STRUCTURE_L == 0 && STRUCTURE_U == 0) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
-      tempbuffer[0] = 0; tempbuffer[1] = 0; tempbuffer[2] = 0; tempbuffer[3] = 0;
-      for (int j = 0; j < polyphony; j++) {
-        for (int osc = 0; osc < 4; osc++) {
-          freqmutato[osc][j] += pichcount[osc][j];
-          uint32_t currentPhase = (freqmutato[osc][j] >> step) & 1023; // Gyorsabb!
-          float input;
-          if (Waveform[osc] == 1) { // SAW
-            input = (float)((int32_t)(currentPhase << 6) - 32768);
-          } else { // SQUARE
-            input = (currentPhase < PWcount[osc][j]) ? 32767.0f : -32768.0f;
-          }
-          float f = filter_f[osc][j];
-          float q = filter_q[osc];
-          // SVF szűrő (már float-tal, konverziók nélkül)
-          float hp = input - v_lp[osc][j] - (q * v_bp[osc][j]);
-          v_bp[osc][j] += f * hp;
-          v_lp[osc][j] += f * v_bp[osc][j];
-          // Hard clipper (védelem)
-          if (v_lp[osc][j] > 32767.0f)  v_lp[osc][j] = 32767.0f;
-          if (v_lp[osc][j] < -32768.0f) v_lp[osc][j] = -32768.0f;
-          tempbuffer[osc] += ((int32_t)v_lp[osc][j] * generatorvolume[osc][j]) >> 6;
-        }
-      }
-      bufferbe[0] = (tempbuffer[0] + tempbuffer[1]) >> masterVolume;
-      bufferbe[1] = (tempbuffer[2] + tempbuffer[3]) >> masterVolume;
+      // Ezek gyűjtik a teljes polifóniát a két kimenetre
+      int32_t totalUpper = 0; // Itt lesz a 0+1 mix
+      int32_t totalLower = 0; // Itt lesz a 2*3 ring
 
-      // ------------------------------------------------------------------------------------------
-      //freqstep
+      //osc0 pointer Linear variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint32_t* pW0  = &PWcount[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer Linear variable
+      uint32_t* pF1  = &freqmutato[1][0];
+      uint32_t* pP1  = &pichcount[1][0];
+      float* pL1  = &v_lp[1][0];
+      float* pB1  = &v_bp[1][0];
+      uint32_t* pW1  = &PWcount[1][0];
+      uint16_t* pV1  = &generatorvolume[1][0];
+      float* pFF1 = &filter_f[1][0];
+
+      //oc2 pointer Linear variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2  = &v_lp[2][0];
+      float* pB2  = &v_bp[2][0];
+      uint32_t* pW2  = &PWcount[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer Linear variable
+      uint32_t* pF3  = &freqmutato[3][0];
+      uint32_t* pP3  = &pichcount[3][0];
+      float* pL3  = &v_lp[3][0];
+      float* pB3  = &v_bp[3][0];
+      uint32_t* pW3  = &PWcount[3][0]; // uint32_t, ha az OSC 0-nál az vált be
+      uint16_t* pV3      = &generatorvolume[3][0]; // byte-ra javítva!
+      float* pFF3    = &filter_f[3][0];
+
+      for (int j = 0; j < polyphony; j++) {
+        int32_t osc_out[4];
+
+        // --- OSC 0 (Linear Engine pointer) ---
+        *pF0 += *pP0;
+        uint32_t ph0 = (*pF0 >> step) & 1023;
+        // Waveform[0]-at használjuk
+        float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < *pW0 ? 32767.0f : -32768.0f);
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 6;
+        // Mutatók léptetése a polifónia körben
+        pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
+
+
+
+        // --- OSC 1 LINEAR Engine pointer ---
+        *pF1 += *pP1;
+        uint32_t ph1 = (*pF1 >> step) & 1023;
+        // Waveform[1]-et használjuk
+        float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < *pW1 ? 32767.0f : -32768.0f);
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 6;
+        // Mutatók léptetése a j végén (az összesé!)
+        pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
+
+        // --- OSC 2 LINEAR Engine pointer---
+        *pF2 += *pP2;
+        uint32_t ph2 = (*pF2 >> step) & 1023;
+        float in2 = (Waveform[2] == 1) ? (float)((int32_t)(ph2 << 6) - 32768) : (ph2 < *pW2 ? 32767.0f : -32768.0f);
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 6;
+        pF2++; pP2++; pL2++; pB2++; pW2++; pV2++; pFF2++;
+
+        // --- OSC 3 LINEAR Engine pointer---
+        *pF3 += *pP3;
+        uint32_t ph3 = (*pF3 >> step) & 1023;
+        float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < *pW3 ? 32767.0f : -32768.0f);
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
+        pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
+
+        // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
+        //totalLower += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        totalUpper += (osc_out[0] + osc_out[1]);
+        totalLower += (osc_out[2] + osc_out[3]);
+
+      }
+
+      // --- 5. Kimeneti bufferbe töltés és effektezés ---
+      bufferbe[0] = totalUpper >> masterVolume;
+      bufferbe[1] = totalLower >> masterVolume;
       parametereqleft();
-      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
-      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
-      //choruslfo
-      chorusleft();
-      chorusright();
-      reverbleft();
-      reverbright();
-      lowpassfilterleft();
-      lowpassfilterright();
+      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
+      chorusleft(); chorusright();
+      reverbleft(); reverbright();
+      lowpassfilterleft(); lowpassfilterright();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
   }
 
-  //------------------1-------------------0---------------------PWM------------------------------------
+  //------------------1-------------------0---------------------PWM*PWM PWM+PWM------------------------------------
   if (STRUCTURE_L == 1 && STRUCTURE_U == 0) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
       int32_t totalLower = 0; // Itt lesz a 2*3 ring
 
+      //osc0 pointer Linear variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint32_t* pW0  = &PWcount[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer Linear variable
+      uint32_t* pF1  = &freqmutato[1][0];
+      uint32_t* pP1  = &pichcount[1][0];
+      float* pL1  = &v_lp[1][0];
+      float* pB1  = &v_bp[1][0];
+      uint32_t* pW1  = &PWcount[1][0];
+      uint16_t* pV1  = &generatorvolume[1][0];
+      float* pFF1 = &filter_f[1][0];
+
+      //oc2 pointer Linear variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2  = &v_lp[2][0];
+      float* pB2  = &v_bp[2][0];
+      uint32_t* pW2  = &PWcount[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer Linear variable
+      uint32_t* pF3  = &freqmutato[3][0];
+      uint32_t* pP3  = &pichcount[3][0];
+      float* pL3  = &v_lp[3][0];
+      float* pB3  = &v_bp[3][0];
+      uint32_t* pW3  = &PWcount[3][0]; // uint32_t, ha az OSC 0-nál az vált be
+      uint16_t* pV3      = &generatorvolume[3][0]; // byte-ra javítva!
+      float* pFF3    = &filter_f[3][0];
+
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
-        for (int osc = 0; osc < 4; osc++) {
-          // --- 1. Hullámforma generálás (Változatlan) ---
-          freqmutato[osc][j] += pichcount[osc][j];
-          uint32_t currentPhase = (freqmutato[osc][j] >> step) & 1023;
-          float input = (Waveform[osc] == 1) ? (float)((int32_t)(currentPhase << 6) - 32768) : (currentPhase < PWcount[osc][j] ? 32767.0f : -32768.0f);
+        // --- OSC 0 (Linear Engine pointer) ---
+        *pF0 += *pP0;
+        uint32_t ph0 = (*pF0 >> step) & 1023;
+        // Waveform[0]-at használjuk
+        float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < *pW0 ? 32767.0f : -32768.0f);
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 6;
+        // Mutatók léptetése a polifónia körben
+        pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
 
-          // --- 2. Szűrés (Változatlan) ---
-          float f = filter_f[osc][j];
-          float q = filter_q[osc];
-          float hp = input - v_lp[osc][j] - (q * v_bp[osc][j]);
-          v_bp[osc][j] += f * hp;
-          v_lp[osc][j] += f * v_bp[osc][j];
 
-          if (v_lp[osc][j] > 32767.0f)  v_lp[osc][j] = 32767.0f;
-          if (v_lp[osc][j] < -32768.0f) v_lp[osc][j] = -32768.0f;
 
-          // --- 3. Hangerőzés (még hangonként) ---
-          osc_out[osc] = ((int32_t)v_lp[osc][j] * generatorvolume[osc][j]) >> 6;
-        }
+        // --- OSC 1 LINEAR Engine pointer ---
+        *pF1 += *pP1;
+        uint32_t ph1 = (*pF1 >> step) & 1023;
+        // Waveform[1]-et használjuk
+        float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < *pW1 ? 32767.0f : -32768.0f);
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 6;
+        // Mutatók léptetése a j végén (az összesé!)
+        pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
+
+        // --- OSC 2 LINEAR Engine pointer---
+        *pF2 += *pP2;
+        uint32_t ph2 = (*pF2 >> step) & 1023;
+        float in2 = (Waveform[2] == 1) ? (float)((int32_t)(ph2 << 6) - 32768) : (ph2 < *pW2 ? 32767.0f : -32768.0f);
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 6;
+        pF2++; pP2++; pL2++; pB2++; pW2++; pV2++; pFF2++;
+
+        // --- OSC 3 LINEAR Engine pointer---
+        *pF3 += *pP3;
+        uint32_t ph3 = (*pF3 >> step) & 1023;
+        float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < *pW3 ? 32767.0f : -32768.0f);
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
+        pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
-
-        // Upper oldal: 0 és 1 összeadása
-        totalUpper += (osc_out[2] + osc_out[3]);
-
-        // Lower oldal: 2 és 3 ÖSSZESZORZÁSA (Ring Mod)
-        // Az (osc_out[3] >> 12) azért kell, hogy ne csorduljon túl a 32-biten
         totalLower += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        //totalUpper += (osc_out[0] + osc_out[1]);
+        //totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
+        totalLower += (osc_out[2] + osc_out[3]);
+
       }
 
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
-
-
       parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
-
       chorusleft(); chorusright();
       reverbleft(); reverbright();
       lowpassfilterleft(); lowpassfilterright();
-
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
   }
 
-  //------------------0-------------------1---------------------PWM------------------------------------
+  //------------------0-------------------1---------------------PWM+PWM PWM*PWM------------------------------------
   if (STRUCTURE_L == 0 && STRUCTURE_U == 1) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
       int32_t totalLower = 0; // Itt lesz a 2*3 ring
 
+      //osc0 pointer Linear variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint32_t* pW0  = &PWcount[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer Linear variable
+      uint32_t* pF1  = &freqmutato[1][0];
+      uint32_t* pP1  = &pichcount[1][0];
+      float* pL1  = &v_lp[1][0];
+      float* pB1  = &v_bp[1][0];
+      uint32_t* pW1  = &PWcount[1][0];
+      uint16_t* pV1  = &generatorvolume[1][0];
+      float* pFF1 = &filter_f[1][0];
+
+      //oc2 pointer Linear variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2  = &v_lp[2][0];
+      float* pB2  = &v_bp[2][0];
+      uint32_t* pW2  = &PWcount[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer Linear variable
+      uint32_t* pF3  = &freqmutato[3][0];
+      uint32_t* pP3  = &pichcount[3][0];
+      float* pL3  = &v_lp[3][0];
+      float* pB3  = &v_bp[3][0];
+      uint32_t* pW3  = &PWcount[3][0]; // uint32_t, ha az OSC 0-nál az vált be
+      uint16_t* pV3      = &generatorvolume[3][0]; // byte-ra javítva!
+      float* pFF3    = &filter_f[3][0];
+
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
-        for (int osc = 0; osc < 4; osc++) {
-          // --- 1. Hullámforma generálás (Változatlan) ---
-          freqmutato[osc][j] += pichcount[osc][j];
-          uint32_t currentPhase = (freqmutato[osc][j] >> step) & 1023;
-          float input = (Waveform[osc] == 1) ? (float)((int32_t)(currentPhase << 6) - 32768) : (currentPhase < PWcount[osc][j] ? 32767.0f : -32768.0f);
+        // --- OSC 0 (Linear Engine pointer) ---
+        *pF0 += *pP0;
+        uint32_t ph0 = (*pF0 >> step) & 1023;
+        // Waveform[0]-at használjuk
+        float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < *pW0 ? 32767.0f : -32768.0f);
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 6;
+        // Mutatók léptetése a polifónia körben
+        pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
 
-          // --- 2. Szűrés (Változatlan) ---
-          float f = filter_f[osc][j];
-          float q = filter_q[osc];
-          float hp = input - v_lp[osc][j] - (q * v_bp[osc][j]);
-          v_bp[osc][j] += f * hp;
-          v_lp[osc][j] += f * v_bp[osc][j];
 
-          if (v_lp[osc][j] > 32767.0f)  v_lp[osc][j] = 32767.0f;
-          if (v_lp[osc][j] < -32768.0f) v_lp[osc][j] = -32768.0f;
 
-          // --- 3. Hangerőzés (még hangonként) ---
-          osc_out[osc] = ((int32_t)v_lp[osc][j] * generatorvolume[osc][j]) >> 6;
-        }
+        // --- OSC 1 LINEAR Engine pointer ---
+        *pF1 += *pP1;
+        uint32_t ph1 = (*pF1 >> step) & 1023;
+        // Waveform[1]-et használjuk
+        float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < *pW1 ? 32767.0f : -32768.0f);
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 6;
+        // Mutatók léptetése a j végén (az összesé!)
+        pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
+
+        // --- OSC 2 LINEAR Engine pointer---
+        *pF2 += *pP2;
+        uint32_t ph2 = (*pF2 >> step) & 1023;
+        float in2 = (Waveform[2] == 1) ? (float)((int32_t)(ph2 << 6) - 32768) : (ph2 < *pW2 ? 32767.0f : -32768.0f);
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 6;
+        pF2++; pP2++; pL2++; pB2++; pW2++; pV2++; pFF2++;
+
+        // --- OSC 3 LINEAR Engine pointer---
+        *pF3 += *pP3;
+        uint32_t ph3 = (*pF3 >> step) & 1023;
+        float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < *pW3 ? 32767.0f : -32768.0f);
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
+        pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
-
-        // Upper oldal: 0 és 1 összeadása
+        //totalLower += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
         totalUpper += (osc_out[0] + osc_out[1]);
         totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
+        //totalLower += (osc_out[2] + osc_out[3]);
+
       }
 
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
-
-
       parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
-
       chorusleft(); chorusright();
       reverbleft(); reverbright();
       lowpassfilterleft(); lowpassfilterright();
-
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
   }
 
 
-  //------------------1-------------------1---------------------PWM------------------------------------
+  //------------------1-------------------1---------------------PWM*PWM PWM*PWM------------------------------------
   if (STRUCTURE_L == 1 && STRUCTURE_U == 1) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
       int32_t totalLower = 0; // Itt lesz a 2*3 ring
 
+      //osc0 pointer Linear variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint32_t* pW0  = &PWcount[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer Linear variable
+      uint32_t* pF1  = &freqmutato[1][0];
+      uint32_t* pP1  = &pichcount[1][0];
+      float* pL1  = &v_lp[1][0];
+      float* pB1  = &v_bp[1][0];
+      uint32_t* pW1  = &PWcount[1][0];
+      uint16_t* pV1  = &generatorvolume[1][0];
+      float* pFF1 = &filter_f[1][0];
+
+      //oc2 pointer Linear variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2  = &v_lp[2][0];
+      float* pB2  = &v_bp[2][0];
+      uint32_t* pW2  = &PWcount[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer Linear variable
+      uint32_t* pF3  = &freqmutato[3][0];
+      uint32_t* pP3  = &pichcount[3][0];
+      float* pL3  = &v_lp[3][0];
+      float* pB3  = &v_bp[3][0];
+      uint32_t* pW3  = &PWcount[3][0]; // uint32_t, ha az OSC 0-nál az vált be
+      uint16_t* pV3      = &generatorvolume[3][0]; // byte-ra javítva!
+      float* pFF3    = &filter_f[3][0];
+
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
-        for (int osc = 0; osc < 4; osc++) {
-          // --- 1. Hullámforma generálás (Változatlan) ---
-          freqmutato[osc][j] += pichcount[osc][j];
-          uint32_t currentPhase = (freqmutato[osc][j] >> step) & 1023;
-          float input = (Waveform[osc] == 1) ? (float)((int32_t)(currentPhase << 6) - 32768) : (currentPhase < PWcount[osc][j] ? 32767.0f : -32768.0f);
+        // --- OSC 0 (Linear Engine pointer) ---
+        *pF0 += *pP0;
+        uint32_t ph0 = (*pF0 >> step) & 1023;
+        // Waveform[0]-at használjuk
+        float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < *pW0 ? 32767.0f : -32768.0f);
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 6;
+        // Mutatók léptetése a polifónia körben
+        pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
 
-          // --- 2. Szűrés (Változatlan) ---
-          float f = filter_f[osc][j];
-          float q = filter_q[osc];
-          float hp = input - v_lp[osc][j] - (q * v_bp[osc][j]);
-          v_bp[osc][j] += f * hp;
-          v_lp[osc][j] += f * v_bp[osc][j];
 
-          if (v_lp[osc][j] > 32767.0f)  v_lp[osc][j] = 32767.0f;
-          if (v_lp[osc][j] < -32768.0f) v_lp[osc][j] = -32768.0f;
 
-          // --- 3. Hangerőzés (még hangonként) ---
-          osc_out[osc] = ((int32_t)v_lp[osc][j] * generatorvolume[osc][j]) >> 6;
-        }
+        // --- OSC 1 LINEAR Engine pointer ---
+        *pF1 += *pP1;
+        uint32_t ph1 = (*pF1 >> step) & 1023;
+        // Waveform[1]-et használjuk
+        float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < *pW1 ? 32767.0f : -32768.0f);
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 6;
+        // Mutatók léptetése a j végén (az összesé!)
+        pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
+
+        // --- OSC 2 LINEAR Engine pointer---
+        *pF2 += *pP2;
+        uint32_t ph2 = (*pF2 >> step) & 1023;
+        float in2 = (Waveform[2] == 1) ? (float)((int32_t)(ph2 << 6) - 32768) : (ph2 < *pW2 ? 32767.0f : -32768.0f);
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 6;
+        pF2++; pP2++; pL2++; pB2++; pW2++; pV2++; pFF2++;
+
+        // --- OSC 3 LINEAR Engine pointer---
+        *pF3 += *pP3;
+        uint32_t ph3 = (*pF3 >> step) & 1023;
+        float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < *pW3 ? 32767.0f : -32768.0f);
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
+        pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
-
-        // Upper oldal: 0 és 1 összeadása
         totalUpper += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
-
-        // Lower oldal: 2 és 3 ÖSSZESZORZÁSA (Ring Mod)
-        // Az (osc_out[3] >> 12) azért kell, hogy ne csorduljon túl a 32-biten
+        //totalUpper += (osc_out[0] + osc_out[1]);
         totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
+        //totalLower += (osc_out[2] + osc_out[3]);
+
       }
 
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
-
-
-
       parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
-
       chorusleft(); chorusright();
       reverbleft(); reverbright();
       lowpassfilterleft(); lowpassfilterright();
-
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
   }
 
 
-  //------------------0-------------------2---------------------PWM------------------------------------
-  if (STRUCTURE_L == 0 && STRUCTURE_U == 2) {
+  //------------------0-------------------2---------------------LINEAR+LINEAR PCM+LINEAR------------------------------------
+  if (STRUCTURE_L == 2 && STRUCTURE_U == 2) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
       int32_t totalLower = 0; // Itt lesz a 2*3 ring
 
+      //osc0 pointer Linear variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint32_t* pW0  = &PWcount[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer Linear variable
+      uint32_t* pF1  = &freqmutato[1][0];
+      uint32_t* pP1  = &pichcount[1][0];
+      float* pL1  = &v_lp[1][0];
+      float* pB1  = &v_bp[1][0];
+      uint32_t* pW1  = &PWcount[1][0];
+      uint16_t* pV1  = &generatorvolume[1][0];
+      float* pFF1 = &filter_f[1][0];
+
+      //oc2 pointer PCM variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2     = &v_lp[2][0];
+      float* pB2     = &v_bp[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer Linear variable
+      uint32_t* pF3  = &freqmutato[3][0];
+      uint32_t* pP3  = &pichcount[3][0];
+      float* pL3  = &v_lp[3][0];
+      float* pB3  = &v_bp[3][0];
+      uint32_t* pW3  = &PWcount[3][0]; // uint32_t, ha az OSC 0-nál az vált be
+      uint16_t* pV3      = &generatorvolume[3][0]; // byte-ra javítva!
+      float* pFF3    = &filter_f[3][0];
+
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
-        // --- OSC 0 ---
-        freqmutato[0][j] += pichcount[0][j];
-        uint32_t ph0 = (freqmutato[0][j] >> step) & 1023;
-        float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < PWcount[0][j] ? 32767.0f : -32768.0f);
-        float hp0 = in0 - v_lp[0][j] - (filter_q[0] * v_bp[0][j]);
-        v_bp[0][j] += filter_f[0][j] * hp0;
-        v_lp[0][j] += filter_f[0][j] * v_bp[0][j];
-        if (v_lp[0][j] > 32767.0f)  v_lp[0][j] = 32767.0f;
-        if (v_lp[0][j] < -32768.0f) v_lp[0][j] = -32768.0f;
-        osc_out[0] = ((int32_t)v_lp[0][j] * generatorvolume[0][j]) >> 6;
 
-        // --- OSC 1 ---
-        freqmutato[1][j] += pichcount[1][j];
-        uint32_t ph1 = (freqmutato[1][j] >> step) & 1023;
-        float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < PWcount[1][j] ? 32767.0f : -32768.0f);
-        float hp1 = in1 - v_lp[1][j] - (filter_q[1] * v_bp[1][j]);
-        v_bp[1][j] += filter_f[1][j] * hp1;
-        v_lp[1][j] += filter_f[1][j] * v_bp[1][j];
-        if (v_lp[1][j] > 32767.0f)  v_lp[1][j] = 32767.0f;
-        if (v_lp[1][j] < -32768.0f) v_lp[1][j] = -32768.0f;
-        osc_out[1] = ((int32_t)v_lp[1][j] * generatorvolume[1][j]) >> 6;
+        // --- OSC 0 (Linear Engine pointer) ---
+        *pF0 += *pP0;
+        uint32_t ph0 = (*pF0 >> step) & 1023;
+        // Waveform[0]-at használjuk
+        float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < *pW0 ? 32767.0f : -32768.0f);
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 6;
+        // Mutatók léptetése a polifónia körben
+        pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
 
-        // --- OSC 2 ---
-        uint32_t pos2 = freqmutato[2][j];
+
+        // --- OSC 1 LINEAR Engine pointer ---
+        *pF1 += *pP1;
+        uint32_t ph1 = (*pF1 >> step) & 1023;
+        // Waveform[1]-et használjuk
+        float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < *pW1 ? 32767.0f : -32768.0f);
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 6;
+        // Mutatók léptetése a j végén (az összesé!)
+        pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
+
+        // --- OSC 2 PCM Engine pointer---
+        uint32_t pos2 = *pF2;
         uint32_t idx2 = pos2 >> step;
         uint32_t frac2 = pos2 & ((1 << step) - 1);
         if (idx2 < sampleend[2] - 1) {
-          freqmutato[2][j] += pichcount[2][j];
+          *pF2 += *pP2;
         } else if (loopsample[2]) {
-          freqmutato[2][j] = (uint32_t)samplebegin[2] << step;
+          *pF2 = (uint32_t)samplebegin[2] << step;
         }
         int16_t s1_2 = *(genstartadress[2] + idx2);
         int16_t s2_2 = *(genstartadress[2] + idx2 + 1);
         float in2 = (float)(s1_2 + (((int32_t)(s2_2 - s1_2) * (int32_t)frac2) >> step));
-        float hp2 = in2 - v_lp[2][j] - (filter_q[2] * v_bp[2][j]);
-        v_bp[2][j] += filter_f[2][j] * hp2;
-        v_lp[2][j] += filter_f[2][j] * v_bp[2][j];
-        if (v_lp[2][j] > 32767.0f)  v_lp[2][j] = 32767.0f;
-        if (v_lp[2][j] < -32768.0f) v_lp[2][j] = -32768.0f;
-        osc_out[2] = ((int32_t)v_lp[2][j] * generatorvolume[2][j]) >> 4;
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 4;
+        pF2++; pP2++; pL2++; pB2++; pV2++; pFF2++;
 
-        // --- OSC 3 ---
-        freqmutato[3][j] += pichcount[3][j];
-        uint32_t ph3 = (freqmutato[3][j] >> step) & 1023;
-        float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < PWcount[3][j] ? 32767.0f : -32768.0f);
-        float hp3 = in3 - v_lp[3][j] - (filter_q[3] * v_bp[3][j]);
-        v_bp[3][j] += filter_f[3][j] * hp3;
-        v_lp[3][j] += filter_f[3][j] * v_bp[3][j];
-        if (v_lp[3][j] > 32767.0f)  v_lp[3][j] = 32767.0f;
-        if (v_lp[3][j] < -32768.0f) v_lp[3][j] = -32768.0f;
-        osc_out[3] = ((int32_t)v_lp[3][j] * generatorvolume[3][j]) >> 6;
-
+        // --- OSC 3 LINEAR Engine pointer---
+        *pF3 += *pP3;
+        uint32_t ph3 = (*pF3 >> step) & 1023;
+        float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < *pW3 ? 32767.0f : -32768.0f);
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
+        pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
         totalUpper += (osc_out[0] + osc_out[1]);
@@ -2911,25 +3228,20 @@ void loop() {
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
-
-
-
       parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
-
       chorusleft(); chorusright();
       reverbleft(); reverbright();
       lowpassfilterleft(); lowpassfilterright();
-
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
   }
 
 
-  //------------------2-------------------0---------------------PWM+LINEAR+LINEAR+LINEAR------------------------------------
+  //------------------2-------------------0---------------------PCM+LINEAR LINEAR+LINEAR------------------------------------
   if (STRUCTURE_L == 2 && STRUCTURE_U == 0) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3052,7 +3364,7 @@ void loop() {
     }
   }
 
-  //------------------2-------------------2---------------------PWM+LINEAR------------------------------------
+  //------------------2-------------------2---------------------PCM+LINEAR PCM+LINEAR------------------------------------
   if (STRUCTURE_L == 2 && STRUCTURE_U == 2) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3728,68 +4040,293 @@ void loop() {
 
   //--------------------6-------------------5---------------------
 
-  if (STRUCTURE_U == 6 && STRUCTURE_L == 5)
-  {
+  if (STRUCTURE_L == 6 && STRUCTURE_U == 5 ) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
-      bufferbe[0] = 0;
-      bufferbe[1] = 0;
-      bufferbe[2] = 0;
-      bufferbe[3] = 0;
+      // Ezek gyűjtik a teljes polifóniát a két kimenetre
+      int32_t totalUpper = 0; // Itt lesz a 0+1 mix
+      int32_t totalLower = 0; // Itt lesz a 2*3 ring
+
+      //osc0 pointer PCM variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer PCM variable
+      uint32_t* pF1 = &freqmutato[1][0]; // JAVÍTVA: 1-es hangszín/oszci sor
+      uint32_t* pP1 = &pichcount[1][0];
+      float* pL1    = &v_lp[1][0];
+      float* pB1    = &v_bp[1][0];
+      uint16_t* pV1 = &generatorvolume[1][0];
+      float* pFF1   = &filter_f[1][0];
+
+      //oc2 pointer PCM variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2     = &v_lp[2][0];
+      float* pB2     = &v_bp[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer PCM variable
+      uint32_t* pF3 = &freqmutato[3][0]; // JAVÍTVA: 3-as hangszín/oszci sor
+      uint32_t* pP3 = &pichcount[3][0];
+      float* pL3    = &v_lp[3][0];
+      float* pB3    = &v_bp[3][0];
+      uint16_t* pV3 = &generatorvolume[3][0];
+      float* pFF3   = &filter_f[3][0];
+
       for (int j = 0; j < polyphony; j++) {
-        //if end of sample
-        if (((freqmutato[0][j] >> step) < sampleend[0] - 1 )) {
-          freqmutato[0][j] += pichcount[0][j];
+        int32_t osc_out[4];
+
+        // --- OSC 0 (PCM Sample Engine pointer) ---
+        uint32_t pos0 = *pF0;
+        uint32_t idx0 = pos0 >> step;
+        uint32_t frac0 = pos0 & ((1 << step) - 1);
+        if (idx0 < sampleend[0] - 1) {
+          *pF0 += *pP0;
         } else if (loopsample[0]) {
-
-          freqmutato[0][j] = samplebegin[0] << step;
+          *pF0 = (uint32_t)samplebegin[0] << step;
         }
-        if (((freqmutato[1][j] >> step) < sampleend[1] - 1 )  ) {
-          freqmutato[1][j] += pichcount[1][j];
+        int16_t s1_0 = *(genstartadress[0] + idx0);
+        int16_t s2_0 = *(genstartadress[0] + idx0 + 1);
+        float in0 = (float)(s1_0 + (((int32_t)(s2_0 - s1_0) * (int32_t)frac0) >> step));
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 4;
+        pF0++; pP0++; pL0++; pB0++; pV0++; pFF0++;
+
+        // --- OSC 1 LINEAR Engine pointer ---
+        uint32_t pos1 = *pF1;
+        uint32_t idx1 = pos1 >> step;
+        uint32_t frac1 = pos1 & ((1 << step) - 1);
+        if (idx1 < sampleend[1] - 1) {
+          *pF1 += *pP1;
         } else if (loopsample[1]) {
-
-          freqmutato[1][j] = samplebegin[1] << step;
+          *pF1 = (uint32_t)samplebegin[1] << step;
         }
-        if (((freqmutato[2][j] >> step) < sampleend[2] - 1 ) ) {
-          freqmutato[2][j] += pich[2][j];
+        int16_t s1_1 = *(genstartadress[1] + idx1);
+        int16_t s2_1 = *(genstartadress[1] + idx1 + 1);
+        float in1 = (float)(s1_1 + (((int32_t)(s2_1 - s1_1) * (int32_t)frac1) >> step));
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 4;
+        pF1++; pP1++; pL1++; pB1++; pV1++; pFF1++;
+
+        // --- OSC 2 PCM Engine pointer---
+        uint32_t pos2 = *pF2;
+        uint32_t idx2 = pos2 >> step;
+        uint32_t frac2 = pos2 & ((1 << step) - 1);
+        if (idx2 < sampleend[2] - 1) {
+          *pF2 += *pP2;
         } else if (loopsample[2]) {
-
-          freqmutato[2][j] = samplebegin[2] << step;
+          *pF2 = (uint32_t)samplebegin[2] << step;
         }
-        if (((freqmutato[3][j] >> step) < sampleend[3] - 1 )  ) {
-          freqmutato[3][j] += pich[3][j];
+        int16_t s1_2 = *(genstartadress[2] + idx2);
+        int16_t s2_2 = *(genstartadress[2] + idx2 + 1);
+        float in2 = (float)(s1_2 + (((int32_t)(s2_2 - s1_2) * (int32_t)frac2) >> step));
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 4;
+        pF2++; pP2++; pL2++; pB2++; pV2++; pFF2++;
+
+        // --- OSC 3 LINEAR Engine pointer---
+        uint32_t pos3 = *pF3;
+        uint32_t idx3 = pos3 >> step;
+        uint32_t frac3 = pos3 & ((1 << step) - 1);
+        if (idx3 < sampleend[3] - 1) {
+          *pF3 += *pP3;
         } else if (loopsample[3]) {
-
-          freqmutato[3][j] = samplebegin[3] << step;
+          *pF3 = (uint32_t)samplebegin[3] << step;
         }
-        tempbuffer0 = *(genstartadress[0] + (freqmutato[0][j] >> step));
-        bufferbe[2] = (tempbuffer0 * generatorvolume[0][j]) >> 6;
+        int16_t s1_3 = *(genstartadress[3] + idx3);
+        int16_t s2_3 = *(genstartadress[3] + idx3 + 1);
+        float in3 = (float)(s1_3 + (((int32_t)(s2_3 - s1_3) * (int32_t)frac3) >> step));
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 4;
+        pF3++; pP3++; pL3++; pB3++; pV3++; pFF3++;
 
-        tempbuffer1 = *(genstartadress[1] + (freqmutato[1][j] >> step));
-        bufferbe[0] += (((tempbuffer1 * generatorvolume[1][j]) >> 6) + bufferbe[2]) >> 3;
-        //buffers right
-        tempbuffer2 = *(genstartadress[2] + (freqmutato[2][j] >> step));
-        bufferbe[3] = (tempbuffer2 * generatorvolume[2][j]) >> 8;
-
-        tempbuffer3 = *(genstartadress[3] + (freqmutato[3][j] >> step));
-        bufferbe[1] += (((tempbuffer3 * generatorvolume[3][j]) >> 8) * bufferbe[3]) >> 9;
+        // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
+        //totalUpper += (osc_out[0] + osc_out[1]);
+        totalLower += (osc_out[2] + osc_out[3]);
+        totalUpper += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        //totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
       }
-      //freqstep
+
+      // --- 5. Kimeneti bufferbe töltés és effektezés ---
+      bufferbe[0] = totalUpper >> masterVolume;
+      bufferbe[1] = totalLower >> masterVolume;
       parametereqleft();
-      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7 ;
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
-      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7 ;
-      //choruslfo
-      chorusleft();
-      chorusright();
-      reverbleft();
-      reverbright();
-      lowpassfilterleft();
-      lowpassfilterright();
+      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
+      chorusleft(); chorusright();
+      reverbleft(); reverbright();
+      lowpassfilterleft(); lowpassfilterright();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
   }
 
+//--------------------5-------------------6---------------------
+
+  if (STRUCTURE_L == 6 && STRUCTURE_U == 5 ) {
+    for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
+      // Ezek gyűjtik a teljes polifóniát a két kimenetre
+      int32_t totalUpper = 0; // Itt lesz a 0+1 mix
+      int32_t totalLower = 0; // Itt lesz a 2*3 ring
+
+      //osc0 pointer PCM variable
+      uint32_t* pF0  = &freqmutato[0][0];
+      uint32_t* pP0  = &pichcount[0][0];
+      float* pL0     = &v_lp[0][0];
+      float* pB0     = &v_bp[0][0];
+      uint16_t* pV0      = &generatorvolume[0][0];
+      float* pFF0    = &filter_f[0][0];
+
+      //osc1 pointer PCM variable
+      uint32_t* pF1 = &freqmutato[1][0]; // JAVÍTVA: 1-es hangszín/oszci sor
+      uint32_t* pP1 = &pichcount[1][0];
+      float* pL1    = &v_lp[1][0];
+      float* pB1    = &v_bp[1][0];
+      uint16_t* pV1 = &generatorvolume[1][0];
+      float* pFF1   = &filter_f[1][0];
+
+      //oc2 pointer PCM variable
+      uint32_t* pF2  = &freqmutato[2][0];
+      uint32_t* pP2  = &pichcount[2][0];
+      float* pL2     = &v_lp[2][0];
+      float* pB2     = &v_bp[2][0];
+      uint16_t* pV2      = &generatorvolume[2][0];
+      float* pFF2    = &filter_f[2][0];
+
+      //osc3 pointer PCM variable
+      uint32_t* pF3 = &freqmutato[3][0]; // JAVÍTVA: 3-as hangszín/oszci sor
+      uint32_t* pP3 = &pichcount[3][0];
+      float* pL3    = &v_lp[3][0];
+      float* pB3    = &v_bp[3][0];
+      uint16_t* pV3 = &generatorvolume[3][0];
+      float* pFF3   = &filter_f[3][0];
+
+      for (int j = 0; j < polyphony; j++) {
+        int32_t osc_out[4];
+
+        // --- OSC 0 (PCM Sample Engine pointer) ---
+        uint32_t pos0 = *pF0;
+        uint32_t idx0 = pos0 >> step;
+        uint32_t frac0 = pos0 & ((1 << step) - 1);
+        if (idx0 < sampleend[0] - 1) {
+          *pF0 += *pP0;
+        } else if (loopsample[0]) {
+          *pF0 = (uint32_t)samplebegin[0] << step;
+        }
+        int16_t s1_0 = *(genstartadress[0] + idx0);
+        int16_t s2_0 = *(genstartadress[0] + idx0 + 1);
+        float in0 = (float)(s1_0 + (((int32_t)(s2_0 - s1_0) * (int32_t)frac0) >> step));
+        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+        *pB0 += *pFF0 * hp0;
+        *pL0 += *pFF0 * *pB0;
+        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
+        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        osc_out[0] = ((int32_t) * pL0 * *pV0) >> 4;
+        pF0++; pP0++; pL0++; pB0++; pV0++; pFF0++;
+
+        // --- OSC 1 LINEAR Engine pointer ---
+        uint32_t pos1 = *pF1;
+        uint32_t idx1 = pos1 >> step;
+        uint32_t frac1 = pos1 & ((1 << step) - 1);
+        if (idx1 < sampleend[1] - 1) {
+          *pF1 += *pP1;
+        } else if (loopsample[1]) {
+          *pF1 = (uint32_t)samplebegin[1] << step;
+        }
+        int16_t s1_1 = *(genstartadress[1] + idx1);
+        int16_t s2_1 = *(genstartadress[1] + idx1 + 1);
+        float in1 = (float)(s1_1 + (((int32_t)(s2_1 - s1_1) * (int32_t)frac1) >> step));
+        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+        *pB1 += *pFF1 * hp1;
+        *pL1 += *pFF1 * *pB1;
+        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        osc_out[1] = ((int32_t) * pL1 * *pV1) >> 4;
+        pF1++; pP1++; pL1++; pB1++; pV1++; pFF1++;
+
+        // --- OSC 2 PCM Engine pointer---
+        uint32_t pos2 = *pF2;
+        uint32_t idx2 = pos2 >> step;
+        uint32_t frac2 = pos2 & ((1 << step) - 1);
+        if (idx2 < sampleend[2] - 1) {
+          *pF2 += *pP2;
+        } else if (loopsample[2]) {
+          *pF2 = (uint32_t)samplebegin[2] << step;
+        }
+        int16_t s1_2 = *(genstartadress[2] + idx2);
+        int16_t s2_2 = *(genstartadress[2] + idx2 + 1);
+        float in2 = (float)(s1_2 + (((int32_t)(s2_2 - s1_2) * (int32_t)frac2) >> step));
+        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+        *pB2 += *pFF2 * hp2;
+        *pL2 += *pFF2 * *pB2;
+        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
+        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        osc_out[2] = ((int32_t) * pL2 * *pV2) >> 4;
+        pF2++; pP2++; pL2++; pB2++; pV2++; pFF2++;
+
+        // --- OSC 3 LINEAR Engine pointer---
+        uint32_t pos3 = *pF3;
+        uint32_t idx3 = pos3 >> step;
+        uint32_t frac3 = pos3 & ((1 << step) - 1);
+        if (idx3 < sampleend[3] - 1) {
+          *pF3 += *pP3;
+        } else if (loopsample[3]) {
+          *pF3 = (uint32_t)samplebegin[3] << step;
+        }
+        int16_t s1_3 = *(genstartadress[3] + idx3);
+        int16_t s2_3 = *(genstartadress[3] + idx3 + 1);
+        float in3 = (float)(s1_3 + (((int32_t)(s2_3 - s1_3) * (int32_t)frac3) >> step));
+        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+        *pB3 += *pFF3 * hp3;
+        *pL3 += *pFF3 * *pB3;
+        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
+        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        osc_out[3] = ((int32_t) * pL3 * *pV3) >> 4;
+        pF3++; pP3++; pL3++; pB3++; pV3++; pFF3++;
+
+        // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
+        totalUpper += (osc_out[0] + osc_out[1]);
+        //totalLower += (osc_out[2] + osc_out[3]);
+        //totalUpper += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
+      }
+
+      // --- 5. Kimeneti bufferbe töltés és effektezés ---
+      bufferbe[0] = totalUpper >> masterVolume;
+      bufferbe[1] = totalLower >> masterVolume;
+      parametereqleft();
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
+      parametereqright();
+      bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
+      chorusleft(); chorusright();
+      reverbleft(); reverbright();
+      lowpassfilterleft(); lowpassfilterright();
+      sBuffer[i] = bufferbe[0];
+      sBuffer[i + 1] = bufferbe[1];
+    }
+  }
 
   //-----------------6-------------------6------------------
   if (STRUCTURE_L == 6 && STRUCTURE_U == 6 ) {
