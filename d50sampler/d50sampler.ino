@@ -2186,7 +2186,7 @@ void chasearpeggiomidiclock() {
   if (MIDI_SYNC == 1 && CHASE_TIME > 0) {
 
     // A masterTick eltolása az offsettel (0-23 tartományban tartva)
-    int shiftedTick = (masterTick + OFFSET) % 24;
+    int shiftedTick = (masterTick + OFFSET);
 
     // A shiftedTick alapján nézzük az osztást
     if (shiftedTick % CHASE_TIME == 0) {
@@ -2215,6 +2215,8 @@ void chasearpeggiomidiclock() {
     }
   }
 }
+
+
 /*
   void chasearpeggio() {
   if (CHASE_TIME > 0) {
@@ -2274,6 +2276,7 @@ void chasearpeggio() {
 void handleNoteOn(byte channel, byte note, byte velocity) {
   if (channel == midichan) { // <--- A szűrő kapuja
     if (velocity > 0 && note >= 12) {
+      
       keyon(note);
     } else {
       keyoff(note);
@@ -2299,6 +2302,7 @@ void handleStart() {
   chaseindex = 0;
   lastchase = 255;
   MIDI_SYNC = 1;
+  masterTick = 0;
 }
 
 void handleContinue() {
