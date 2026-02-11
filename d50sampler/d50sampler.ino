@@ -1,4 +1,4 @@
-#include <driver/i2s.h>
+ #include <driver/i2s.h>
 #include <MIDI.h>
 #include "samples.h"
 //#include <MIDIUSB.h>
@@ -14,7 +14,7 @@ struct Serial2MIDISettings : public midi::DefaultSettings {
 
 
 MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial2, MIDI2, Serial2MIDISettings);
-byte midichan = 1;
+byte midichan = 16;
 byte commandByte;
 byte noteByte;
 byte velocityByte;
@@ -215,9 +215,11 @@ byte PWMLFO[4] = {2, 3, 4, 5};
 byte PICH_LFO_level[4] = {0, 0, 0, 0};
 byte TVF_LFO_level[4] = {0, 0, 0, 0};
 byte PWMLFODepth[4];
-byte masterVolume = 3;
+byte masterVolume = 4;
 volatile int masterTick = 0;
 byte OFFSET = 2;
+byte modulationWheel = 0;
+int32_t pitchBendValue = 0;
 
 //----------------------------PARAMETRIC EQ LEFT-------------------------------------------------
 
@@ -412,7 +414,7 @@ void maxsize() {
   sizes[13] = sizeof(nailfile) >> 1;
   sizes[14] = sizeof(pick) >> 1;
   sizes[15] = sizeof(lowpiano) >> 1;
-  sizes[16] = sizeof(pianosample) >> 1;
+  sizes[16] = sizeof(midpiano) >> 1;
   sizes[17] = sizeof(highpiano) >> 1;
   sizes[18] = sizeof(hapsichord) >> 1;
   sizes[19] = sizeof(harp) >> 1;
@@ -425,12 +427,12 @@ void maxsize() {
   sizes[26] = sizeof(pickbass) >> 1;
   sizes[27] = sizeof(popbass) >> 1;
   sizes[28] = sizeof(thump) >> 1;
-  sizes[29] = sizeof(klarinet) >> 1;
-  sizes[30] = sizeof(breath) >> 1;
-  sizes[31] = sizeof(klarinet) >> 1;
+  sizes[29] = sizeof(uprightbass) >> 1;
+  sizes[30] = sizeof(klarinet) >> 1;
+  sizes[31] = sizeof(breath) >> 1;
   sizes[32] = sizeof(steamer) >> 1;
-  sizes[33] = sizeof(steamer) >> 1;
-  sizes[34] = sizeof(steamer) >> 1;
+  sizes[33] = sizeof(hightflute) >> 1;
+  sizes[34] = sizeof(lowflute) >> 1;
   sizes[35] = sizeof(steamer) >> 1;
   sizes[36] = sizeof(steamer) >> 1;
   sizes[37] = sizeof(steamer) >> 1;
@@ -546,7 +548,7 @@ void setPCMWave() {
     case 13: genstartadress[opmenuoldal] = nailfile; break;
     case 14: genstartadress[opmenuoldal] = pick; break;
     case 15: genstartadress[opmenuoldal] = lowpiano; break;
-    case 16: genstartadress[opmenuoldal] = pianosample; break;
+    case 16: genstartadress[opmenuoldal] = midpiano; break;
     case 17: genstartadress[opmenuoldal] = highpiano; break;
     case 18: genstartadress[opmenuoldal] = hapsichord; break;
     case 19: genstartadress[opmenuoldal] = harp; break;
@@ -559,12 +561,12 @@ void setPCMWave() {
     case 26: genstartadress[opmenuoldal] = pickbass; break;
     case 27: genstartadress[opmenuoldal] = popbass; break;
     case 28: genstartadress[opmenuoldal] = thump; break;
-    case 29: genstartadress[opmenuoldal] = klarinet; break;
-    case 30: genstartadress[opmenuoldal] = breath; break;
-    case 31: genstartadress[opmenuoldal] = popbass; break;
+    case 29: genstartadress[opmenuoldal] = uprightbass; break;
+    case 30: genstartadress[opmenuoldal] = klarinet; break;
+    case 31: genstartadress[opmenuoldal] = breath; break;
     case 32: genstartadress[opmenuoldal] = steamer; break;
-    case 33: genstartadress[opmenuoldal] = steamer; break;
-    case 34: genstartadress[opmenuoldal] = steamer; break;
+    case 33: genstartadress[opmenuoldal] = hightflute; break;
+    case 34: genstartadress[opmenuoldal] = lowflute; break;
     case 35: genstartadress[opmenuoldal] = steamer; break;
     case 36: genstartadress[opmenuoldal] = steamer; break;
     case 37: genstartadress[opmenuoldal] = steamer; break;
@@ -1802,7 +1804,9 @@ void parametersysexchanged() {
         line = "CHASE TIME=" + lcdprint3(CHASE_TIME);
         break;
       case 37:
-        midichan = value;
+        if (value > 0) {
+          midichan = value;
+        }
         line = "MIDI CH=" + String(midichan);
         break;
     }
@@ -2321,10 +2325,21 @@ void handleStop() {
   lastchase = 255;
 }
 
+void handleControlChange(byte channel, byte number, byte value) {
+  if (number == 1) { // CC#1 a Mod Wheel
+    modulationWheel = value;
+  }
+}
+void handlePitchBend(byte channel, int bend) {
+  // A bend 0-16383 között jön, eltoljuk, hogy -8192 és +8191 között legyen
+  pitchBendValue = bend - 8192;
+}
+
+
+
 void handleSysEx(byte* data, unsigned size) {
   // CSAK AKKOR printelj, ha nagyon muszáj, mert a Serial.print lassú!
   // A legjobb, ha csak a feldolgozás marad:
-
   // prefix ellenőrzés: 240, 65, 0, 20, 18, 0
   if (size >= 6 && data[0] == 240 && data[1] == 65 && data[2] == 0 && data[3] == 20 && data[4] == 18 && data[5] == 0) {
 
@@ -2387,6 +2402,8 @@ void setup() {
   MIDI2.setHandleStart(handleStart);
   MIDI2.setHandleContinue(handleContinue);
   MIDI2.setHandleStop(handleStop);
+  MIDI2.setHandleControlChange(handleControlChange);
+  MIDI2.setHandlePitchBend(handlePitchBend);
   MIDI2.begin(MIDI_CHANNEL_OMNI);
 
 
@@ -2560,7 +2577,9 @@ void loop() {
 
   //Serial.printf("Vol:%d Bias:%d TVA:%u GenVol:%u\n", volume[0], wavebias[0][0], currentLevel0, generatorvolume[0][0]);
   //LFO working area
-  if (true) {
+
+  /*
+    if (true) {
     for (int osc = 0; osc < 4; osc++) {
       int lfoBaseIndex = (osc < 2) ? 0 : 3;
       int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
@@ -2594,8 +2613,62 @@ void loop() {
       }
     }
     // Serial.println("lfo4value: " + String(lfovalue[4]) + " PWcount0: " + PWcount[0][0] );
-  }
+    }*/
 
+  // --- 0. BEND SZÁMÍTÁSA KÍVÜL ---
+
+ // LFO working area
+  if (true) {
+    for (int osc = 0; osc < 4; osc++) {
+      int lfoBaseIndex = (osc < 2) ? 0 : 3;
+      int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
+      
+      // --- 1. PWM MODULÁCIÓ (Integer) ---
+      // A modulációs kerék (0-127) értéket adjuk hozzá az alap mélységhez.
+      // A (modulationWheel >> 1) pl. 0-63 közötti extra mélységet ad.
+      int32_t currentPWMLFODepth = PWMLFODepth[osc] + (modulationWheel >> 1); 
+      int32_t lfoMod = (lfovalue[selectedLFO] * currentPWMLFODepth) >> 5;
+      
+      if (PWMLFO[osc] & 1) {
+        lfoMod = -lfoMod;
+      }
+      
+      int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
+      if (finalPW > 1023) finalPW = 1023;
+      if (finalPW < 1)    finalPW = 1;
+
+      // --- 2. TVF (SZŰRŐ) MODULÁCIÓ ---
+      // Itt használsz float-ot (cutoffHz számítás), ami a szűrő stabilitása miatt kell.
+      // De a bemenő LFO értéket először integerben adjuk össze:
+      int32_t totalTVFLfoLevel = TVF_LFO_level[osc] + (modulationWheel >> 2); // Mod kerék hatása a szűrőre
+      float lfo_part = (tvf_cutoff[osc] * 0.01f) + ((lfovalue[TWFLFO[osc]] - 128.0f) * (totalTVFLfoLevel * 0.000039f));
+
+      filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
+      
+      // --- 3. PITCH (VIBRATO) MODULÁCIÓ (Tisztán Integer) ---
+      int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
+      
+      // Összeadjuk az alap LFO mélységet és a Mod Wheel-t (itt is integerben)
+      // A (modulationWheel << 1) egy érzékenységi szorzó, tetszés szerint állítható
+      int32_t totalPichLfoDepth = PICH_LFO_level[osc] ;
+
+      for (int j = 0; j < polyphony; j++)
+      {
+        // TVF (Itt marad a float, mert a szűrőfüggvényed erre épül)
+        float total_norm = lfo_part + (TVFlevel[osc][j] * 0.5f);
+        total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
+        float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
+        filter_f[osc][j] = fmaxf(0.005f, fminf(0.45f, 2.0f * sinf(cutoffHz * 0.0000712f)));
+        
+        // PWM (Integer)
+        PWcount[osc][j] = finalPW;
+
+        // PITCH (Integer)
+        // A végén nem float-olunk, marad az egész számú eltolás
+        pichcount[osc][j] = pich[osc][j] + (bipolarLFO * totalPichLfoDepth);
+      }
+    }
+  }
 
   if (true) {
     f0 = f0orig + (lfovalue[0] * lfolevel[0]);
@@ -2844,7 +2917,7 @@ void loop() {
         pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
-        totalLower += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        totalUpper += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
         //totalUpper += (osc_out[0] + osc_out[1]);
         //totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
         totalLower += (osc_out[2] + osc_out[3]);
@@ -3115,7 +3188,7 @@ void loop() {
 
 
   //------------------0-------------------2---------------------LINEAR+LINEAR PCM+LINEAR------------------------------------
-  if (STRUCTURE_L == 2 && STRUCTURE_U == 2) {
+  if (STRUCTURE_L == 0 && STRUCTURE_U == 2) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
@@ -4163,8 +4236,9 @@ void loop() {
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
         //totalUpper += (osc_out[0] + osc_out[1]);
-        totalLower += (osc_out[2] + osc_out[3]);
         totalUpper += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        totalLower += (osc_out[2] + osc_out[3]);
+        
         //totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
       }
 
@@ -4183,9 +4257,9 @@ void loop() {
     }
   }
 
-//--------------------5-------------------6---------------------
+  //--------------------5-------------------6---------------------
 
-  if (STRUCTURE_L == 6 && STRUCTURE_U == 5 ) {
+  if (STRUCTURE_L == 5 && STRUCTURE_U == 6 ) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
