@@ -351,7 +351,7 @@ void notebias() {
   }
 }
 void notetune() {
-  float szorzo2 = 2;
+  float szorzo2 = 1;
   for (int j = 0; j < 4; j++) {
     switch (KEYFollow[j]) {
       case 0:  szorzo2 = 0.12; break;
@@ -466,22 +466,14 @@ void maxsize() {
   sizes[65] = sizeof(oohloop) >> 1;
   sizes[66] = sizeof(maleloop) >> 1;
   sizes[67] = sizeof(spectrum1loop) >> 1;
-  //loop
-  //sizes[68] = (sizeof(marimba) + sizeof(vibraphone)) >> 1 ;
-  sizes[68] = (sizeof(vibraphone) + sizeof(xilophone1)) >> 1;
-  // sizes[70] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
-  // sizes[71] = (sizeof(vibraphone) + sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
-  sizes[69] = (sizeof(xilophone1) + sizeof(xilophone2)) >> 1;
-  //sizes[73] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass)) >> 1;
-  // sizes[74] = (sizeof(xilophone1) + sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
-  // sizes[75] = (sizeof(xilophone2) + sizeof(logbass)) >> 1;
-  // sizes[76] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer)) >> 1;
-  sizes[70] = (sizeof(xilophone2) + sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
-  sizes[71] = (sizeof(logbass) + sizeof(hammer)) >> 1;
-  sizes[72] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum)) >> 1;
-  sizes[73] = (sizeof(logbass) + sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
-  sizes[74] = (sizeof(hammer) + sizeof(japanesedrum)) >> 1;
-  sizes[75] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
+  sizes[68] = sizeof(spectrum2loop) >> 1;
+  sizes[69] = sizeof(spectrum3loop) >> 1;
+  sizes[70] = sizeof(spectrum4loop) >> 1;
+  sizes[71] = sizeof(spectrum5loop) >> 1;
+  sizes[72] = sizeof(spectrum6loop) >> 1;
+  sizes[73] = sizeof(spectrum7loop) >> 1;
+  sizes[74] =sizeof(male) >> 1;
+  sizes[75] =sizeof(noise) >> 1;
   sizes[76] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
   sizes[77] = (+sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
   sizes[78] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
@@ -601,22 +593,15 @@ void setPCMWave() {
     case 65: genstartadress[opmenuoldal] = oohloop; break;
     case 66: genstartadress[opmenuoldal] = maleloop; break;
     case 67: genstartadress[opmenuoldal] = spectrum1loop; break;
-    //loop
-    //  case 68: genstartadress[opmenuoldal] = marimba; break;
-    case 68: genstartadress[opmenuoldal] = vibraphone; break;
-    //  case 70: genstartadress[opmenuoldal] = vibraphone; break;
-    // case 71: genstartadress[opmenuoldal] = vibraphone; break;
-    case 69: genstartadress[opmenuoldal] = xilophone1; break;
-    // case 73: genstartadress[opmenuoldal] = xilophone1; break;
-    // case 74: genstartadress[opmenuoldal] = xilophone1; break;
-    // case 75: genstartadress[opmenuoldal] = xilophone2; break;
-    // case 76: genstartadress[opmenuoldal] = xilophone2; break;
-    case 70: genstartadress[opmenuoldal] = xilophone2; break;
-    case 71: genstartadress[opmenuoldal] = logbass; break;
-    case 72: genstartadress[opmenuoldal] = logbass; break;
-    case 73: genstartadress[opmenuoldal] = logbass; break;
-    case 74: genstartadress[opmenuoldal] = hammer; break;
-    case 75: genstartadress[opmenuoldal] = hammer; break;
+    case 68: genstartadress[opmenuoldal] = spectrum2loop; break;
+    case 69: genstartadress[opmenuoldal] = spectrum3loop; break;
+    case 70: genstartadress[opmenuoldal] = spectrum4loop; break;
+    case 71: genstartadress[opmenuoldal] = spectrum5loop; break;
+    case 72: genstartadress[opmenuoldal] = spectrum6loop; break;
+    case 73: genstartadress[opmenuoldal] = spectrum7loop; break;
+    case 74: genstartadress[opmenuoldal] = male; break;
+    case 75: genstartadress[opmenuoldal] = noise; break;
+   //loop
     case 76: genstartadress[opmenuoldal] = hammer; break;
     case 77: genstartadress[opmenuoldal] = japanesedrum; break;
     case 78: genstartadress[opmenuoldal] = japanesedrum; break;
