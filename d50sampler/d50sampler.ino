@@ -1,4 +1,4 @@
- #include <driver/i2s.h>
+#include <driver/i2s.h>
 #include <MIDI.h>
 #include "samples.h"
 //#include <MIDIUSB.h>
@@ -46,7 +46,7 @@ void i2s_setpin() {
 }
 
 // Define input buffer length
-#define bufferLen 256
+#define bufferLen 512
 int16_t sBuffer[bufferLen];
 
 //---16-bit
@@ -472,8 +472,8 @@ void maxsize() {
   sizes[71] = sizeof(spectrum5loop) >> 1;
   sizes[72] = sizeof(spectrum6loop) >> 1;
   sizes[73] = sizeof(spectrum7loop) >> 1;
-  sizes[74] =sizeof(male) >> 1;
-  sizes[75] =sizeof(noise) >> 1;
+  sizes[74] = sizeof(male) >> 1;
+  sizes[75] = sizeof(noise) >> 1;
   sizes[76] = (sizeof(hammer) + sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
   sizes[77] = (+sizeof(japanesedrum) + sizeof(kalimba)) >> 1;
   sizes[78] = (+sizeof(japanesedrum) + sizeof(kalimba) + sizeof(pluck1)) >> 1;
@@ -601,7 +601,7 @@ void setPCMWave() {
     case 73: genstartadress[opmenuoldal] = spectrum7loop; break;
     case 74: genstartadress[opmenuoldal] = male; break;
     case 75: genstartadress[opmenuoldal] = noise; break;
-   //loop
+    //loop
     case 76: genstartadress[opmenuoldal] = hammer; break;
     case 77: genstartadress[opmenuoldal] = japanesedrum; break;
     case 78: genstartadress[opmenuoldal] = japanesedrum; break;
@@ -1109,7 +1109,7 @@ void parametersysexchanged() {
         notetune();
 
         break;
-      case 67:
+      case 68:
         TVA[0] = value;
         line = "L1: TVA ON-OFF=" + lcdprint3(TVA[0]);
         break;
@@ -2136,6 +2136,15 @@ void keyon(byte noteByte) {
   freqmutato[1][generatornumber] = samplebegin[1] << step;
   freqmutato[2][generatornumber] = samplebegin[2] << step;
   freqmutato[3][generatornumber] = samplebegin[3] << step;
+  // 2. SZŰRŐ RESET (Ezt add hozzá!)
+
+
+  // CSAK ENNYI KELL: Töröljük a szűrő memóriáját az új hang indításakor
+  v_lp[0][generatornumber] = 0.0f; v_bp[0][generatornumber] = 0.0f;
+  v_lp[1][generatornumber] = 0.0f; v_bp[1][generatornumber] = 0.0f;
+  v_lp[2][generatornumber] = 0.0f; v_bp[2][generatornumber] = 0.0f;
+  v_lp[3][generatornumber] = 0.0f; v_bp[3][generatornumber] = 0.0f;
+
   noteoff[generatornumber] = false;
   TVAvolume[0][generatornumber] = ENV_L0;
   TVAvolume[1][generatornumber] = ENV_L0;
@@ -2552,7 +2561,7 @@ void loop() {
       uint8_t* pBias   = &wavebias[i][0];
       uint16_t  v       = volume[i];
       for (int j = 0; j < polyphony; j++) {
-        *pGenVol = (v * (*pBias)) >> 6;
+        *pGenVol = (v * (*pBias)) >> 2;
         pGenVol++; pBias++;
       }
     }
@@ -2602,22 +2611,22 @@ void loop() {
 
   // --- 0. BEND SZÁMÍTÁSA KÍVÜL ---
 
- // LFO working area
+  // LFO working area
   if (true) {
     for (int osc = 0; osc < 4; osc++) {
       int lfoBaseIndex = (osc < 2) ? 0 : 3;
       int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
-      
+
       // --- 1. PWM MODULÁCIÓ (Integer) ---
       // A modulációs kerék (0-127) értéket adjuk hozzá az alap mélységhez.
       // A (modulationWheel >> 1) pl. 0-63 közötti extra mélységet ad.
-      int32_t currentPWMLFODepth = PWMLFODepth[osc] + (modulationWheel >> 1); 
+      int32_t currentPWMLFODepth = PWMLFODepth[osc] + (modulationWheel >> 1);
       int32_t lfoMod = (lfovalue[selectedLFO] * currentPWMLFODepth) >> 5;
-      
+
       if (PWMLFO[osc] & 1) {
         lfoMod = -lfoMod;
       }
-      
+
       int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
       if (finalPW > 1023) finalPW = 1023;
       if (finalPW < 1)    finalPW = 1;
@@ -2629,10 +2638,10 @@ void loop() {
       float lfo_part = (tvf_cutoff[osc] * 0.01f) + ((lfovalue[TWFLFO[osc]] - 128.0f) * (totalTVFLfoLevel * 0.000039f));
 
       filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
-      
+
       // --- 3. PITCH (VIBRATO) MODULÁCIÓ (Tisztán Integer) ---
       int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
-      
+
       // Összeadjuk az alap LFO mélységet és a Mod Wheel-t (itt is integerben)
       // A (modulationWheel << 1) egy érzékenységi szorzó, tetszés szerint állítható
       int32_t totalPichLfoDepth = PICH_LFO_level[osc] ;
@@ -2644,7 +2653,7 @@ void loop() {
         total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
         float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
         filter_f[osc][j] = fmaxf(0.005f, fminf(0.45f, 2.0f * sinf(cutoffHz * 0.0000712f)));
-        
+
         // PWM (Integer)
         PWcount[osc][j] = finalPW;
 
@@ -3466,25 +3475,51 @@ void loop() {
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
-        // --- OSC 0 (PCM Sample Engine pointer) ---
+
+        // --- OSC 0 PCM ---
         uint32_t pos0 = *pF0;
         uint32_t idx0 = pos0 >> step;
         uint32_t frac0 = pos0 & ((1 << step) - 1);
+        const int16_t* pSample0 = genstartadress[0];
+        int16_t s1_0, s2_0;
         if (idx0 < sampleend[0] - 1) {
-          *pF0 += *pP0;
-        } else if (loopsample[0]) {
-          *pF0 = (uint32_t)samplebegin[0] << step;
+          // NORMÁL LEJÁTSZÁS: Benne vagyunk a mintában
+          s1_0 = pSample0[idx0];
+          s2_0 = pSample0[idx0 + 1];
+          *pF0 += *pP0; // Csak akkor lépünk, ha nem értük el a végét
         }
-        int16_t s1_0 = *(genstartadress[0] + idx0);
-        int16_t s2_0 = *(genstartadress[0] + idx0 + 1);
-        float in0 = (float)(s1_0 + (((int32_t)(s2_0 - s1_0) * (int32_t)frac0) >> step));
+        else if (idx0 >= sampleend[0] - 1) {
+          // HATÁR ESET: Elértük az utolsó mintát vagy túlfutottunk
+          if (loopsample[0]) {
+            // LOOP MÓD: Visszarántjuk az elejére
+            *pF0 = (uint32_t)samplebegin[0] << step;
+            idx0 = samplebegin[0];
+            s1_0 = pSample0[idx0];
+            s2_0 = pSample0[idx0 + 1];
+            // Itt nem növelünk újra, mert a következő körben a pos0 már az eleje lesz
+          } else {
+            // ONE-SHOT MÓD: Megállítjuk a fázist és elnémítjuk a bemenetet
+            s1_0 = 0;
+            s2_0 = 0;
+            // A *pF0-t NEM növeljük tovább, így ott marad a minta végén.
+          }
+        }
+        // 3. Interpoláció (Már a tiszta s1_0, s2_0 értékekkel)
+        float in0 = (float)s1_0 + (float)(s2_0 - s1_0) * (float)frac0 * (1.0f / (float)(1 << step));
+        // 4. SZŰRŐ (Változatlanul gyors)
         float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
         *pB0 += *pFF0 * hp0;
         *pL0 += *pFF0 * *pB0;
+        // Anti-pop / Limiter
         if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
         if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        // 5. Kimenet és Pointer léptetés
         osc_out[0] = ((int32_t) * pL0 * *pV0) >> 4;
         pF0++; pP0++; pL0++; pB0++; pV0++; pFF0++;
+
+
+
+
 
         // --- OSC 1 LINEAR Engine pointer ---
         *pF1 += *pP1;
@@ -3500,25 +3535,56 @@ void loop() {
         // Mutatók léptetése a j végén (az összesé!)
         pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
 
-        // --- OSC 2 PCM Engine pointer---
+
+        // --- OSC 2 PCM Engine pointer ---
+        // --- OSC 2 (Végleges, optimalizált PCM - One-shot védelemmel) ---
+        // 1. Alapadatok
         uint32_t pos2 = *pF2;
         uint32_t idx2 = pos2 >> step;
         uint32_t frac2 = pos2 & ((1 << step) - 1);
+        const int16_t* pSample2 = genstartadress[2];
+
+        int16_t s1_2, s2_2;
+
+        // 2. Loop és határkezelés (Szigorú kontroll)
         if (idx2 < sampleend[2] - 1) {
-          *pF2 += *pP2;
-        } else if (loopsample[2]) {
-          *pF2 = (uint32_t)samplebegin[2] << step;
+          // NORMÁL LEJÁTSZÁS: Benne vagyunk a mintában
+          s1_2 = pSample2[idx2];
+          s2_2 = pSample2[idx2 + 1];
+          *pF2 += *pP2; // Csak akkor lépünk, ha nem értük el a végét
         }
-        int16_t s1_2 = *(genstartadress[2] + idx2);
-        int16_t s2_2 = *(genstartadress[2] + idx2 + 1);
-        float in2 = (float)(s1_2 + (((int32_t)(s2_2 - s1_2) * (int32_t)frac2) >> step));
+        else if (idx2 >= sampleend[2] - 1) {
+          // HATÁR ESET: Elértük az utolsó mintát vagy túlfutottunk
+          if (loopsample[2]) {
+            // LOOP MÓD: Visszarántjuk az elejére
+            *pF2 = (uint32_t)samplebegin[2] << step;
+            idx2 = samplebegin[2];
+            s1_2 = pSample2[idx2];
+            s2_2 = pSample2[idx2 + 1];
+          } else {
+            // ONE-SHOT MÓD: Megállítjuk a fázist és elnémítjuk a bemenetet
+            s1_2 = 0;
+            s2_2 = 0;
+            // A *pF2-t NEM növeljük tovább, így ott marad a minta végén.
+          }
+        }
+
+        // 3. Interpoláció
+        float in2 = (float)s1_2 + (float)(s2_2 - s1_2) * (float)frac2 * (1.0f / (float)(1 << step));
+
+        // 4. SZŰRŐ (Kompakt és gyors)
         float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
         *pB2 += *pFF2 * hp2;
         *pL2 += *pFF2 * *pB2;
+
+        // Anti-pop / Limiter (Biztonsági korlát)
         if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
         if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+
+        // 5. Kimenet és Pointer léptetés
         osc_out[2] = ((int32_t) * pL2 * *pV2) >> 4;
         pF2++; pP2++; pL2++; pB2++; pV2++; pFF2++;
+
 
         // --- OSC 3 LINEAR Engine pointer---
         *pF3 += *pP3;
@@ -3954,7 +4020,7 @@ void loop() {
 
 
   //------------------5-------------------5---------------------
-  if (STRUCTURE_L == 5 && STRUCTURE_U == 5 ) {
+  if (STRUCTURE_L == 5 && STRUCTURE_U == 5) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
       int32_t totalUpper = 0; // Itt lesz a 0+1 mix
@@ -3968,13 +4034,14 @@ void loop() {
       uint16_t* pV0      = &generatorvolume[0][0];
       float* pFF0    = &filter_f[0][0];
 
-      //osc1 pointer PCM variable
-      uint32_t* pF1 = &freqmutato[1][0]; // JAVÍTVA: 1-es hangszín/oszci sor
-      uint32_t* pP1 = &pichcount[1][0];
-      float* pL1    = &v_lp[1][0];
-      float* pB1    = &v_bp[1][0];
-      uint16_t* pV1 = &generatorvolume[1][0];
-      float* pFF1   = &filter_f[1][0];
+      //osc1 pointer Linear variable
+      uint32_t* pF1  = &freqmutato[1][0];
+      uint32_t* pP1  = &pichcount[1][0];
+      float* pL1  = &v_lp[1][0];
+      float* pB1  = &v_bp[1][0];
+      uint32_t* pW1  = &PWcount[1][0];
+      uint16_t* pV1  = &generatorvolume[1][0];
+      float* pFF1 = &filter_f[1][0];
 
       //oc2 pointer PCM variable
       uint32_t* pF2  = &freqmutato[2][0];
@@ -3984,96 +4051,241 @@ void loop() {
       uint16_t* pV2      = &generatorvolume[2][0];
       float* pFF2    = &filter_f[2][0];
 
-      //osc3 pointer PCM variable
-      uint32_t* pF3 = &freqmutato[3][0]; // JAVÍTVA: 3-as hangszín/oszci sor
-      uint32_t* pP3 = &pichcount[3][0];
-      float* pL3    = &v_lp[3][0];
-      float* pB3    = &v_bp[3][0];
-      uint16_t* pV3 = &generatorvolume[3][0];
-      float* pFF3   = &filter_f[3][0];
+      //osc3 pointer Linear variable
+      uint32_t* pF3  = &freqmutato[3][0];
+      uint32_t* pP3  = &pichcount[3][0];
+      float* pL3  = &v_lp[3][0];
+      float* pB3  = &v_bp[3][0];
+      uint32_t* pW3  = &PWcount[3][0]; // uint32_t, ha az OSC 0-nál az vált be
+      uint16_t* pV3      = &generatorvolume[3][0]; // byte-ra javítva!
+      float* pFF3    = &filter_f[3][0];
 
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
-        // --- OSC 0 (PCM Sample Engine pointer) ---
+
+        // --- OSC 0 PCM ---
         uint32_t pos0 = *pF0;
         uint32_t idx0 = pos0 >> step;
         uint32_t frac0 = pos0 & ((1 << step) - 1);
+        const int16_t* pSample0 = genstartadress[0];
+        int16_t s1_0, s2_0;
         if (idx0 < sampleend[0] - 1) {
-          *pF0 += *pP0;
-        } else if (loopsample[0]) {
-          *pF0 = (uint32_t)samplebegin[0] << step;
+          // NORMÁL LEJÁTSZÁS: Benne vagyunk a mintában
+          s1_0 = pSample0[idx0];
+          s2_0 = pSample0[idx0 + 1];
+          *pF0 += *pP0; // Csak akkor lépünk, ha nem értük el a végét
         }
-        int16_t s1_0 = *(genstartadress[0] + idx0);
-        int16_t s2_0 = *(genstartadress[0] + idx0 + 1);
-        float in0 = (float)(s1_0 + (((int32_t)(s2_0 - s1_0) * (int32_t)frac0) >> step));
+        else if (idx0 >= sampleend[0] - 1) {
+          // HATÁR ESET: Elértük az utolsó mintát vagy túlfutottunk
+          if (loopsample[0]) {
+            // LOOP MÓD: Visszarántjuk az elejére
+            *pF0 = (uint32_t)samplebegin[0] << step;
+            idx0 = samplebegin[0];
+            s1_0 = pSample0[idx0];
+            s2_0 = pSample0[idx0 + 1];
+            // Itt nem növelünk újra, mert a következő körben a pos0 már az eleje lesz
+          } else {
+            // ONE-SHOT MÓD: Megállítjuk a fázist és elnémítjuk a bemenetet
+            s1_0 = 0;
+            s2_0 = 0;
+            // A *pF0-t NEM növeljük tovább, így ott marad a minta végén.
+          }
+        }
+        // 3. Interpoláció (Már a tiszta s1_0, s2_0 értékekkel)
+        float in0 = (float)s1_0 + (float)(s2_0 - s1_0) * (float)frac0 * (1.0f / (float)(1 << step));
+        // 4. SZŰRŐ (Változatlanul gyors)
         float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
         *pB0 += *pFF0 * hp0;
         *pL0 += *pFF0 * *pB0;
+        // Anti-pop / Limiter
         if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
         if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        // 5. Kimenet és Pointer léptetés
         osc_out[0] = ((int32_t) * pL0 * *pV0) >> 4;
         pF0++; pP0++; pL0++; pB0++; pV0++; pFF0++;
 
-        // --- OSC 1 LINEAR Engine pointer ---
+
+
+
+
+        // --- OSC 1 PCM ---
+
         uint32_t pos1 = *pF1;
+
         uint32_t idx1 = pos1 >> step;
+
         uint32_t frac1 = pos1 & ((1 << step) - 1);
+
+        const int16_t* pSample1 = genstartadress[1];
+
+        int16_t s1_1, s2_1;
+
+
         if (idx1 < sampleend[1] - 1) {
-          *pF1 += *pP1;
-        } else if (loopsample[1]) {
-          *pF1 = (uint32_t)samplebegin[1] << step;
+
+          // NORMÁL LEJÁTSZÁS: Benne vagyunk a mintában
+
+          s1_1 = pSample1[idx1];
+
+          s2_1 = pSample1[idx1 + 1];
+
+          *pF1 += *pP1; // Csak akkor lépünk, ha nem értük el a végét
+
         }
-        int16_t s1_1 = *(genstartadress[1] + idx1);
-        int16_t s2_1 = *(genstartadress[1] + idx1 + 1);
-        float in1 = (float)(s1_1 + (((int32_t)(s2_1 - s1_1) * (int32_t)frac1) >> step));
+
+        else if (idx1 >= sampleend[1] - 1) {
+
+          // HATÁR ESET: Elértük az utolsó mintát vagy túlfutottunk
+
+          if (loopsample[1]) {
+
+            // LOOP MÓD: Visszarántjuk az elejére
+
+            *pF1 = (uint32_t)samplebegin[1] << step;
+
+            idx1 = samplebegin[1];
+
+            s1_1 = pSample1[idx1];
+
+            s2_1 = pSample1[idx1 + 1];
+
+          } else {
+
+            // ONE-SHOT MÓD: Megállítjuk a fázist és elnémítjuk a bemenetet
+
+            s1_1 = 0;
+
+            s2_1 = 0;
+
+            // A *pF1-et NEM növeljük tovább.
+
+          }
+
+        }
+
+
+        // 3. Interpoláció
+
+        float in1 = (float)s1_1 + (float)(s2_1 - s1_1) * (float)frac1 * (1.0f / (float)(1 << step));
+
+
+        // 4. SZŰRŐ
+
         float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+
         *pB1 += *pFF1 * hp1;
+
         *pL1 += *pFF1 * *pB1;
+
+
+        // Anti-pop / Limiter
+
         if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
+
         if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+
+
+        // 5. Kimenet és Pointer léptetés
+
         osc_out[1] = ((int32_t) * pL1 * *pV1) >> 4;
+
+
+        // 6. Mutatók léptetése (pW1 is léptetve!)
+
         pF1++; pP1++; pL1++; pB1++; pV1++; pFF1++;
 
-        // --- OSC 2 PCM Engine pointer---
+        // --- OSC 2 PCM Engine pointer ---
+        // --- OSC 2 (Végleges, optimalizált PCM - One-shot védelemmel) ---
+        // 1. Alapadatok
         uint32_t pos2 = *pF2;
         uint32_t idx2 = pos2 >> step;
         uint32_t frac2 = pos2 & ((1 << step) - 1);
+        const int16_t* pSample2 = genstartadress[2];
+
+        int16_t s1_2, s2_2;
+
+        // 2. Loop és határkezelés (Szigorú kontroll)
         if (idx2 < sampleend[2] - 1) {
-          *pF2 += *pP2;
-        } else if (loopsample[2]) {
-          *pF2 = (uint32_t)samplebegin[2] << step;
+          // NORMÁL LEJÁTSZÁS: Benne vagyunk a mintában
+          s1_2 = pSample2[idx2];
+          s2_2 = pSample2[idx2 + 1];
+          *pF2 += *pP2; // Csak akkor lépünk, ha nem értük el a végét
         }
-        int16_t s1_2 = *(genstartadress[2] + idx2);
-        int16_t s2_2 = *(genstartadress[2] + idx2 + 1);
-        float in2 = (float)(s1_2 + (((int32_t)(s2_2 - s1_2) * (int32_t)frac2) >> step));
+        else if (idx2 >= sampleend[2] - 1) {
+          // HATÁR ESET: Elértük az utolsó mintát vagy túlfutottunk
+          if (loopsample[2]) {
+            // LOOP MÓD: Visszarántjuk az elejére
+            *pF2 = (uint32_t)samplebegin[2] << step;
+            idx2 = samplebegin[2];
+            s1_2 = pSample2[idx2];
+            s2_2 = pSample2[idx2 + 1];
+          } else {
+            // ONE-SHOT MÓD: Megállítjuk a fázist és elnémítjuk a bemenetet
+            s1_2 = 0;
+            s2_2 = 0;
+            // A *pF2-t NEM növeljük tovább, így ott marad a minta végén.
+          }
+        }
+
+        // 3. Interpoláció
+        float in2 = (float)s1_2 + (float)(s2_2 - s1_2) * (float)frac2 * (1.0f / (float)(1 << step));
+
+        // 4. SZŰRŐ (Kompakt és gyors)
         float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
         *pB2 += *pFF2 * hp2;
         *pL2 += *pFF2 * *pB2;
+
+        // Anti-pop / Limiter (Biztonsági korlát)
         if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
         if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+
+        // 5. Kimenet és Pointer léptetés
         osc_out[2] = ((int32_t) * pL2 * *pV2) >> 4;
         pF2++; pP2++; pL2++; pB2++; pV2++; pFF2++;
 
-        // --- OSC 3 LINEAR Engine pointer---
+
+        // --- OSC 3 PCM ---
         uint32_t pos3 = *pF3;
         uint32_t idx3 = pos3 >> step;
         uint32_t frac3 = pos3 & ((1 << step) - 1);
+        const int16_t* pSample3 = genstartadress[3];
+        int16_t s1_3, s2_3;
+
         if (idx3 < sampleend[3] - 1) {
+          s1_3 = pSample3[idx3];
+          s2_3 = pSample3[idx3 + 1];
           *pF3 += *pP3;
-        } else if (loopsample[3]) {
-          *pF3 = (uint32_t)samplebegin[3] << step;
         }
-        int16_t s1_3 = *(genstartadress[3] + idx3);
-        int16_t s2_3 = *(genstartadress[3] + idx3 + 1);
-        float in3 = (float)(s1_3 + (((int32_t)(s2_3 - s1_3) * (int32_t)frac3) >> step));
+        else if (idx3 >= sampleend[3] - 1) {
+          if (loopsample[3]) {
+            *pF3 = (uint32_t)samplebegin[3] << step;
+            idx3 = samplebegin[3]; // <--- JAVÍTVA: idx3-at frissítjük!
+            s1_3 = pSample3[idx3];
+            s2_3 = pSample3[idx3 + 1];
+          } else {
+            s1_3 = 0;
+            s2_3 = 0;
+          }
+        }
+
+        // 3. Interpoláció
+        float in3 = (float)s1_3 + (float)(s2_3 - s1_3) * (float)frac3 * (1.0f / (float)(1 << step));
+
+        // 4. SZŰRŐ
         float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
         *pB3 += *pFF3 * hp3;
         *pL3 += *pFF3 * *pB3;
+
+        // Anti-pop / Limiter
         if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
         if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+
+        // 5. Kimenet
         osc_out[3] = ((int32_t) * pL3 * *pV3) >> 4;
-        pF3++; pP3++; pL3++; pB3++; pV3++; pFF3++;
+
+        // 6. Mutatók léptetése (Szinkronban a polifóniával)
+        pF3++; pP3++; pL3++; pB3++; pV3++; pFF3++; pW3++;
 
         // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
         totalUpper += (osc_out[0] + osc_out[1]);
@@ -4094,7 +4306,6 @@ void loop() {
       sBuffer[i + 1] = bufferbe[1];
     }
   }
-
 
   //--------------------6-------------------5---------------------
 
@@ -4223,7 +4434,7 @@ void loop() {
         //totalUpper += (osc_out[0] + osc_out[1]);
         totalUpper += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
         totalLower += (osc_out[2] + osc_out[3]);
-        
+
         //totalLower += (osc_out[2] * (osc_out[3] >> 12)) >> 3;
       }
 
