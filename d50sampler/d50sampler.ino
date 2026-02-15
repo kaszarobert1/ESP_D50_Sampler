@@ -108,7 +108,7 @@ bool LCD_ON = false;
 //uint16_t GLOBAL_TUNE = 472;
 
 int step = 22;
-uint16_t GLOBAL_TUNE = 15104;
+uint16_t GLOBAL_TUNE = 7552;
 byte COARSE[4] = { 48, 48, 48, 48 };
 byte FINE[4] = { 50, 50, 50, 50 };
 byte szorzo[4] = {1, 1, 1, 1};
@@ -170,8 +170,8 @@ byte PCMWaveNo[4] = { 1, 1, 1, 1 };
 byte BiasPoint[4] = {64, 64, 64, 64};
 byte BiasLevel[4] = {12, 12, 12, 12};
 byte Bias[4][256];
-byte STRUCTURE_U = 0;
-byte STRUCTURE_L = 0;
+byte STRUCTURE_U = 5;
+byte STRUCTURE_L = 5;
 uint32_t lfoarrayindex[LFOnumber] = {0, 0, 0, 0, 0, 0, 0, 0};
 uint16_t lfovalue[LFOnumber];
 byte LFO_Delay[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -215,7 +215,7 @@ byte PWMLFO[4] = {2, 3, 4, 5};
 byte PICH_LFO_level[4] = {0, 0, 0, 0};
 byte TVF_LFO_level[4] = {0, 0, 0, 0};
 byte PWMLFODepth[4];
-byte masterVolume = 4;
+byte masterVolume = 5;
 volatile int masterTick = 0;
 byte OFFSET = 2;
 byte modulationWheel = 0;
@@ -512,11 +512,11 @@ void setsamplesize() {
   //Set up max sample size
   samplesize[opmenuoldal] = sizes[PCMWaveNo[opmenuoldal]];
   sampleend[opmenuoldal] = samplesize[opmenuoldal];
-  Serial.println("Size of sample:");
-  Serial.println(String(samplesize[0]));
-  Serial.println(String(samplesize[1]));
-  Serial.println(String(samplesize[2]));
-  Serial.println(String(samplesize[3]));
+  // Serial.println("Size of sample:");
+  //Serial.println(String(samplesize[0]));
+  //Serial.println(String(samplesize[1]));
+  //Serial.println(String(samplesize[2]));
+  //Serial.println(String(samplesize[3]));
 }
 
 //"marimba","vibraphone","xilophone1","xilophone2","logbass","hammer","japanesedrum","kalimba","pluck1","chink","agogo","triangle","bells","pick","lowpiano","pianosample","highpiano","hapsichord","harp","organpercus",
@@ -679,11 +679,18 @@ String lcdprint3(int cc)
     return eredmeny;
   }
 }
+
 //--------------MIDI SYSEX PARAMETER CONTROL------
+
+int debugCounter = 0;
+String line = "";
 void parametersysexchanged() {
   //byte step = 1;
   byte value = velocityByte;
-  String line = "";
+
+
+  debugCounter++;
+  Serial.print("Param betöltés: "); Serial.println(debugCounter);
   if (localParameterByte == 0)
     switch (noteByte) {
       case 0:
@@ -999,6 +1006,10 @@ void parametersysexchanged() {
         PICH_LFO_level[3] = value;
         line = "U2: PICH_LFOL=" + lcdprint3(PICH_LFO_level[3]);
         break;
+      default:
+        line = "No implemented" + String(localParameterByte) + " " + String(noteByte);
+        return;
+        break;
     }
 
   if (localParameterByte == 1)
@@ -1255,6 +1266,10 @@ void parametersysexchanged() {
         PICH_LFO_level[0] = value;
         line = "L1: PICH_LFOL=" + lcdprint3(PICH_LFO_level[0]);
         break;
+      default:
+        line = "No implemented" + String(localParameterByte) + " " + String(noteByte);
+        return;
+        break;
 
     }
 
@@ -1291,9 +1306,8 @@ void parametersysexchanged() {
       case 7:
         PCMWaveNo[1] = value;
         line = "L2: PCMWaveNo=" + lcdprint3(PCMWaveNo[1]);
-        opmenuoldal = 1;
         setPCMWave();
-        //lcd
+
 
         break;
       case 8:
@@ -1438,6 +1452,7 @@ void parametersysexchanged() {
       case 74:
         STRUCTURE_L = value;
         line = "STRUCTURE_L: " + lcdprint3(STRUCTURE_L);
+
         break;
       case 86:
         f0orig = expgains128[value] >> 1 + 1;
@@ -1552,6 +1567,9 @@ void parametersysexchanged() {
             LFOadress[0] = lfosine;
             LFOadress[1] = lfosine;
             break;
+          default:
+            return;
+            break;
 
         }
         break;
@@ -1563,6 +1581,11 @@ void parametersysexchanged() {
       case 108:
         chorusLevelLeft = value;
         line = "U: Chorus LEVEL=" + lcdprint3( chorusLevelLeft);
+        break;
+      default:
+        line = "No implemented" + String(localParameterByte) + " " + String(value);
+        Serial.println(line);
+        return;
         break;
     }
   }
@@ -1601,6 +1624,9 @@ void parametersysexchanged() {
           case 22: GLOBAL_TUNE = 30208; break;
           case 23: GLOBAL_TUNE = 60416; break;
           case 24: GLOBAL_TUNE = 120832; break;
+          default:
+            return;
+            break;
         }//
         notetune();
         line = "STEP WAVE PART=" + String(step);
@@ -1766,6 +1792,9 @@ void parametersysexchanged() {
             reverblevel = 40;
             line = "Cross Delay 148-256msec";
             break;
+          default:
+            return;
+            break;
         }
         break;
       case 31:
@@ -1794,10 +1823,15 @@ void parametersysexchanged() {
         }
         line = "MIDI CH=" + String(midichan);
         break;
+      default:
+        line = "No implemented" + String(localParameterByte) + " " + String(noteByte);
+
+        return;
+        break;
     }
   }
   //serial
-  // Serial.println(line);
+  Serial.println(line);
   //lcd
   //lcdprint(line);
 }
@@ -2360,8 +2394,86 @@ void handleSysEx(byte* data, unsigned size) {
     }
   }
 }
+//----------------------------------PACH------------------------
 
 
+struct Section {
+  byte localByte;
+  byte startNote;
+  byte length;
+  const char* name;
+};
+
+// A 7 szekció definíciója pontosan a te sorrendedben
+Section sections[] = {
+  {1, 64, 54, "U1"}, // Local 1, Note 64-től, 54 byte
+  {2, 0,  54, "U2"}, // Local 2, Note 0-tól,  54 byte
+  {0, 0,  54, "L1"}, // Local 0, Note 0-tól,  54 byte
+  {0, 64, 54, "L2"}, // Local 0, Note 64-től, 54 byte
+  {3, 0,  40, "P"},  // Patch, Local 3, 40 byte
+  {1, 0,  48, "CU"}, // Common Upper, Local 1, 48 byte
+  {2, 65, 56, "CL"}  // Common Lower, Local 2, 48 byte
+};
+
+void LoadPatch(const byte* storedPatch) {
+  int globalIdx = 0;
+
+  for (int s = 0; s < 7; s++) {
+    Serial.print("--- Section: "); Serial.println(sections[s].name);
+
+    localParameterByte = sections[s].localByte;
+
+    for (int i = 0; i < sections[s].length; i++) {
+      vTaskDelay(pdMS_TO_TICKS(4));
+      noteByte = sections[s].startNote + i;
+      velocityByte = storedPatch[globalIdx];
+
+      parametersysexchanged();
+
+      globalIdx++;
+    }
+  }
+}
+
+void handleProgramChange(byte channel, byte number) {
+  // Opcionális: csak egy adott MIDI csatornára figyeljen
+  // if (channel != 1) return;
+
+  Serial.print("Program Change érkezett: "); Serial.println(number);
+
+  switch (number) {
+    case 0:
+      LoadPatch(storedpach1);
+      Serial.println("Patch 1 betöltve");
+      break;
+    case 1:
+      LoadPatch(storedpach2);
+      Serial.println("Patch 2 betöltve");
+      break;
+    case 2:
+      LoadPatch(storedpach3);
+      Serial.println("Patch 3 betöltve");
+      break;
+    case 3:
+      LoadPatch(storedpach4);
+      Serial.println("Patch 3 betöltve");
+      break;
+    case 4:
+      LoadPatch(storedpach5);
+      Serial.println("Patch 3 betöltve");
+      break;
+    case 5:
+      LoadPatch(storedpach6);
+      Serial.println("Patch 3 betöltve");
+      break;
+    default:
+      Serial.println("Nincs ilyen tárolt patch!");
+      break;
+  }
+}
+
+
+//----------------------------------------setup--------------------------------
 void setup() {
   // Set up Serial Monitor
   Serial.begin(115200);
@@ -2398,6 +2510,7 @@ void setup() {
   MIDI2.setHandleStop(handleStop);
   MIDI2.setHandleControlChange(handleControlChange);
   MIDI2.setHandlePitchBend(handlePitchBend);
+  MIDI2.setHandleProgramChange(handleProgramChange);
   MIDI2.begin(MIDI_CHANNEL_OMNI);
 
 
@@ -2415,7 +2528,9 @@ void setup() {
   }
   opmenuoldal = 0;
   eqkiszamol();
-  Serial.println("Start");
+  //Serial.println("Start");
+  LoadPatch(storedpach1);
+
 }
 
 /*
@@ -4293,8 +4408,8 @@ void loop() {
       }
 
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
-      bufferbe[0] = totalUpper >> masterVolume;
-      bufferbe[1] = totalLower >> masterVolume;
+      bufferbe[0] = totalUpper + (totalLower >> 2) >> masterVolume;
+      bufferbe[1] = totalLower + (totalUpper >> 2) >> masterVolume;
       parametereqleft();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
