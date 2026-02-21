@@ -91,6 +91,7 @@ void i2s_install() {
 const byte polyphony = 8;
 uint32_t freqmutato[4][polyphony];
 uint32_t pich[4][polyphony];
+uint32_t currentPitch[4][polyphony];
 uint32_t pichcount[4][polyphony];
 byte generatornumber = 1;
 uint32_t wavefreq[4][polyphony];
@@ -201,10 +202,11 @@ byte chaseindex = 0;
 byte MIDI_SYNC = 1;
 byte sixteen = 0;
 byte PW[4] = {15, 15, 15, 15};
+
 uint32_t PWcount[4][polyphony];
 float filter_f[4][polyphony] = {0.8f, 0.8f, 0.8f, 0.8f};
 float filter_q[4] = {0.5f, 0.5f, 0.5f, 0.5f}; // Semleges rezonancia
-
+uint16_t portamento_time[4] = {20, 20, 20, 20}; // 0 = azonnali, nagyobb = lassabb csúszás
 // A D-50 stílusú 0-100 értékek (ezeket majd te tekered)
 byte tvf_cutoff[4] = {80, 80, 80, 80};
 byte tvf_reso[4] = {0, 0, 0, 0};
@@ -222,6 +224,7 @@ byte OFFSET = 2;
 byte modulationWheel = 0;
 int32_t pitchBendValue = 0;
 float lastOut[4][polyphony];
+
 
 
 //----------------------------PARAMETRIC EQ LEFT-------------------------------------------------
@@ -1626,8 +1629,15 @@ void parametersysexchanged() {
         line = "GLOBAL_TUNE=" + String(GLOBAL_TUNE);
         break;
       case 28:
-        OFFSET = value;
-        line = "SYNC_OFFCET=" + String(OFFSET);
+        portamento_time[0] = value;
+        portamento_time[1] = value;
+        portamento_time[2] = value;
+        portamento_time[3] = value;
+        break;
+      case 29:
+        //sync ofset!!! in oder controller!!!
+        //OFFSET = value;
+        //line = "SYNC_OFFCET=" + String(OFFSET);
         break;
       case 30:
         switch (value) {
@@ -2235,7 +2245,7 @@ void lowpassfilterright() {
   //x2 = delaybuffer2[delaybufferindex2];
 }
 
-
+uint32_t lastTargetPitch[4] = {0, 0, 0, 0};
 //-------------------------------MIDI INPUT COMMAND-------------------------------------
 void keyon(byte noteByte) {
   wavefreq[0][generatornumber] = noteertek[0][noteByte  + LKeyShift];
@@ -2252,6 +2262,25 @@ void keyon(byte noteByte) {
   pich[1][generatornumber] = wavefreq[1][generatornumber];
   pich[2][generatornumber] = wavefreq[2][generatornumber];
   pich[3][generatornumber] = wavefreq[3][generatornumber];
+  for (int osc = 0; osc < 4; osc++) {
+    // 1. Ha a portamento ki van kapcsolva, azonnal odaállunk
+    if (portamento_time[osc] == 0) {
+      currentPitch[osc][generatornumber] = pich[osc][generatornumber];
+    }
+    // 2. Ha be van kapcsolva, akkor az ELŐZŐLEG leütött hangról indítjuk a csúszást,
+    // nem pedig arról, ami véletlenül abban a slotban maradt.
+    else {
+      currentPitch[osc][generatornumber] = lastTargetPitch[osc];
+    }
+
+    // Elmentjük a mostani célpontot, hogy a következő hang erről indulhasson
+    lastTargetPitch[osc] = pich[osc][generatornumber];
+  }
+
+
+
+
+
   // Serial.println(String(pich[generatornumber]));
   freqmutato[0][generatornumber] = samplebegin[0] << step;
   freqmutato[1][generatornumber] = samplebegin[1] << step;
@@ -2569,6 +2598,22 @@ void handleProgramChange(byte channel, byte number) {
       LoadPatch(storedpach10);
       Serial.println("Patch 10 betöltve");
       break;
+    case 11:
+      LoadPatch(storedpach11);
+      Serial.println("Patch 11 betöltve");
+      break;
+    case 12:
+      LoadPatch(storedpach12);
+      Serial.println("Patch 12 betöltve");
+      break;
+    case 13:
+      LoadPatch(storedpach13);
+      Serial.println("Patch 13 betöltve");
+      break;
+    case 14:
+      LoadPatch(storedpach14);
+      Serial.println("Patch 14 betöltve");
+      break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
       break;
@@ -2859,49 +2904,73 @@ void loop() {
       int lfoBaseIndex = (osc < 2) ? 0 : 3;
       int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
 
-      // --- 1. PWM MODULÁCIÓ (Integer) ---
-      // A modulációs kerék (0-127) értéket adjuk hozzá az alap mélységhez.
-      // A (modulationWheel >> 1) pl. 0-63 közötti extra mélységet ad.
+      // --- 1. PWM MODULÁCIÓ ---
       int32_t currentPWMLFODepth = PWMLFODepth[osc] + (modulationWheel >> 1);
       int32_t lfoMod = (lfovalue[selectedLFO] * currentPWMLFODepth) >> 5;
-
       if (PWMLFO[osc] & 1) {
         lfoMod = -lfoMod;
       }
-
       int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
       if (finalPW > 1023) finalPW = 1023;
       if (finalPW < 1)    finalPW = 1;
 
       // --- 2. TVF (SZŰRŐ) MODULÁCIÓ ---
-      // Itt használsz float-ot (cutoffHz számítás), ami a szűrő stabilitása miatt kell.
-      // De a bemenő LFO értéket először integerben adjuk össze:
-      int32_t totalTVFLfoLevel = TVF_LFO_level[osc] + (modulationWheel >> 2); // Mod kerék hatása a szűrőre
+      int32_t totalTVFLfoLevel = TVF_LFO_level[osc] + (modulationWheel >> 2);
       float lfo_part = (tvf_cutoff[osc] * 0.01f) + ((lfovalue[TWFLFO[osc]] - 128.0f) * (totalTVFLfoLevel * 0.000039f));
-
       filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
 
-      // --- 3. PITCH (VIBRATO) MODULÁCIÓ (Tisztán Integer) ---
+      // --- 3. PITCH ELŐKÉSZÍTÉS ---
       int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
+      int32_t totalPichLfoDepth = PICH_LFO_level[osc];
 
-      // Összeadjuk az alap LFO mélységet és a Mod Wheel-t (itt is integerben)
-      // A (modulationWheel << 1) egy érzékenységi szorzó, tetszés szerint állítható
-      int32_t totalPichLfoDepth = PICH_LFO_level[osc] ;
+      // Portamento sebesség skálázása (Próbáld a << 14 vagy << 15 értéket, ha lassú/gyors)
+      uint32_t portamentoSpeed = (uint32_t)portamento_time[osc] << 15;
 
-      for (int j = 0; j < polyphony; j++)
-      {
-        // TVF (Itt marad a float, mert a szűrőfüggvényed erre épül)
+      for (int j = 0; j < polyphony; j++) {
+
+      // --- 4. PORTAMENTO (GLIDE) LÉPTETÉS - GYORS ÉS PONTOS ---
+if (currentPitch[osc][j] != pich[osc][j]) {
+    if (portamento_time[osc] == 0) {
+        currentPitch[osc][j] = pich[osc][j];
+    } else {
+        uint32_t distance;
+        uint8_t shift = 1 + (portamento_time[osc] >> 3);
+
+        if (currentPitch[osc][j] < pich[osc][j]) {
+            // FELFELÉ
+            distance = pich[osc][j] - currentPitch[osc][j];
+            uint32_t step = distance >> shift;
+            if (step < 2) step = 2;
+
+            currentPitch[osc][j] += step;
+            // Ha túlszaladtunk (felfelé), korrigálunk
+            if (currentPitch[osc][j] > pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
+        } else {
+            // LEFELÉ
+            distance = currentPitch[osc][j] - pich[osc][j];
+            uint32_t step = distance >> shift;
+            if (step < 2) step = 2;
+
+            currentPitch[osc][j] -= step;
+            // JAVÍTÁS: Ha túlszaladtunk lefelé (kisebb lett), korrigálunk
+            if (currentPitch[osc][j] < pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
+        }
+    }
+}
+
+
+
+
+        // --- 5. SZŰRŐ ÉS PWM FRISSÍTÉS ---
         float total_norm = lfo_part + (TVFlevel[osc][j] * 0.5f);
         total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
         float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
         filter_f[osc][j] = fmaxf(0.005f, fminf(0.45f, 2.0f * sinf(cutoffHz * 0.0000712f)));
 
-        // PWM (Integer)
         PWcount[osc][j] = finalPW;
 
-        // PITCH (Integer)
-        // A végén nem float-olunk, marad az egész számú eltolás
-        pichcount[osc][j] = pich[osc][j] + (bipolarLFO * totalPichLfoDepth);
+        // --- 6. VÉGLEGES PITCH (GLIDE + LFO) ---
+        pichcount[osc][j] = currentPitch[osc][j] + (bipolarLFO * totalPichLfoDepth);
       }
     }
   }
@@ -4685,152 +4754,98 @@ void loop() {
     }
   }
 
-  //--------------------6----FMProbe---------------6---------------------
-
-  // --- Konstansok a ciklus előtt (osztás kiváltása szorzással) ---
-  float inv100 = 0.01f;
-  float inv10000 = 0.0001f;
-
   if (STRUCTURE == 66) {
+    // --- Konstansok és előkalkulált értékek a belső ciklus előtt ---
+    const float inv10000_0015 = 0.0001f * 0.0015f;
+    const float inv10000_05 = 0.0001f * 0.05f;
+    const float inv100_01 = 0.01f * 0.01f;
+
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       int32_t totalUpper = 0;
       int32_t totalLower = 0;
 
-      // --- POINTEREK INICIALIZÁLÁSA ---
-      uint32_t* pF0 = &freqmutato[0][0]; uint32_t* pP0 = &pichcount[0][0];
-      float* pL0 = &v_lp[0][0]; float* pB0 = &v_bp[0][0];
-      uint32_t* pW0 = &PWcount[0][0]; uint16_t* pV0 = &generatorvolume[0][0];
-      float* pFF0 = &filter_f[0][0];
-
-      uint32_t* pF1 = &freqmutato[1][0]; uint32_t* pP1 = &pichcount[1][0];
-      float* pL1 = &v_lp[1][0]; float* pB1 = &v_bp[1][0];
-      uint32_t* pW1 = &PWcount[1][0]; uint16_t* pV1 = &generatorvolume[1][0];
-      float* pFF1 = &filter_f[1][0];
-
-      uint32_t* pF2 = &freqmutato[2][0]; uint32_t* pP2 = &pichcount[2][0];
-      float* pL2 = &v_lp[2][0]; float* pB2 = &v_bp[2][0];
-      uint32_t* pW2 = &PWcount[2][0]; uint16_t* pV2 = &generatorvolume[2][0];
-      float* pFF2 = &filter_f[2][0];
-
-      uint32_t* pF3 = &freqmutato[3][0]; uint32_t* pP3 = &pichcount[3][0];
-      float* pL3 = &v_lp[3][0]; float* pB3 = &v_bp[3][0];
-      uint32_t* pW3 = &PWcount[3][0]; uint16_t* pV3 = &generatorvolume[3][0];
-      float* pFF3 = &filter_f[3][0];
-
       for (int j = 0; j < polyphony; j++) {
+        // Előkészítjük a paramétereket, amik a hangon belül fixek (nem kell minden j-re pointerezni, ha konstansok)
+        // Megjegyzés: Ha a paraméterek (pl. pW0) hangonként változnak, marad a pointer,
+        // de a négyzetre emelést elvégezhetjük itt egyszer:
+        float fb0_scale = (float)(PWcount[0][j] * PWcount[0][j]) * inv10000_0015;
+        float fb1_scale = (float)(PWcount[1][j] * PWcount[1][j]) * inv10000_0015;
+        float fb2_scale = (float)(PWcount[2][j] * PWcount[2][j]) * inv10000_0015;
+        float fb3_scale = (float)(PWcount[3][j] * PWcount[3][j]) * inv10000_0015;
 
-        // ================= OSC 0 (Modulátor 1) =================
-        *pF0 += *pP0;
-        // Négyzetes feedback skálázás (finomabb állítás 100-as skálán)
-        float feedback0 = (float)(*pW0 * *pW0) * inv10000 * 0.05f;
-        float cross0 = (float)(*pW1) * inv100 * 0.01f; // Visszacsatolás az OSC 1-től
-        float fb0 = (lastOut[0][j] * feedback0) + (lastOut[1][j] * cross0);
+        float d0_scale = (float)(generatorvolume[0][j] * generatorvolume[0][j]) * inv10000_05;
+        float d2_scale = (float)(generatorvolume[2][j] * generatorvolume[2][j]) * inv10000_05;
+        float link1_val = (float)PWcount[3][j] * inv100_01;
+        float cross0_val = (float)PWcount[1][j] * inv100_01;
 
-        uint32_t ph0 = ((*pF0 >> step) + (int32_t)fb0) & 1023;
-        float valL0 = *pL0;
-        float in0;
-        if (Waveform[0] == 0) in0 = sinTable[ph0];
-        else if (Waveform[0] == 1) in0 = (float)((int32_t)(ph0 << 6) - 32768);
-        else in0 = (ph0 < *pW0 ? 32767.0f : -32768.0f);
+        // --- OSC 0 ---
+        freqmutato[0][j] += pichcount[0][j];
+        float fb0 = (lastOut[0][j] * fb0_scale) + (lastOut[1][j] * cross0_val);
+        uint32_t ph0 = ((freqmutato[0][j] >> step) + (int32_t)fb0) & 1023;
 
-        // SVF Filter + Gerjedés védelem
-        float hp0 = in0 - valL0 - (filter_q[0] * *pB0);
-        if (hp0 > 32767.0f) hp0 = 32767.0f; else if (hp0 < -32768.0f) hp0 = -32768.0f;
-        *pB0 += *pFF0 * hp0;
-        valL0 += *pFF0 * *pB0;
-        //if (valL0 > 32767.0f) valL0 = 32767.0f; else if (valL0 < -32768.0f) valL0 = -32768.0f;
-        // Ha közeledik a határhoz, elkezdjük fékezni
-        if (valL0 > 20000.0f) valL0 = 20000.0f + (valL0 - 20000.0f) * 0.2f;
-        if (valL0 < -20000.0f) valL0 = -20000.0f + (valL0 + 20000.0f) * 0.2f;
+        // Gyorsított Waveform választó (csak szinuszra példázva, a többit is így tördeld be)
+        float in0 = (Waveform[0] == 0) ? sinTable[ph0] : (Waveform[0] == 1 ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < PWcount[0][j] ? 32767.0f : -32768.0f));
 
-        lastOut[0][j] = valL0;
-        *pL0 = valL0;
-        // Négyzetes Depth (Modulációs index)
-        float depth0 = (float)(*pV0 * *pV0) * inv10000 * 0.05f;
+        // Filter (SVF) - marad a float, mert a stabilitás fontos
+        float hp0 = in0 - v_lp[0][j] - (filter_q[0] * v_bp[0][j]);
+        v_bp[0][j] += filter_f[0][j] * hp0;
+        v_lp[0][j] += filter_f[0][j] * v_bp[0][j];
 
-        // ================= OSC 1 (Carrier 1) =================
-        *pF1 += *pP1;
-        float link1 = (float)(*pW3) * inv100 * 0.01f; // Link az OSC 3-tól
-        float totalMod1 = (in0 * depth0) + (lastOut[3][j] * link1);
+        // Soft clip (gyorsabb if-ekkel)
+        if (v_lp[0][j] > 20000.0f) v_lp[0][j] = 20000.0f + (v_lp[0][j] - 20000.0f) * 0.2f;
+        else if (v_lp[0][j] < -20000.0f) v_lp[0][j] = -20000.0f + (v_lp[0][j] + 20000.0f) * 0.2f;
+        lastOut[0][j] = v_lp[0][j];
 
-        uint32_t ph1 = ((*pF1 >> step) + (int32_t)totalMod1) & 1023;
-        float valL1 = *pL1;
-        float in1;
-        if (Waveform[1] == 0) in1 = sinTable[ph1];
-        else if (Waveform[1] == 1) in1 = (float)((int32_t)(ph1 << 6) - 32768);
-        else in1 = (ph1 < *pW1 ? 32767.0f : -32768.0f);
+        // --- OSC 1 ---
+        freqmutato[1][j] += pichcount[1][j];
+        float fb1 = lastOut[1][j] * fb1_scale;
+        float totalMod1 = (in0 * d0_scale) + (lastOut[3][j] * link1_val);
+        uint32_t ph1 = ((freqmutato[1][j] >> step) + (int32_t)totalMod1 + (int32_t)fb1) & 1023;
+        float in1 = (Waveform[1] == 0) ? sinTable[ph1] : (Waveform[1] == 1 ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < PWcount[1][j] ? 32767.0f : -32768.0f));
 
-        float hp1 = in1 - valL1 - (filter_q[1] * *pB1);
-        if (hp1 > 32767.0f) hp1 = 32767.0f; else if (hp1 < -32768.0f) hp1 = -32768.0f;
-        *pB1 += *pFF1 * hp1;
-        valL1 += *pFF1 * *pB1;
-        // if (valL1 > 32767.0f) valL1 = 32767.0f; else if (valL1 < -32768.0f) valL1 = -32768.0f;
-        // Ha közeledik a határhoz, elkezdjük fékezni
-        if (valL1 > 20000.0f) valL1 = 20000.0f + (valL1 - 20000.0f) * 0.2f;
-        if (valL1 < -20000.0f) valL1 = -20000.0f + (valL1 + 20000.0f) * 0.2f;
+        // Filter 1 + Soft clip
+        float hp1 = in1 - v_lp[1][j] - (filter_q[1] * v_bp[1][j]);
+        v_bp[1][j] += filter_f[1][j] * hp1;
+        v_lp[1][j] += filter_f[1][j] * v_bp[1][j];
+        if (v_lp[1][j] > 20000.0f) v_lp[1][j] = 20000.0f + (v_lp[1][j] - 20000.0f) * 0.2f;
+        else if (v_lp[1][j] < -20000.0f) v_lp[1][j] = -20000.0f + (v_lp[1][j] + 20000.0f) * 0.2f;
+        lastOut[1][j] = v_lp[1][j];
+        int32_t out1 = ((int32_t)v_lp[1][j] * generatorvolume[1][j]) >> 6;
 
+        // --- OSC 2 ---
+        freqmutato[2][j] += pichcount[2][j];
+        float fb2 = lastOut[2][j] * fb2_scale;
+        uint32_t ph2 = ((freqmutato[2][j] >> step) + (int32_t)fb2) & 1023;
+        float in2 = (Waveform[2] == 0) ? sinTable[ph2] : (Waveform[2] == 1 ? (float)((int32_t)(ph2 << 6) - 32768) : (ph2 < PWcount[2][j] ? 32767.0f : -32768.0f));
 
+        // Filter 2 + Soft clip
+        float hp2 = in2 - v_lp[2][j] - (filter_q[2] * v_bp[2][j]);
+        v_bp[2][j] += filter_f[2][j] * hp2;
+        v_lp[2][j] += filter_f[2][j] * v_bp[2][j];
+        if (v_lp[2][j] > 20000.0f) v_lp[2][j] = 20000.0f + (v_lp[2][j] - 20000.0f) * 0.2f;
+        else if (v_lp[2][j] < -20000.0f) v_lp[2][j] = -20000.0f + (v_lp[2][j] + 20000.0f) * 0.2f;
+        lastOut[2][j] = v_lp[2][j];
 
+        // --- OSC 3 ---
+        freqmutato[3][j] += pichcount[3][j];
+        float fb3 = lastOut[3][j] * fb3_scale;
+        uint32_t ph3 = ((freqmutato[3][j] >> step) + (int32_t)(in2 * d2_scale) + (int32_t)fb3) & 1023;
+        float in3 = (Waveform[3] == 0) ? sinTable[ph3] : (Waveform[3] == 1 ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < PWcount[3][j] ? 32767.0f : -32768.0f));
 
-        lastOut[1][j] = valL1;
-        *pL1 = valL1;
-        int32_t out1 = ((int32_t)valL1 * *pV1) >> 6;
-
-        // ================= OSC 2 (Modulátor 2) =================
-        *pF2 += *pP2;
-        float feedback2 = (float)(*pW2 * *pW2) * inv10000 * 0.05f;
-        float fb2 = lastOut[2][j] * feedback2;
-
-        uint32_t ph2 = ((*pF2 >> step) + (int32_t)fb2) & 1023;
-        float valL2 = *pL2;
-        float in2;
-        if (Waveform[2] == 0) in2 = sinTable[ph2];
-        else if (Waveform[2] == 1) in2 = (float)((int32_t)(ph2 << 6) - 32768);
-        else in2 = (ph2 < *pW2 ? 32767.0f : -32768.0f);
-
-        float hp2 = in2 - valL2 - (filter_q[2] * *pB2);
-        if (hp2 > 32767.0f) hp2 = 32767.0f; else if (hp2 < -32768.0f) hp2 = -32768.0f;
-        *pB2 += *pFF2 * hp2;
-        valL2 += *pFF2 * *pB2;
-        // if (valL2 > 32767.0f) valL2 = 32767.0f; else if (valL2 < -32768.0f) valL2 = -32768.0f;
-        // Ha közeledik a határhoz, elkezdjük fékezni
-        if (valL2 > 20000.0f) valL2 = 20000.0f + (valL2 - 20000.0f) * 0.2f;
-        if (valL2 < -20000.0f) valL2 = -20000.0f + (valL2 + 20000.0f) * 0.2f;
-
-        lastOut[2][j] = valL2;
-        *pL2 = valL2;
-        float depth2 = (float)(*pV2 * *pV2) * inv10000 * 0.05f;
-
-        // ================= OSC 3 (Carrier 2) =================
-        *pF3 += *pP3;
-        uint32_t ph3 = ((*pF3 >> step) + (int32_t)(in2 * depth2)) & 1023;
-        float valL3 = *pL3;
-        float in3;
-        if (Waveform[3] == 0) in3 = sinTable[ph3];
-        else if (Waveform[3] == 1) in3 = (float)((int32_t)(ph3 << 6) - 32768);
-        else in3 = (ph3 < *pW3 ? 32767.0f : -32768.0f);
-
-        float hp3 = in3 - valL3 - (filter_q[3] * *pB3);
-        if (hp3 > 32767.0f) hp3 = 32767.0f; else if (hp3 < -32768.0f) hp3 = -32768.0f;
-        *pB3 += *pFF3 * hp3;
-        valL3 += *pFF3 * *pB3;
-        //if (valL3 > 32767.0f) valL3 = 32767.0f; else if (valL3 < -32768.0f) valL3 = -32768.0f;
-        // Ha közeledik a határhoz, elkezdjük fékezni
-        if (valL3 > 20000.0f) valL3 = 20000.0f + (valL3 - 20000.0f) * 0.2f;
-        if (valL3 < -20000.0f) valL3 = -20000.0f + (valL3 + 20000.0f) * 0.2f;
-        lastOut[3][j] = valL3;
-        *pL3 = valL3;
-        int32_t out3 = ((int32_t)valL3 * *pV3) >> 6;
-
-        // Pointerek léptetése
-        pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
-        pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
-        pF2++; pP2++; pL2++; pB2++; pW2++; pV2++; pFF2++;
-        pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
+        // Filter 3 + Soft clip
+        float hp3 = in3 - v_lp[3][j] - (filter_q[3] * v_bp[3][j]);
+        v_bp[3][j] += filter_f[3][j] * hp3;
+        v_lp[3][j] += filter_f[3][j] * v_bp[3][j];
+        if (v_lp[3][j] > 20000.0f) v_lp[3][j] = 20000.0f + (v_lp[3][j] - 20000.0f) * 0.2f;
+        else if (v_lp[3][j] < -20000.0f) v_lp[3][j] = -20000.0f + (v_lp[3][j] + 20000.0f) * 0.2f;
+        lastOut[3][j] = v_lp[3][j];
+        int32_t out3 = ((int32_t)v_lp[3][j] * generatorvolume[3][j]) >> 6;
 
         totalUpper += (out1 + (out3 >> 2));
         totalLower += (out3 + (out1 >> 2));
       }
+      // Itt töltsd az output buffert a totalUpper/Lower értékekkel...
+
 
       // --- Kimeneti lánc (Effektek, EQ, Pan) ---
       bufferbe[0] = totalUpper >> masterVolume;
@@ -4848,8 +4863,6 @@ void loop() {
 
 
   //----------------------6-------fm-------7---------------------------------------------- Low Compensed----------------------------------
-  // --- Konstansok a ciklus előtt (osztás kiváltása szorzással) ---
-
 
   if ((STRUCTURE == 67) ) {
     // Előre kiszámolt fixek a CPU-nak (nem a ciklusban!)
@@ -4957,9 +4970,6 @@ void loop() {
         totalUpper += (out1 + (out3 >> 2));
         totalLower += (out3 + (out1 >> 2));
       }
-      // --- Kimeneti lánc (Effektek...) ---
-      // ... ide másold be a sBuffer[i] beállítását ...
-
       // --- Kimeneti lánc (Effektek, EQ, Pan) ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
@@ -5090,8 +5100,9 @@ void loop() {
         int32_t out3 = ((int32_t)(*pL3) * *pV3) >> 6;
 
         // Összegzés
-        totalUpper += out2;
-        totalLower += out3;
+
+        totalUpper += (out2 + (out3 >> 2));
+        totalLower += (out3 + (out2 >> 2));
 
         // Pointer léptetések
         pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
