@@ -249,26 +249,25 @@ float b0 = ((1 + cos(w0)) / 2);
 float b1 = (-(1 + cos(w0))) ;
 float b2 = ((1 + cos(w0)) / 2) ;
 
-
 //parametric eq left init:
 void eqkiszamol() {
-  float cosw0 = cos(w0);
-  w0 = 2 * Pi * f0 / Fs;
+   float cosw0 = cos(w0); 
+   w0 = 2 * Pi * f0 / Fs;
+ 
   alpha = sin(w0) / (2 * Q);
   a0 = (1 + alpha) * 100 ;
   a1 = (-2 * cosw0) * 100;
   a2 = (1 - alpha) * 100;
-
   b0 = ((1 + cosw0) / 2) * 100;
   b1 = (-(1 + cosw0)) * 100;
   b2 = ((1 + cosw0) / 2) * 100;
 }
 
-
 //parametric eq left counts actual value:
 int32_t PrevSample[4];
 int32_t lastbuffer[3];
 int32_t paraeqleftbuffer;
+
 //parametric eq left function
 void parametereqleft() {
   PrevSample[3] = PrevSample[2];
@@ -282,7 +281,6 @@ void parametereqleft() {
   lastbuffer[0] =  paraeqleftbuffer;
 }
 
-
 //parametric eq2 right default:
 float w02 = 2 * Pi * f02 / Fs;
 float alpha2 = sin(w02) / (2 * Q2);
@@ -295,8 +293,9 @@ float b22 = ((1 + cos(w02)) / 2) ;
 
 //parametric eq2 right init:
 void eqkiszamol2() {
-  float cosw02 = cos(w02);
+   float cosw02 = cos(w02);
   w02 = 2 * Pi * f02 / Fs;
+ 
   alpha2 = sin(w02) / (2 * Q2);
   a02 = (1 + alpha2) * 100 ;
   a12 = (-2 * cosw02) * 100;
@@ -305,21 +304,27 @@ void eqkiszamol2() {
   b12 = (-(1 + cosw02)) * 100;
   b22 = ((1 + cosw02) / 2) * 100;
 }
+
 //parametric eq right counts actual value:
 int32_t PrevSample2[4];
 int32_t lastbuffer2[3];
 int32_t paraeqrightbuffer;
+
 //parametric eq left function
 void parametereqright() {
   PrevSample2[3] = PrevSample2[2];
   PrevSample2[2] = PrevSample2[1];
   PrevSample2[1] = PrevSample2[0];
   PrevSample2[0] = bufferbe[1];
-  //bufferbe[0] = ( b0 / a0 * PrevSample2[0]) +(b1 / a0 * PrevSample2[1]) +(b2 / a0 * PrevSample2[2]) -(a1 / a0 * lastbuffer2[0]) - (a2 / a0 * lastlastbuffer2);
-  paraeqrightbuffer = (b02 / a02 * PrevSample2[0]) + (b12 / a02 * PrevSample2[1]) + (b22 / a02 * PrevSample2[2])  - (a12 / a02 * lastbuffer2[0]) - (a22 / a02 * lastbuffer2[1]);
+
+  // Előbb szorzunk a mintával, és csak a végén osztunk le a normalizáló a0-val
+  // Ez sokkal pontosabb marad és kevésbé hajlamos a gerjedésre
+  paraeqrightbuffer = ( (b02 * PrevSample2[0]) + (b12 * PrevSample2[1]) + (b22 * PrevSample2[2]) 
+                        - (a12 * lastbuffer2[0]) - (a22 * lastbuffer2[1]) ) / a02;
+
   lastbuffer2[2] = lastbuffer2[1];
   lastbuffer2[1] = lastbuffer2[0];
-  lastbuffer2[0] =  paraeqrightbuffer;
+  lastbuffer2[0] = paraeqrightbuffer;
 }
 
 
@@ -629,9 +634,9 @@ void setPCMWave() {
 void updateLFOAdresses() {
   for (int i = 0; i < LFOnumber; i++) {
     switch (LFO_Wave_Select[i]) {
-      case 0: LFOadress[i] = lfosine;   break;
-      case 1: LFOadress[i] = lfotriangle; break;
-      case 2: LFOadress[i] = lfosaw;      break;
+      case 0: LFOadress[i] = lfotriangle;   break;
+      case 1: LFOadress[i] = lfosaw;  break;
+      case 2: LFOadress[i] = lfosquare;       break;
       case 3: LFOadress[i] = lforandom;   break;
       case 4: LFOadress[i] = lfosine;   break;
       default: LFOadress[i] = lfosine;  break;
@@ -1020,7 +1025,7 @@ void parametersysexchanged() {
         break;
       case 4:
         PENVMode[0] = value;
-        line = "L1: LFOMode=" + lcdprint3(PENVMode[0]);
+        line = "L1: PENVMode=" + lcdprint3(PENVMode[0]);
         break;
       case 5:
         BENDERMode[0] = value;
@@ -1061,6 +1066,8 @@ void parametersysexchanged() {
       case 27:
         lfolevel[3] = value;
         line = " lfofreq3: " + lcdprint3(lfolevel[3]);
+        LFO_Delay[3] = value;
+        line = " LFO3_DELAY: " + lcdprint3(LFO_Delay[3]);
         break;
       case 28:
         lfo3sync = value;
@@ -1477,6 +1484,8 @@ void parametersysexchanged() {
       case 91:
         lfolevel[0] = value;
         line = " lfofreq0: " + lcdprint3(lfolevel[0]);
+        LFO_Delay[0] = value;
+        line = " LFO0_DELAY: " + lcdprint3(LFO_Delay[0]);
         break;
       case 92:
         lfo2sync = value;
@@ -2276,11 +2285,6 @@ void keyon(byte noteByte) {
     // Elmentjük a mostani célpontot, hogy a következő hang erről indulhasson
     lastTargetPitch[osc] = pich[osc][generatornumber];
   }
-
-
-
-
-
   // Serial.println(String(pich[generatornumber]));
   freqmutato[0][generatornumber] = samplebegin[0] << step;
   freqmutato[1][generatornumber] = samplebegin[1] << step;
@@ -2614,6 +2618,10 @@ void handleProgramChange(byte channel, byte number) {
       LoadPatch(storedpach14);
       Serial.println("Patch 14 betöltve");
       break;
+    case 15:
+      LoadPatch(storedpach15);
+      Serial.println("Patch 15 betöltve");
+      break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
       break;
@@ -2692,30 +2700,6 @@ uint32_t tvapointer[4][polyphony];
 
 
 void loop() {
-  //debug
-  /*
-    if (debug_ready) {
-    String out = "\n--- LFO SNAPSHOT START ---\n";
-    out.reserve(4000); // Lefoglalunk helyet a memóriában, hogy ne töredezzen
-
-    for (int i = 0; i < DEBUG_SIZE; i++) {
-      out += String(debug_lfo[i]);
-      out += ",";
-      out += String(debug_fract[i]);
-      out += "\n";
-    }
-
-    out += "--- END ---";
-    Serial.println(out); // Ez az egyetlen pillanat, amikor az ESP32 kommunikál
-
-    debug_ptr = 0;
-    debug_ready = false;
-    }
-
-  */
-
-
-
   MIDI2.read();
   // Serial.print("-");
   if (MIDI_SYNC == 2)
@@ -2724,27 +2708,50 @@ void loop() {
   }
   //--MIDI input--
   //serialEvent();
-  //LFOVALUES
+
+  // LFO LÉPTETÉS: TISZTA SZÜNET -> FINOM FELÚSZÁS
   static uint8_t lfoPrescaler = 0;
   lfoPrescaler++;
-  auto pLfoIdx  = &lfoarrayindex[0];
-  auto pLfoFreq = &lfofreq[0];
-  auto pLfoVal  = &lfovalue[0];
-  auto pCounter = &LFO_Delay_Counter[0];
+
   for (int i = 0; i < 6; i++) {
-    if (*pCounter < LFO_Delay[i]) {
-      // Csak minden 8. körben (buffernél) növeljük a számlálót
-      if ((lfoPrescaler & 0x0F) == 0) {
-        (*pCounter)++;
-      }
-      *pLfoVal = 0;
+    // 1. A fázis mindig menjen a háttérben
+    uint8_t rawVal = *(LFOadress[i] + (lfoarrayindex[i] >> 23));
+    lfoarrayindex[i] += ((uint32_t)lfofreq[i] << 19);
+
+    // 2. Késleltetés kezelése
+    // Legyen a potméter fele a "totál csend", a másik fele a "beúszás"
+    uint16_t silenceThreshold = LFO_Delay[i] >> 1;
+
+    if (LFO_Delay_Counter[i] < silenceThreshold) {
+      // ELSŐ SZAKASZ: Teljes csend
+      if ((lfoPrescaler & 0x1F) == 0) LFO_Delay_Counter[i]++;
+      lfovalue[i] = 128; // Középérték, nincs eltolás
+    }
+    else if (LFO_Delay_Counter[i] < LFO_Delay[i]) {
+      // MÁSODIK SZAKASZ: Felúszás (Precíz matekkal)
+      if ((lfoPrescaler & 0x1F) == 0) LFO_Delay_Counter[i]++;
+
+      uint32_t fadeProgress = LFO_Delay_Counter[i] - silenceThreshold;
+      uint32_t fadeDuration = LFO_Delay[i] - silenceThreshold;
+
+      // Kiszámoljuk a különbséget a középértéktől (128)
+      // rawVal: 0-255, 128 a közép.
+      int32_t diff = (int32_t)rawVal - 128;
+
+      // A szorzást elvégezzük 32 biten, majd osztunk
+      int32_t scaledDiff = (diff * (int32_t)fadeProgress) / (int32_t)fadeDuration;
+
+      // Visszatoljuk a 128-as középvonalra
+      lfovalue[i] = (uint8_t)(128 + scaledDiff);
     }
     else {
-      *pLfoVal = *(LFOadress[i] + (*pLfoIdx >> 23));
-      *pLfoIdx += ((uint32_t) * pLfoFreq << 19);
+      // HARMADIK SZAKASZ: Teljes vibrato
+      lfovalue[i] = rawVal;
     }
-    pLfoIdx++; pLfoFreq++; pLfoVal++; pCounter++;
   }
+
+
+
 
   // TVA ENVELOPE OPTIMIZED
   for (int i = 0; i < 4; i++) {
@@ -2854,114 +2861,66 @@ void loop() {
     }
   }
 
-
-
-  //Serial.printf("Vol:%d Bias:%d TVA:%u GenVol:%u\n", volume[0], wavebias[0][0], currentLevel0, generatorvolume[0][0]);
-  //LFO working area
-
-  /*
-    if (true) {
-    for (int osc = 0; osc < 4; osc++) {
-      int lfoBaseIndex = (osc < 2) ? 0 : 3;
-      int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
-      int32_t lfoMod = (lfovalue[selectedLFO] * PWMLFODepth[osc]) >> 5;
-      if (PWMLFO[osc] & 1) {
-        lfoMod = -lfoMod;
-      }
-      // 5. PW számítása
-      int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
-      // 6. Limiter (0-1023)
-      if (finalPW > 1023) finalPW = 1023;
-      if (finalPW < 1)    finalPW = 1;
-      // --- TVF ELŐSZÁMÍTÁS LFO-VAL ---
-      float lfo_part = (tvf_cutoff[osc] * 0.01f) + ((lfovalue[TWFLFO[osc]] - 128.0f) * (TVF_LFO_level[osc] * 0.000039f));
-      filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
-      int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
-      for (int j = 0; j < polyphony; j++)
-      {
-        //TVF
-        float total_norm = lfo_part + (TVFlevel[osc][j] * 0.5f);
-        total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
-        float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
-        filter_f[osc][j] = fmaxf(0.005f, fminf(0.45f, 2.0f * sinf(cutoffHz * 0.0000712f)));
-        //pwm
-        PWcount[osc][j] = finalPW;
-        //pich lfo
-        // pichcount[osc][j] = pich[osc][j] + (lfovalue[PICHLFO[osc]] * PICH_LFO_level[osc] << 8);
-        // pichcount[osc][j] = pich[osc][j] + ((int32_t)(lfovalue[PICHLFO[osc]] * PICH_LFO_level[osc]) << 1);
-
-        pichcount[osc][j] = pich[osc][j] + (bipolarLFO * PICH_LFO_level[osc]);
-      }
-    }
-    // Serial.println("lfo4value: " + String(lfovalue[4]) + " PWcount0: " + PWcount[0][0] );
-    }*/
-
-  // --- 0. BEND SZÁMÍTÁSA KÍVÜL ---
-
   // LFO working area
   if (true) {
     for (int osc = 0; osc < 4; osc++) {
-      int lfoBaseIndex = (osc < 2) ? 0 : 3;
-      int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
+      // 1. MEGHATÁROZZUK AZ LFO CSOPORTOT (Lower: LFO 0-2 | Upper: LFO 3-5)
+      int lfoOffset = (osc < 2) ? 0 : 3;
 
-      // --- 1. PWM MODULÁCIÓ ---
+      // --- A) PWM LFO KIVÁLASZTÁSA ÉS IRÁNYA ---
+      int selectedPWM = lfoOffset + (PWMLFO[osc] >> 1);
       int32_t currentPWMLFODepth = PWMLFODepth[osc] + (modulationWheel >> 1);
-      int32_t lfoMod = (lfovalue[selectedLFO] * currentPWMLFODepth) >> 5;
-      if (PWMLFO[osc] & 1) {
-        lfoMod = -lfoMod;
-      }
-      int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
+      int32_t lfoModPWM = (lfovalue[selectedPWM] * currentPWMLFODepth) >> 5;
+      if (PWMLFO[osc] & 1) lfoModPWM = -lfoModPWM; // Ha páratlan a MIDI érték, invertálunk
+
+      int32_t finalPW = ((PW[osc] + 1) << 5) + lfoModPWM;
       if (finalPW > 1023) finalPW = 1023;
       if (finalPW < 1)    finalPW = 1;
 
-      // --- 2. TVF (SZŰRŐ) MODULÁCIÓ ---
+      // --- B) TVF (SZŰRŐ) LFO KIVÁLASZTÁSA ÉS IRÁNYA ---
+      int selectedTVF = lfoOffset + (TWFLFO[osc] >> 1);
+      float rawLfoTVF = (lfovalue[selectedTVF] - 128.0f);
+      if (TWFLFO[osc] & 1) rawLfoTVF = -rawLfoTVF; // Fázisfordítás
+
       int32_t totalTVFLfoLevel = TVF_LFO_level[osc] + (modulationWheel >> 2);
-      float lfo_part = (tvf_cutoff[osc] * 0.01f) + ((lfovalue[TWFLFO[osc]] - 128.0f) * (totalTVFLfoLevel * 0.000039f));
+      float lfo_part = (tvf_cutoff[osc] * 0.01f) + (rawLfoTVF * (totalTVFLfoLevel * 0.000039f));
       filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
 
-      // --- 3. PITCH ELŐKÉSZÍTÉS ---
-      int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
+      // --- C) PITCH LFO KIVÁLASZTÁSA ÉS IRÁNYA ---
+      int selectedPICH = lfoOffset + (PICHLFO[osc] >> 1);
+      int16_t rawLfoPich = (int16_t)lfovalue[selectedPICH] - 127;
+      if (PICHLFO[osc] & 1) rawLfoPich = -rawLfoPich; // Fázisfordítás
+
       int32_t totalPichLfoDepth = PICH_LFO_level[osc];
 
-      // Portamento sebesség skálázása (Próbáld a << 14 vagy << 15 értéket, ha lassú/gyors)
-      uint32_t portamentoSpeed = (uint32_t)portamento_time[osc] << 15;
-
+      // --- D) POLYPHONIC CIKLUS (Glide + Összegzés) ---
       for (int j = 0; j < polyphony; j++) {
 
-      // --- 4. PORTAMENTO (GLIDE) LÉPTETÉS - GYORS ÉS PONTOS ---
-if (currentPitch[osc][j] != pich[osc][j]) {
-    if (portamento_time[osc] == 0) {
-        currentPitch[osc][j] = pich[osc][j];
-    } else {
-        uint32_t distance;
-        uint8_t shift = 1 + (portamento_time[osc] >> 3);
+        // PORTAMENTO (A korábban kikísérletezett +1-es shift)
+        if (currentPitch[osc][j] != pich[osc][j]) {
+          if (portamento_time[osc] == 0) {
+            currentPitch[osc][j] = pich[osc][j];
+          } else {
+            uint32_t distance;
+            uint8_t shift = 1 + (portamento_time[osc] >> 3);
 
-        if (currentPitch[osc][j] < pich[osc][j]) {
-            // FELFELÉ
-            distance = pich[osc][j] - currentPitch[osc][j];
-            uint32_t step = distance >> shift;
-            if (step < 2) step = 2;
-
-            currentPitch[osc][j] += step;
-            // Ha túlszaladtunk (felfelé), korrigálunk
-            if (currentPitch[osc][j] > pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
-        } else {
-            // LEFELÉ
-            distance = currentPitch[osc][j] - pich[osc][j];
-            uint32_t step = distance >> shift;
-            if (step < 2) step = 2;
-
-            currentPitch[osc][j] -= step;
-            // JAVÍTÁS: Ha túlszaladtunk lefelé (kisebb lett), korrigálunk
-            if (currentPitch[osc][j] < pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
+            if (currentPitch[osc][j] < pich[osc][j]) {
+              distance = pich[osc][j] - currentPitch[osc][j];
+              uint32_t step = distance >> shift;
+              if (step < 1) step = 1;
+              currentPitch[osc][j] += step;
+              if (currentPitch[osc][j] > pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
+            } else {
+              distance = currentPitch[osc][j] - pich[osc][j];
+              uint32_t step = distance >> shift;
+              if (step < 1) step = 1;
+              currentPitch[osc][j] -= step;
+              if (currentPitch[osc][j] < pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
+            }
+          }
         }
-    }
-}
 
-
-
-
-        // --- 5. SZŰRŐ ÉS PWM FRISSÍTÉS ---
+        // SZŰRŐ SZÁMÍTÁS
         float total_norm = lfo_part + (TVFlevel[osc][j] * 0.5f);
         total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
         float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
@@ -2969,11 +2928,13 @@ if (currentPitch[osc][j] != pich[osc][j]) {
 
         PWcount[osc][j] = finalPW;
 
-        // --- 6. VÉGLEGES PITCH (GLIDE + LFO) ---
-        pichcount[osc][j] = currentPitch[osc][j] + (bipolarLFO * totalPichLfoDepth);
+        int32_t lfoShift = (int32_t)((currentPitch[osc][j] >> 10) * rawLfoPich * totalPichLfoDepth) >> 7;
+
+        pichcount[osc][j] = currentPitch[osc][j] + lfoShift;
       }
     }
   }
+
 
   if (true) {
     f0 = f0orig + (lfovalue[0] * lfolevel[0]);
@@ -3602,9 +3563,8 @@ if (currentPitch[osc][j] != pich[osc][j]) {
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
-      parametereqleft();
+      parametereqleft(); parametereqright();
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
-      parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       reverbleft(); reverbright();
@@ -5115,9 +5075,10 @@ if (currentPitch[osc][j] != pich[osc][j]) {
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
       parametereqleft();
-      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
+
       chorusleft(); chorusright();
       reverbleft(); reverbright();
       //processingStereoReverb();
@@ -5249,9 +5210,10 @@ if (currentPitch[osc][j] != pich[osc][j]) {
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
       parametereqleft();
-      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       parametereqright();
+      bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
+
       chorusleft(); chorusright();
       reverbleft(); reverbright();
       //processingStereoReverb();
