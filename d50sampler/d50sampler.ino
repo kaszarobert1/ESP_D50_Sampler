@@ -230,6 +230,7 @@ byte oscMode[4] = {0, 0, 0, 0};
 uint32_t lastTargetPitch[4] = {0, 0, 0, 0};
 //uint16_t lastGenVol[4][polyphony] = {0};
 byte voiceStack[polyphony];
+uint16_t smoothedVol[4][polyphony];
 
 
 //----------------------------PARAMETRIC EQ LEFT-------------------------------------------------
@@ -2255,7 +2256,7 @@ int findBestSlot() {
     // A memmove sokkal gyorsabb, mint a manuális for ciklus!
     int count = polyphony - 1 - foundIdx;
     memmove(&voiceStack[foundIdx], &voiceStack[foundIdx + 1], count * sizeof(byte));
-  }  
+  }
   voiceStack[polyphony - 1] = bestS;
   return bestS;
 }
@@ -2298,14 +2299,19 @@ void keyon(byte noteByte) {
       generatorstatus[i][g] = 0; // ATTACK
     }
     else {
-      // --- MONOFÓN ÁG (Fix slot 'm') ---
-      // 'ropi' küszöb: ha már nagyon halk vagy Release-ben van, resetelünk
-      if (generatorstatus[i][m] == 4 || TVAvolume[i][m] < ropi) {
-        freqmutato[i][m] = samplebegin[i] << step;
-        TVAvolume[i][m] = ENV_L0;
-        generatorstatus[i][m] = 0;
-      } else {
-        // Meleg váltás (Legato): Csak a státuszt lökjük meg, ha kell
+      //monofon
+      if (generatorstatus[i][m] == 5) {
+        freqmutato[i][m] = (uint32_t)samplebegin[i] << step;
+        smoothedVol[i][m] = 0; // A simítót nulláról indítjuk
+        TVAvolume[i][m] = 0;   // A burkolót is nulláról indítjuk
+        generatorstatus[i][m] = 0; // Indul az Attack
+      }
+      // 2. Ha már szól valami (Legato):
+      else {
+        // SEMMI fázis-reset (freqmutato marad, ahol volt!)
+        // SEMMI hangerő-reset (smoothedVol marad, ahol volt!)
+
+        // Csak a burkológörbe célját állítjuk át, hogy innen menjen tovább
         generatorstatus[i][m] = 0;
       }
     }
@@ -4515,25 +4521,24 @@ void loop() {
       int32_t totalUpper = 0;
       int32_t totalLower = 0;
 
-      // Pointerek inicializálása
+      // Pointerek inicializálása (Hozzáadva a pSV-k)
       uint32_t *pF0 = &freqmutato[0][0], *pP0 = &pichcount[0][0];
       float *pL0 = &v_lp[0][0], *pB0 = &v_bp[0][0], *pFF0 = &filter_f[0][0];
-      uint16_t *pV0 = &generatorvolume[0][0];
+      uint16_t *pV0 = &generatorvolume[0][0], *pSV0 = &smoothedVol[0][0];
 
       uint32_t *pF1 = &freqmutato[1][0], *pP1 = &pichcount[1][0];
       float *pL1 = &v_lp[1][0], *pB1 = &v_bp[1][0], *pFF1 = &filter_f[1][0];
-      uint16_t *pV1 = &generatorvolume[1][0];
+      uint16_t *pV1 = &generatorvolume[1][0], *pSV1 = &smoothedVol[1][0];
 
       uint32_t *pF2 = &freqmutato[2][0], *pP2 = &pichcount[2][0];
       float *pL2 = &v_lp[2][0], *pB2 = &v_bp[2][0], *pFF2 = &filter_f[2][0];
-      uint16_t *pV2 = &generatorvolume[2][0];
-      uint32_t *pW2 = &PWcount[2][0]; // FM Feedbackhez
+      uint16_t *pV2 = &generatorvolume[2][0], *pSV2 = &smoothedVol[2][0];
+      uint32_t *pW2 = &PWcount[2][0];
 
       uint32_t *pF3 = &freqmutato[3][0], *pP3 = &pichcount[3][0];
       float *pL3 = &v_lp[3][0], *pB3 = &v_bp[3][0], *pFF3 = &filter_f[3][0];
-      uint16_t *pV3 = &generatorvolume[3][0];
-      uint32_t *pW3 = &PWcount[3][0]; // FM Feedbackhez
-
+      uint16_t *pV3 = &generatorvolume[3][0], *pSV3 = &smoothedVol[3][0];
+      uint32_t *pW3 = &PWcount[3][0];
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
@@ -4556,7 +4561,9 @@ void loop() {
           float in = (float)s1 + (float)(s2 - s1) * (float)(pos & ((1 << step) - 1)) * invStep;
           float hp = in - *pL0 - (filter_q[0] * *pB0);
           *pB0 += *pFF0 * hp; *pL0 += *pFF0 * *pB0;
-          osc_out[0] = ((int32_t) * pL0 * *pV0) >> 4;
+          if (*pSV0 < *pV0) (*pSV0)++; else if (*pSV0 > *pV0) (*pSV0)--; // Simító
+          osc_out[0] = ((int32_t) * pL0 * *pSV0) >> 4;
+
         }
 
         // --- OSC 1 (PCM 2) ---
@@ -4578,7 +4585,8 @@ void loop() {
           float in = (float)s1 + (float)(s2 - s1) * (float)(pos & ((1 << step) - 1)) * invStep;
           float hp = in - *pL1 - (filter_q[1] * *pB1);
           *pB1 += *pFF1 * hp; *pL1 += *pFF1 * *pB1;
-          osc_out[1] = ((int32_t) * pL1 * *pV1) >> 4;
+          if (*pSV1 < *pV1) (*pSV1)++; else if (*pSV1 > *pV1) (*pSV1)--; // Simító
+          osc_out[1] = ((int32_t) * pL1 * *pSV1) >> 4;
         }
 
         // --- OSC 2 (FM Modulator + Feedback) ---
@@ -4594,14 +4602,16 @@ void loop() {
           float hp = s - *pL2 - (filter_q[2] * *pB2);
           *pB2 += *pFF2 * hp; *pL2 += *pFF2 * *pB2;
           lastOut[2][j] = *pL2;
-          osc_out[2] = ((int32_t) * pL2 * *pV2) >> 6;
+          if (*pSV2 < *pV2) (*pSV2)++; else if (*pSV2 > *pV2) (*pSV2)--; // Simító
+          osc_out[2] = ((int32_t) * pL2 * *pSV2) >> 6;
         }
 
         // --- OSC 3 (FM Carrier - Modulated by OSC 2) ---
         {
           *pF3 += *pP3;
           // Moduláció az OSC 2 kimenetéről
-          float mod = lastOut[2][j] * (*pV2 * 0.0002f);
+          // float mod = lastOut[2][j] * (*pV2 * 0.0002f);
+          float mod = lastOut[2][j] * (*pSV2 * 0.0002f);
           float feedback = lastOut[3][j] * (*pW3 * 0.00001f);
           if (*pW3 < 2) feedback = 0.0f;
 
@@ -4612,7 +4622,8 @@ void loop() {
           *pB3 += *pFF3 * (hp > 32767.0f ? 32767.0f : (hp < -32768.0f ? -32768.0f : hp));
           *pL3 += *pFF3 * *pB3;
           lastOut[3][j] = *pL3;
-          osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
+          if (*pSV3 < *pV3) (*pSV3)++; else if (*pSV3 > *pV3) (*pSV3)--; // Simító
+          osc_out[3] = ((int32_t) * pL3 * *pSV3) >> 6;
         }
 
 
@@ -4620,11 +4631,10 @@ void loop() {
         totalUpper += (osc_out[3] + osc_out[0]);
         totalLower += (osc_out[3]) + osc_out[1];
 
-        // Pointer léptetések
-        pF0++; pP0++; pL0++; pB0++; pV0++; pFF0++;
-        pF1++; pP1++; pL1++; pB1++; pV1++; pFF1++;
-        pF2++; pP2++; pL2++; pB2++; pV2++; pFF2++; pW2++;
-        pF3++; pP3++; pL3++; pB3++; pV3++; pFF3++; pW3++;
+        pF0++; pP0++; pL0++; pB0++; pFF0++; pV0++; pSV0++;
+        pF1++; pP1++; pL1++; pB1++; pFF1++; pV1++; pSV1++;
+        pF2++; pP2++; pL2++; pB2++; pFF2++; pV2++; pSV2++; pW2++;
+        pF3++; pP3++; pL3++; pB3++; pFF3++; pV3++; pSV3++; pW3++;
       }
 
       // Stereo Mix & Effekt lánc
