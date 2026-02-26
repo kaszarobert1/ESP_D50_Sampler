@@ -44,7 +44,7 @@ void i2s_setpin() {
 }
 
 // Define input buffer length
-#define bufferLen 512
+#define bufferLen 256
 int16_t sBuffer[bufferLen];
 
 //---16-bit
@@ -228,6 +228,10 @@ byte Lpoly = 8;
 byte Upoly = 8;
 byte oscMode[4] = {0, 0, 0, 0};
 uint32_t lastTargetPitch[4] = {0, 0, 0, 0};
+//uint16_t lastGenVol[4][polyphony] = {0};
+byte voiceStack[polyphony];
+
+
 //----------------------------PARAMETRIC EQ LEFT-------------------------------------------------
 /* cut-off (or center) frequency in Hz */
 /* filter Q */
@@ -908,7 +912,8 @@ void parametersysexchanged() {
         //velocity[3]=ropi;
 
         ropi = value;
-        //line = "U2: Velocity=" + lcdprint3(velocity[3]);
+
+        line = "U2: Velocity=" + lcdprint3(ropi);
         notebias();
         break;
 
@@ -2234,25 +2239,46 @@ void lowpassfilterright() {
 
 
 //-------------------------------MIDI INPUT COMMAND-------------------------------------
+//keylogic
+int findBestSlot() {
+  int foundIdx = 0; // Alapértelmezett a legrégebbi (0. index a stackben)
+  // 1. Keresés: Megállunk az első szabad slotnál
+  for (int i = 0; i < polyphony; i++) {
+    if (generatorstatus[0][voiceStack[i]] == 5) {
+      foundIdx = i;
+      break;
+    }
+  }
+  int bestS = voiceStack[foundIdx];
+  // 2. Stack frissítése: Csak akkor mozgatunk, ha nem az utolsót választottuk
+  if (foundIdx < (polyphony - 1)) {
+    // A memmove sokkal gyorsabb, mint a manuális for ciklus!
+    int count = polyphony - 1 - foundIdx;
+    memmove(&voiceStack[foundIdx], &voiceStack[foundIdx + 1], count * sizeof(byte));
+  }  
+  voiceStack[polyphony - 1] = bestS;
+  return bestS;
+}
 
-
-
+byte monoNote = 0;
 void keyon(byte noteByte) {
-  int g = generatornumber; // Polifón slot index
-  int m = 0;               // Monofon slot index (fixen a 0.)
-
-  // --- 1. ADATOK ÉS PITCH BEÁLLÍTÁSA ---
+  bool isAnyPoly = false;
+  for (int i = 0; i < 4; i++) if (oscMode[i] == 0) isAnyPoly = true;
+  int g;
+  if (isAnyPoly) {
+    g = findBestSlot();
+  } else {
+    g = 0;
+  }
+  int m = 0;
   for (int i = 0; i < 4; i++) {
-    // Eldöntjük, melyik slotba írunk: poli (g) vagy mono (m)
-    // Ha oscMode[i] == 0, akkor Poli, ha > 0 (pl. 8), akkor Mono
     int targetS = (oscMode[i] == 0) ? g : m;
     int shift = (i < 2) ? LKeyShift : UKeyShift;
-
     wavefreq[i][targetS] = noteertek[i][noteByte + shift];
     wavebias[i][targetS] = Bias[i][noteByte + shift];
     pich[i][targetS] = wavefreq[i][targetS];
 
-    // Portamento kezelés
+    // Portamento
     if (portamento_time[i] == 0) {
       currentPitch[i][targetS] = pich[i][targetS];
     } else {
@@ -2261,86 +2287,66 @@ void keyon(byte noteByte) {
     lastTargetPitch[i] = pich[i][targetS];
   }
 
-  // --- 2. INDÍTÁSI LOGIKA OSC-NKÉNT ---
+  // --- 3. INDÍTÁSI LOGIKA OSC-NKÉNT ---
   for (int i = 0; i < 4; i++) {
     if (oscMode[i] == 0) {
-      // --- POLIFÓN ÁG (Mindig friss reset) ---
+      // --- POLIFÓN ÁG (LRU slot 'g') ---
       freqmutato[i][g] = samplebegin[i] << step;
       v_lp[i][g] = 0.0f;
       v_bp[i][g] = 0.0f;
       TVAvolume[i][g] = ENV_L0;
-      generatorstatus[i][g] = 0;
+      generatorstatus[i][g] = 0; // ATTACK
     }
     else {
-      // --- MONOFÓN ÁG (Okos reset a 'ropi' küszöbbel) ---
+      // --- MONOFÓN ÁG (Fix slot 'm') ---
+      // 'ropi' küszöb: ha már nagyon halk vagy Release-ben van, resetelünk
       if (generatorstatus[i][m] == 4 || TVAvolume[i][m] < ropi) {
-        // Hideg indítás: fázis resetel
         freqmutato[i][m] = samplebegin[i] << step;
-        //v_lp[i][m] = 0.0f;
-       // v_bp[i][m] = 0.0f;
         TVAvolume[i][m] = ENV_L0;
         generatorstatus[i][m] = 0;
       } else {
-        // Meleg váltás (Legato): fázis fut tovább, nincs kattanás!
-        //generatorstatus[i][m] = 0;
+        // Meleg váltás (Legato): Csak a státuszt lökjük meg, ha kell
+        generatorstatus[i][m] = 0;
       }
     }
   }
+  // --- 4. ADMINISZTRÁCIÓ ---
+  oldnoteByte[g] = noteByte;
+  noteoff[g] = false;
 
- // --- ADMINISZTRÁCIÓ JAVÍTÁSA ---
-oldnoteByte[g] = noteByte;
-noteoff[g] = false;
+  // LFO Sync
+  for (int i = 0; i < 6; i++) {
+    if (LFOSYNC[i] == 2) LFO_Delay_Counter[i] = 0;
+  }
+  monoNote = noteByte; // Megjegyezzük, mi indította a monofont
 
-// CSAK AKKOR LÉPTESSÜNK, HA VALÓDI POLIFÓN OSZCILLÁTORT HASZNÁLUNK
-// Ha minden OSC monofon (oscMode > 0), akkor NE engedjük elmászni a g-t 0-ról!
-bool isAnyPoly = false;
-for(int i=0; i<4; i++) if(oscMode[i] == 0) isAnyPoly = true;
-
-if (isAnyPoly) {
-    generatornumber++;
-    if (generatornumber == polyphony) generatornumber = 0;
-} else {
-    generatornumber = 0; // Monofon módban maradjunk a 0-ás indexen!
 }
-}
-
-
 void keyoff(byte noteByte) {
-  bool anyNoteLeft = false;
-
-  // 1. Megnézzük, melyik slotban van a hang
-  // Ha monofon oszcillátoraid vannak, azok mind a 0. slot adatait használják adminisztrációra
-  
+  // 1. Végigmegyünk az összes sloton (0-7)
   for (int g = 0; g < polyphony; g++) {
-    if (noteByte == oldnoteByte[g]) {
-      oldnoteByte[g] = 0; 
 
-      // Csak polifón slotokat küldünk release-be
+    // POLIFÓN ELLENŐRZÉS: Ha ez a slot az adott billentyűhöz tartozik
+    if (noteByte == oldnoteByte[g]) {
+      oldnoteByte[g] = 0; // Felszabadítjuk a slot adminisztrációját
+
       for (int i = 0; i < 4; i++) {
+        // Csak a polifón módban lévő oszcillátorokat küldjük Release-be ebben a slotban
         if (oscMode[i] == 0) {
           generatorstatus[i][g] = 4;
         }
       }
     }
-    if (oldnoteByte[g] != 0) anyNoteLeft = true;
   }
-
-  // 2. MONOFON JAVÍTÁS:
-  // Ha monofon módban vagyunk, a keyon-ban a 'g' (generatornumber) 
-  // indexszel írtuk be az oldnoteByte-ot. 
-  // Ha ez volt az utolsó lenyomott billentyű, AKKOR mehet release-be a 0. slot.
-  
-  if (!anyNoteLeft) {
+  // 2. MONOFÓN ELLENŐRZÉS: Minden oszcillátort külön megnézünk a 0. slotban
+  if (noteByte == monoNote) {
     for (int i = 0; i < 4; i++) {
-      if (oscMode[i] != 0) {
-        // Csak akkor küldjük 4-esbe, ha tényleg vége a dalnak
-        generatorstatus[i][0] = 4; 
+      // Ha ez az oszcillátor monofón (oscMode > 0), akkor ő a 0. slotot használja
+      if (oscMode[i] > 0) {
+        generatorstatus[i][0] = 4; // A monofón hang is elmegy Release-be
       }
     }
   }
 }
-
-
 
 //--------------CHASE---------------------------
 void chasearpeggiomidiclock() {
@@ -2655,16 +2661,19 @@ void setup() {
   //Serial.println("Start");
   LoadPatch(storedpach1);
 
-  for (int s = 1; s < polyphony; s++) { // 1-től indulunk, mert a 0-át használjuk!
-    for (int osc = 2; osc < 4; osc++) {
-      generatorstatus[osc][s] = 4; // Release/Idle állapot
-      TVAvolume[osc][s] = 0;       // Teljes néma
-      v_lp[osc][s] = 0.0f;         // Szűrő pufferek ürítése
-      v_bp[osc][s] = 0.0f;
-      // Opcionálisan:
-      pich[osc][s] = 0;
+  Serial.println("--- Szinti Init ---");
+
+  for (int s = 0; s < polyphony; s++) {
+    voiceStack[s] = s; // Feltöltjük: 0, 1, 2, 3...
+    for (int i = 0; i < 4; i++) {
+      generatorstatus[i][s] = 5; // Minden oszcillátor alapból OFF
+      TVAvolume[i][s] = 0;
+      v_lp[i][s] = 0;
+      v_bp[i][s] = 0;
     }
+    oldnoteByte[s] = 0;
   }
+  Serial.print("Polyphony: "); Serial.println(polyphony);
 
 }
 
@@ -2698,6 +2707,11 @@ void loop() {
     }
     pLfoIdx++; pLfoFreq++; pLfoVal++; pCounter++;
   }
+
+  // --- GLOBÁLIS VÁLTOZÓ (Ezt a függvényen kívülre tedd) ---
+  uint16_t lastGenVol[4][polyphony] = {0};
+
+  // ... a függvényed többi része ...
 
   // TVA ENVELOPE OPTIMIZED
   for (int i = 0; i < 4; i++) {
@@ -2806,6 +2820,7 @@ void loop() {
       }
     }
   }
+
 
   // BEND SZÁMÍTÁSA KÍVÜL ???---
 
