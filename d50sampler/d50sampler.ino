@@ -102,12 +102,12 @@ uint16_t samplebegin[4] = { 0, 0, 0, 0 };
 uint16_t sampleend[4] = { 10190, 10190, 10190, 10190 };
 byte opmenuoldal = 0;
 uint16_t samplesize[4];
-bool LCD_ON = false;
+bool LCD_ON = true;
 //int step = 16;
 //uint16_t GLOBAL_TUNE = 472;
 
 int step = 22;
-uint16_t GLOBAL_TUNE = 7552;
+uint16_t GLOBAL_TUNE = 5040;
 byte COARSE[4] = { 48, 48, 48, 48 };
 byte FINE[4] = { 50, 50, 50, 50 };
 byte szorzo[4] = {1, 1, 1, 1};
@@ -640,16 +640,28 @@ void updateLFOAdresses() {
 }
 
 //--------------LCD-------------------------------
-void lcdprint(String szoveg) {
-  if (LCD_ON)
-  {
-    lcd.setCursor(0, 1);
-    int hiany = 16 - szoveg.length();
-    for (int i = 0; i < hiany; i++)
-    {
-      szoveg += " ";
+String lcdBuffer[2] = {"                ", "                "};
+
+void lcdprint(String ujSzoveg, byte sor) {
+  if (!LCD_ON) return;
+
+  // 1. Kiegészítjük a bejövő szöveget szóközökkel 16 karakterre
+  while (ujSzoveg.length() < 16) {
+    ujSzoveg += " ";
+  }
+  // Ha hosszabb lenne, levágjuk (biztonság kedvéért)
+  if (ujSzoveg.length() > 16) {
+    ujSzoveg = ujSzoveg.substring(0, 16);
+  }
+
+  // 2. Karakterenkénti összehasonlítás
+  for (int i = 0; i < 16; i++) {
+    // Csak akkor küldjük ki, ha az adott pozíción lévő karakter megváltozott
+    if (ujSzoveg[i] != lcdBuffer[sor][i]) {
+      lcd.setCursor(i, sor);
+      lcd.write(ujSzoveg[i]); // A .write() gyorsabb, mint a .print() egy karakternél
+      lcdBuffer[sor][i] = ujSzoveg[i]; // Frissítjük a belső buffert
     }
-    lcd.print(szoveg);
   }
 }
 
@@ -681,8 +693,8 @@ String line = "";
 void parametersysexchanged() {
   //byte step = 1;
   byte value = velocityByte;
-  debugCounter++;
-  Serial.print("Param betöltés: "); Serial.println(debugCounter);
+  // debugCounter++;
+  //Serial.print("Param betöltés: "); Serial.println(debugCounter);
   if (localParameterByte == 0)
     switch (noteByte) {
       case 0:
@@ -721,8 +733,6 @@ void parametersysexchanged() {
       case 7:
         PCMWaveNo[2] = value;
         line = "U1: PCMWaveNo=" + lcdprint3(PCMWaveNo[2]);
-
-        //
         opmenuoldal = 2;
         setPCMWave();
         break;
@@ -1123,6 +1133,7 @@ void parametersysexchanged() {
         //lcd
         break;
       case 71:
+
         PCMWaveNo[0] = value;
         line = "L1: PCMWaveNo=" + lcdprint3(PCMWaveNo[0]);
         opmenuoldal = 0;
@@ -1286,6 +1297,7 @@ void parametersysexchanged() {
         }
         break;
       case 7:
+        opmenuoldal = 1;
         PCMWaveNo[1] = value;
         line = "L2: PCMWaveNo=" + lcdprint3(PCMWaveNo[1]);
         setPCMWave();
@@ -1550,7 +1562,7 @@ void parametersysexchanged() {
         break;
       default:
         line = "No implemented" + String(localParameterByte) + " " + String(value);
-        Serial.println(line);
+        // Serial.println(line);
         return;
         break;
     }
@@ -1600,8 +1612,9 @@ void parametersysexchanged() {
         line = "L: KeyShift=" + lcdprint3(LKeyShift);
         break;
       case 25:
-        GLOBAL_TUNE = 422 + value;
+        GLOBAL_TUNE = 300 + value;
         notetune();
+        Serial.println(String(GLOBAL_TUNE));
         break;
       case 27:
         step = value;
@@ -1615,7 +1628,7 @@ void parametersysexchanged() {
           case 13: GLOBAL_TUNE = 59; break;
           case 14: GLOBAL_TUNE = 118; break;
           case 15: GLOBAL_TUNE = 236; break;
-          case 16: GLOBAL_TUNE = 472; break;
+          case 16: GLOBAL_TUNE = 333; break;//módosított korrekció 472-rol
           case 17: GLOBAL_TUNE = 944; break;
           case 18: GLOBAL_TUNE = 1888; break;
           case 19: GLOBAL_TUNE = 3776; break;
@@ -1838,9 +1851,9 @@ void parametersysexchanged() {
     }
   }
   //serial
-  Serial.println(line);
+  //Serial.println(line);
   //lcd
-  //lcdprint(line);
+  lcdprint(line, 1);
 }
 
 //--------------MIDI PARAMETER CONTROL-------------
@@ -2277,6 +2290,8 @@ void keyon(byte noteByte) {
     int shift = (i < 2) ? LKeyShift : UKeyShift;
     wavefreq[i][targetS] = noteertek[i][noteByte + shift];
     wavebias[i][targetS] = Bias[i][noteByte + shift];
+
+
     pich[i][targetS] = wavefreq[i][targetS];
 
     // Portamento
@@ -2415,27 +2430,46 @@ void chasearpeggiomidiclock() {
 void chasearpeggio() {
   if (CHASE_TIME > 0) {
     ido = micros();
-    if (elozoido > ido) elozoido = 0;
-    if (ido - elozoido > (uint32_t)(CHASE_TIME << 13)) {
-      // 1. ELŐBB kikapcsoljuk az előzőt, ami tényleg szólt
-      if (lastchase != 0) {
-        keyoff(lastchase);
-        lastchase = 0; // Biztonság kedvéért nullázzuk
-      }
-      // 2. Léptetünk
-      chaseindex++;
-      if (chaseindex >= CHASE_LEVEL) chaseindex = 0;
+    if (ido - elozoido > (uint32_t)CHASE_TIME << 13) {
 
-      // 3. Megnézzük az újat
-      if (CaseArray[chaseindex] != 0) {
-        lastchase = CaseArray[chaseindex];
-        keyon(lastchase);
+      int count = 0;
+      int talaltHang = 0;
+
+      // Egyszerűen végigmegyünk a slotokon (0, 1, 2, 3...)
+      for (int i = 0; i < polyphony; i++) {
+        chaseindex++;
+        if (chaseindex >= polyphony) chaseindex = 0;
+
+        // Csak azt a slotot nézzük, ami éppen hangot generál
+        // generatorstatus[0] az OSC 0 állapota, ha nem 5, akkor szól
+        if (generatorstatus[0][chaseindex] != 5) {
+          talaltHang = oldnoteByte[chaseindex];
+          if (talaltHang != 0) break; // Megvan a következő hang!
+        }
       }
+
+      if (talaltHang != 0) {
+        // 1. Kikapcsoljuk a hangot "hivatalosan"
+        keyoff(talaltHang);
+
+        // 2. VISSZAÍRJUK az adminisztrációba, amit a keyoff törölt!
+        // Ez a trükk: a keyoff lezárta a generátort, de mi azonnal
+        // visszatesszük a listába, hogy a következő körben is megtalálja az Arp.
+        for (int g = 0; g < polyphony; g++) {
+          if (oldnoteByte[g] == 0) { // Keressük meg, hol szabadult fel
+            oldnoteByte[g] = talaltHang;
+            break;
+          }
+        }
+
+        // 3. Újraindítjuk tisztán
+        keyon(talaltHang);
+      }
+
       elozoido = ido;
     }
   }
 }
-
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
   if (channel == midichan) { // <--- A szűrő kapuja
@@ -2535,79 +2569,99 @@ Section sections[] = {
 };
 
 void LoadPatch(const byte* storedPatch) {
+  LCD_ON = false;
   int globalIdx = 0;
   for (int s = 0; s < 7; s++) {
-    Serial.print("--- Section: "); Serial.println(sections[s].name);
+    //Serial.print("--- Section: "); Serial.println(sections[s].name);
     localParameterByte = sections[s].localByte;
     for (int i = 0; i < sections[s].length; i++) {
-      vTaskDelay(pdMS_TO_TICKS(4));
+      vTaskDelay(pdMS_TO_TICKS(1));
       noteByte = sections[s].startNote + i;
       velocityByte = storedPatch[globalIdx];
       parametersysexchanged();
       globalIdx++;
     }
   }
+  LCD_ON = true;
 }
 
 void handleProgramChange(byte channel, byte number) {
-  Serial.print("Program Change érkezett: "); Serial.println(number);
-
+  //Serial.print("Program Change érkezett: "); Serial.println(number);
   switch (number) {
     case 0:
       LoadPatch(storedpach1);
-      Serial.println("Patch 1 betöltve");
+      //Serial.println("Patch 1 betöltve");
+      lcdprint("01 PizzaGogo", 0);
       break;
     case 1:
       LoadPatch(storedpach2);
-      Serial.println("Patch 2 betöltve");
+      //Serial.println("Patch 2 betöltve");
+      lcdprint("02 UltraBass", 0);
       break;
     case 2:
       LoadPatch(storedpach3);
-      Serial.println("Patch 3 betöltve");
+      //Serial.println("Patch 3 betöltve");
+      lcdprint("03 BELLS", 0);
       break;
     case 3:
       LoadPatch(storedpach4);
-      Serial.println("Patch 4 betöltve");
+      //Serial.println("Patch 4 betöltve");
+      lcdprint("04 Fifty Pad", 0);
       break;
     case 4:
       LoadPatch(storedpach5);
-      Serial.println("Patch 5 betöltve");
+      //Serial.println("Patch 5 betöltve");
+      lcdprint("05 Clarinet Pad", 0);
       break;
     case 5:
       LoadPatch(storedpach6);
-      Serial.println("Patch 6 betöltve");
+      // Serial.println("Patch 6 betöltve");
+      lcdprint("06 Fifty Pad 2", 0);
       break;
     case 6:
       LoadPatch(storedpach7);
-      Serial.println("Patch 7 betöltve");
+      // Serial.println("Patch 7 betöltve");
+      lcdprint("07 Arabian FM", 0);
+      break;
+    case 7:
+      LoadPatch(storedpach8);
+      // Serial.println("Patch 7 betöltve");
+      lcdprint("08 Guitarbells", 0);
       break;
     case 8:
-      LoadPatch(storedpach8);
-      Serial.println("Patch 8 betöltve");
+      LoadPatch(storedpach9);
+      //Serial.println("Patch 8 betöltve");
+      lcdprint("09 Spectrum pad", 0);
       break;
     case 9:
-      LoadPatch(storedpach9);
-      Serial.println("Patch 9 betöltve");
+      LoadPatch(storedpach10);
+      //Serial.println("Patch 9 betöltve");
+      lcdprint("10 FMPad", 0);
       break;
     case 10:
-      LoadPatch(storedpach10);
-      Serial.println("Patch 10 betöltve");
+      LoadPatch(storedpach11);
+      //Serial.println("Patch 10 betöltve");
+      lcdprint("11 Slap BassFM", 0);
       break;
     case 11:
-      LoadPatch(storedpach11);
-      Serial.println("Patch 11 betöltve");
+      LoadPatch(storedpach12);
+      //Serial.println("Patch 11 betöltve");
+      lcdprint("12 BrassFM", 0);
       break;
     case 12:
-      LoadPatch(storedpach12);
-      Serial.println("Patch 12 betöltve");
+      LoadPatch(storedpach13);
+      //Serial.println("Patch 12 betöltve");
+      lcdprint("13 KelepFM", 0);
       break;
     case 13:
-      LoadPatch(storedpach13);
-      Serial.println("Patch 13 betöltve");
+      LoadPatch(storedpach14);
+      //Serial.println("Patch 13 betöltve");
+      lcdprint("14 FMPad 2", 0);
       break;
     case 14:
-      LoadPatch(storedpach14);
-      Serial.println("Patch 14 betöltve");
+      LoadPatch(storedpach15);
+      // Serial.println("Patch 14 betöltve");
+      lcdprint("15 FMPad 2", 0);
       break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
@@ -2627,6 +2681,7 @@ void setup() {
   i2s_start(I2S_PORT);
   delay(500);
   //Set up LCD
+  Wire.setClock(400000);
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
@@ -2665,6 +2720,7 @@ void setup() {
   opmenuoldal = 0;
   eqkiszamol();
   //Serial.println("Start");
+
   LoadPatch(storedpach1);
 
   Serial.println("--- Szinti Init ---");
