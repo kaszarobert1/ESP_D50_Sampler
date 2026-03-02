@@ -1,6 +1,8 @@
+#pragma GCC optimize ("Ofast")
 #include <driver/i2s.h>
 #include <MIDI.h>
 #include "samples.h"
+
 //#include <MIDIUSB.h>
 
 //----------------MIDI SETUP BEGIN-----------
@@ -2663,6 +2665,11 @@ void handleProgramChange(byte channel, byte number) {
       // Serial.println("Patch 14 betöltve");
       lcdprint("15 FMPad 2", 0);
       break;
+    case 15:
+      LoadPatch(storedpach16);
+      // Serial.println("Patch 15 betöltve");
+      lcdprint("15 Paradise Bells", 0);
+      break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
       break;
@@ -2671,6 +2678,11 @@ void handleProgramChange(byte channel, byte number) {
 
 //----------------------------------------setup--------------------------------
 void setup() {
+
+
+  // Ha a DSP a loop-ban van, adj neki prioritást
+  // Ez megakadályozza, hogy a háttérfolyamatok "ellopják" az időt
+  vTaskPrioritySet(NULL, 1);
   // Set up Serial Monitor
   Serial.begin(115200);
   Serial.println("i2s Setup begin for Roland D50Sampler....");
@@ -3016,67 +3028,68 @@ void loop() {
       for (int j = 0; j < polyphony; j++) {
         int32_t osc_out[4];
 
-        // --- OSC 0 (Linear Engine pointer) ---
+        // --- OSC 0 (Ugrásmentes + Gyorsított) ---
         *pF0 += *pP0;
         uint32_t ph0 = (*pF0 >> step) & 1023;
-        // Waveform[0]-at használjuk
         float in0 = (Waveform[0] == 1) ? (float)((int32_t)(ph0 << 6) - 32768) : (ph0 < *pW0 ? 32767.0f : -32768.0f);
-        float hp0 = in0 - *pL0 - (filter_q[0] * *pB0);
+
+        // Gyors limitálás (hardveres FPU utasítás)
+        float resFB0 = fmaxf(-20000.0f, fminf(20000.0f, *pB0));
+        float hp0 = in0 - *pL0 - (filter_q[0] * resFB0);
         *pB0 += *pFF0 * hp0;
         *pL0 += *pFF0 * *pB0;
-        if (*pL0 > 32767.0f)  *pL0 = 32767.0f;
-        if (*pL0 < -32768.0f) *pL0 = -32768.0f;
+        *pL0 = fmaxf(-32768.0f, fminf(32767.0f, *pL0)); // Clamp
+
         osc_out[0] = ((int32_t) * pL0 * *pV0) >> 6;
-        // Mutatók léptetése a polifónia körben
+        // Mutatók léptetése (0-ás blokk)
         pF0++; pP0++; pL0++; pB0++; pW0++; pV0++; pFF0++;
 
-
-
-        // --- OSC 1 LINEAR Engine pointer ---
+        // --- OSC 1 ---
         *pF1 += *pP1;
         uint32_t ph1 = (*pF1 >> step) & 1023;
-        // Waveform[1]-et használjuk
         float in1 = (Waveform[1] == 1) ? (float)((int32_t)(ph1 << 6) - 32768) : (ph1 < *pW1 ? 32767.0f : -32768.0f);
-        float hp1 = in1 - *pL1 - (filter_q[1] * *pB1);
+
+        float resFB1 = fmaxf(-20000.0f, fminf(20000.0f, *pB1));
+        float hp1 = in1 - *pL1 - (filter_q[1] * resFB1);
         *pB1 += *pFF1 * hp1;
         *pL1 += *pFF1 * *pB1;
-        if (*pL1 > 32767.0f)  *pL1 = 32767.0f;
-        if (*pL1 < -32768.0f) *pL1 = -32768.0f;
+        *pL1 = fmaxf(-32768.0f, fminf(32767.0f, *pL1));
+
         osc_out[1] = ((int32_t) * pL1 * *pV1) >> 6;
-        // Mutatók léptetése a j végén (az összesé!)
         pF1++; pP1++; pL1++; pB1++; pW1++; pV1++; pFF1++;
 
-        // --- OSC 2 LINEAR Engine pointer---
+        // --- OSC 2 ---
         *pF2 += *pP2;
         uint32_t ph2 = (*pF2 >> step) & 1023;
         float in2 = (Waveform[2] == 1) ? (float)((int32_t)(ph2 << 6) - 32768) : (ph2 < *pW2 ? 32767.0f : -32768.0f);
-        float hp2 = in2 - *pL2 - (filter_q[2] * *pB2);
+
+        float resFB2 = fmaxf(-20000.0f, fminf(20000.0f, *pB2));
+        float hp2 = in2 - *pL2 - (filter_q[2] * resFB2);
         *pB2 += *pFF2 * hp2;
         *pL2 += *pFF2 * *pB2;
-        if (*pL2 > 32767.0f)  *pL2 = 32767.0f;
-        if (*pL2 < -32768.0f) *pL2 = -32768.0f;
+        *pL2 = fmaxf(-32768.0f, fminf(32767.0f, *pL2));
+
         osc_out[2] = ((int32_t) * pL2 * *pV2) >> 6;
         pF2++; pP2++; pL2++; pB2++; pW2++; pV2++; pFF2++;
 
-        // --- OSC 3 LINEAR Engine pointer---
+        // --- OSC 3 ---
         *pF3 += *pP3;
         uint32_t ph3 = (*pF3 >> step) & 1023;
         float in3 = (Waveform[3] == 1) ? (float)((int32_t)(ph3 << 6) - 32768) : (ph3 < *pW3 ? 32767.0f : -32768.0f);
-        float hp3 = in3 - *pL3 - (filter_q[3] * *pB3);
+
+        float resFB3 = fmaxf(-20000.0f, fminf(20000.0f, *pB3));
+        float hp3 = in3 - *pL3 - (filter_q[3] * resFB3);
         *pB3 += *pFF3 * hp3;
         *pL3 += *pFF3 * *pB3;
-        if (*pL3 > 32767.0f)  *pL3 = 32767.0f;
-        if (*pL3 < -32768.0f) *pL3 = -32768.0f;
+        *pL3 = fmaxf(-32768.0f, fminf(32767.0f, *pL3));
+
         osc_out[3] = ((int32_t) * pL3 * *pV3) >> 6;
         pF3++; pP3++; pL3++; pB3++; pW3++; pV3++; pFF3++;
 
-        // --- 4. STRUKTÚRA MATEK (Hangonkénti feldolgozás) ---
-        //totalLower += (osc_out[0] * (osc_out[1] >> 12)) >> 3;
+        // Összegzés (Ugyanaz a magon belüli mix)
         totalUpper += (osc_out[0] + osc_out[1]);
         totalLower += (osc_out[2] + osc_out[3]);
-
       }
-
       // --- 5. Kimeneti bufferbe töltés és effektezés ---
       bufferbe[0] = totalUpper >> masterVolume;
       bufferbe[1] = totalLower >> masterVolume;
