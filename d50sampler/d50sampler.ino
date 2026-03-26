@@ -14,7 +14,7 @@ struct Serial2MIDISettings : public midi::DefaultSettings {
 };
 
 MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial2, MIDI2, Serial2MIDISettings);
-byte midichan = 16;
+byte midichan = 1;
 byte commandByte;
 byte noteByte;
 byte velocityByte;
@@ -146,20 +146,21 @@ int32_t tempbuffer2;
 int32_t tempbuffer3;
 int32_t tempbuffer[4] = {0, 0, 0, 0};
 byte ENV_L0 = 0;
-byte ENV_T1[4] = { 100, 100, 100, 100 };
-byte ENV_L1[4] = { 100, 100, 100, 100 };
-byte ENV_T2[4] = { 1, 1, 1, 1 };
-byte ENV_L2[4] = { 80, 80, 80, 80 };
-byte ENV_L3[4] = { 80, 80, 80, 80 }; //not used more
-byte ENV_T3[4] = { 1, 1, 1, 1 };
-byte ENV_LSUS[4] = { 50, 50, 50, 50 };
-byte ENV_T4[4] = { 1, 1, 1, 1 };
-byte ENV_T5[4] = { 1, 1, 1, 1 };
-byte ENV_LEND[4] = { 0, 0, 0, 0 };
+// 0-3: TVA (Hangerő), 4-7: TVF (Szűrő)
+byte ENV_T1[8]   = { 100, 100, 100, 100, 100, 100, 100, 100 };
+byte ENV_L1[8]   = { 100, 100, 100, 100, 100, 100, 100, 100 };
+byte ENV_T2[8]   = { 1, 1, 1, 1, 1, 1, 1, 1 };
+byte ENV_L2[8]   = { 80, 80, 80, 80, 80, 80, 80, 80 };
+byte ENV_L3[8]   = { 80, 80, 80, 80, 80, 80, 80, 80 };
+byte ENV_T3[8]   = { 1, 1, 1, 1, 1, 1, 1, 1 };
+byte ENV_LSUS[8] = { 50, 50, 50, 50, 50, 50, 50, 50 };
+byte ENV_T4[8]   = { 1, 1, 1, 1, 1, 1, 1, 1 };
+byte ENV_T5[8]   = { 1, 1, 1, 1, 1, 1, 1, 1 };
+byte ENV_LEND[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 byte TVA_Slide = 19;
 #define L_SCALE 2500 // 2.5 * 1000 a fixpontos matekhoz
-byte generatorstatus[4][polyphony];
-uint32_t TVAvolume[4][polyphony];
+byte generatorstatus[8][polyphony];
+uint32_t TVAvolume[8][polyphony];
 byte TVFlevel[4][polyphony];
 byte TVA[4] = {1, 1, 1, 1};
 byte KEYFollow[4] = { 11, 11, 11, 11 };
@@ -230,12 +231,14 @@ byte Lpoly = 8;
 byte Upoly = 8;
 byte oscMode[4] = {0, 0, 0, 0};
 uint32_t lastTargetPitch[4] = {0, 0, 0, 0};
-//uint16_t lastGenVol[4][polyphony] = {0};
 byte voiceStack[polyphony];
 uint16_t smoothedVol[4][polyphony];
 const float* waveformLookup[3] = { sqrTable, sawTable, sinTable };
 uint8_t modulationMatrix[4][3];
-
+float tvf_env_mod[4][polyphony];
+uint8_t tvf_env_depth[8] = {100, 100, 100, 100, 50, 50, 50, 50}; // 0-100 közötti értékek
+float ceiling_val = 0.95f;
+float stretch_val = 0.00015f;
 
 
 //----------------------------PARAMETRIC EQ LEFT-------------------------------------------------
@@ -705,18 +708,18 @@ void parametersysexchanged() {
       case 0:
         //couarse u1
         COARSE[2] = value;
-        line = "COARSE U1: " + lcdprint3(COARSE[2]);
+        line = "U1: COARSE=" + lcdprint3(COARSE[2]) + "  ";
         notetune();
         break;
       case 1:
         //couarse u1
         FINE[2] = value;
-        line = "U1: COARSE= " + lcdprint3(FINE[2]);
+        line = "U1: COARSE=" + lcdprint3(FINE[2]) + "  ";
         notetune();
         break;
       case 2:
         KEYFollow[2] = value;
-        line = " U1: KEYFollow=" + lcdprint2(KEYFollow[2]);
+        line = "U1: KEYFollow=" + lcdprint2(KEYFollow[2]);
         notetune();
         break;
       case 3:
@@ -724,80 +727,97 @@ void parametersysexchanged() {
         break;
       case 4:
         TVA[2] = value;
-        line = "U1: TVA=" + lcdprint3(TVA[2]);
+        line = "U1: TVA=" + lcdprint3(TVA[2]) + "     ";
         break;
       case 6:
         Waveform[2] = value;
         if (value == 0) {
-          line = "U1: Waveform=Square";
+          line = "U1: Waveform=Sqr";
         }
         if (value == 1) {
-          line = "U1: Waveform=Sawtooth";
+          line = "U1: Waveform=Saw";
         }
         break;
       case 7:
         PCMWaveNo[2] = value;
-        line = "U1: PCMWaveNo=" + lcdprint3(PCMWaveNo[2]);
+        line = "U1: PCMWavNo=" + lcdprint3(PCMWaveNo[2]);
         opmenuoldal = 2;
         setPCMWave();
         break;
       case 8:
         PW[2] = value;
-        line = "U1: PW=" + lcdprint3(PW[2]);
+        line = "U1: PW=" + lcdprint3(PW[2]) + "      ";
         break;
       case 10:
         PWMLFO[2] = value;
-        line = "U1: PWMLFO=" + lcdprint3(PWMLFO[2]);
+        line = "U1: PWMLFO=" + lcdprint3(PWMLFO[2]) + "  ";
         break;
       case 11:
         PWMLFODepth[2] = value;
-        line = "U1: PLFODPT=" + lcdprint3(PWMLFODepth[2]);
+        line = "U1: PLFODPT=" + lcdprint3(PWMLFODepth[2]) + " ";
         break;
       case 13:
         tvf_cutoff[2] = value;
-        line = "U1: TVF_CUTOFF=" + lcdprint3(tvf_cutoff[2]);
+        line = "U1: TVFCUTOF=" + lcdprint3(tvf_cutoff[2]);
         break;
       case 14:
         tvf_reso[2] = value;
-        line = "U1: TVF_RESO=" + lcdprint3(tvf_reso[2]);
+        line = "U1: TVF RESO=" + lcdprint3(tvf_reso[2]);
         break;
+      case 18:
+        // Tároljuk az eredeti MIDI értéket (0-127), hogy ne vesszen el a felbontás
+        tvf_env_depth[6] = value;
+        line = "U1: TVF Dpth=" + lcdprint3(value);
+        break;
+      case 22: ENV_T1[6] = 100 - value; line = "U1: TVF_T1=" + lcdprint3(ENV_T1[6]); break;
+      case 23: ENV_T2[6] = 100 - value; line = "U1: TVF_T2=" + lcdprint3(ENV_T2[6]); break; // Figyeld az L2-t, ha ez maradt a címke!
+      case 24: ENV_T3[6] = 100 - value; line = "U1: TVF_T3=" + lcdprint3(ENV_T3[6]); break;
+      case 25: ENV_T4[6] = 100 - value; line = "U1: TVF_T4=" + lcdprint3(ENV_T4[6]); break;
+      case 26: ENV_T5[6] = 100 - value; line = "U1: TVF_T5=" + lcdprint3(ENV_T5[6]); break;
+      case 27: ENV_L1[6] = value; line = "U1: TVF_L1=" + lcdprint3(ENV_L1[6]); break;
+      case 28: ENV_L2[6] = value; line = "U1: TVF_L2=" + lcdprint3(ENV_L2[6]); break;
+      case 29: ENV_L3[6] = value; line = "U1: TVF_L3=" + lcdprint3(ENV_L3[6]); break;
+      case 30: ENV_LSUS[6] = value; line = "U1: TVF_L4=" + lcdprint3(ENV_LSUS[6]); break;
+      case 31: ENV_LEND[6] = value; line = "U1: TVF_L5=" + lcdprint3(ENV_LEND[6]); break;
+
+
       case 32:
         TWFLFO[2] = value;
-        line = "U1: TWFLFO=" + lcdprint3(TWFLFO[2]);
+        line = "U1: TWFLFO=" + lcdprint3(TWFLFO[2]) + "   ";
         break;
       case 33:
         TVF_LFO_level[2] = value;
-        line = "U1 TVFLFOL=" + lcdprint3(TVF_LFO_level[2]);
+        line = "U1: TVFLFOL=" + lcdprint3(TVF_LFO_level[2]) + " ";
         break;
       case 35:
         volume[2] = value;
-        line = "U1: Level=" + lcdprint3(volume[2]);
+        line = "U1: Level=" + lcdprint3(volume[2]) + "   ";
         break;
       case 37:
         BiasPoint[2] = value;
-        line = "U1: BiasPoint=" + lcdprint3(BiasPoint[2]);
+        line = "U1: BisPont=" + lcdprint3(BiasPoint[2]);
         notebias();
         break;
       case 38:
         BiasLevel[2] = value;
-        line = "U1: bieasLevel=" + lcdprint3(BiasLevel[2]);
+        line = "U1: BieasLev=" + lcdprint3(BiasLevel[2]);
         notebias();
         break;
       case 39:
         ENV_T1[2] = 100 - value;
-        line = "U1: ENV_T1=" + lcdprint3(ENV_T1[2]);
+        line = "U1: ENV T1=" + lcdprint3(ENV_T1[2]) + "  ";
         break;
       case 40:
         ENV_T2[2] = 100 - value;
-        line = "U1: ENV_T2=" + lcdprint3(ENV_T2[2]);
+        line = "U1: ENV_T2=" + lcdprint3(ENV_T2[2]) + "  ";
         break;
       case 41:
         ENV_T3[2] = 100 - value;
-        line = "U1: ENV_T3=" + lcdprint3(ENV_T3[2]);
+        line = "U1: ENV_T3=" + lcdprint3(ENV_T3[2]) + "  ";
         break;
       case 42:
         ENV_T4[2] = 100 - value;
-        line = "U1: ENV_T4=" + lcdprint3(ENV_T4[2]);
+        line = "U1: ENV_T4=" + lcdprint3(ENV_T4[2]) + "  ";
         break;
       case 43:
         /*
@@ -806,15 +826,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE END U1: " + String(sampleend[2]));
         */
         ENV_T5[2] = 100 - value;
-        line = "U1: ENV_T5=" + lcdprint3(ENV_T5[2]);
+        line = "U1: ENV_T5=" + lcdprint3(ENV_T5[2]) + "  ";
         break;
       case 44:
         ENV_L1[2] = value;
-        line = "U1: ENV_L1" + lcdprint3(ENV_L1[2]);
+        line = "U1: ENV_L1" + lcdprint3(ENV_L1[2]) + "  ";
         break;
       case 45:
         ENV_L2[2] = value;
-        line = "U1: ENV_L2=" + String(ENV_L2[2]);
+        line = "U1: ENV_L2=" + String(ENV_L2[2]) + "  ";
         break;
       case 46:
         /*
@@ -823,15 +843,15 @@ void parametersysexchanged() {
           Serial.println("SAMPLE BEGIN U1: " + String(samplebegin[2]));
         */
         ENV_L3[2] = value;
-        line = "U1: ENV_L3=" + lcdprint3(ENV_L3[2]);
+        line = "U1: ENV_L3=" + lcdprint3(ENV_L3[2]) + "  ";
         break;
       case 47:
         ENV_LSUS[2] = value;
-        line = "U1: ENV_LSUS=" + lcdprint3(ENV_LSUS[2]);
+        line = "U1: ENV_LSUS=" + lcdprint3(ENV_LSUS[2]) + "  ";
         break;
       case 48:
         ENV_LEND[2] = value;
-        line = "U1: ENV_LEND=" + lcdprint3(ENV_LEND[2]);
+        line = "U1: ENV_LEND=" + lcdprint3(ENV_LEND[2]) + "  ";
         break;
       case 49:
         opmenuoldal = 2;
@@ -847,34 +867,34 @@ void parametersysexchanged() {
         break;
       case 51:
         PICHLFO[2] = value;
-        line = "U1: PICH_LFO=" + lcdprint3(PICHLFO[2]);
+        line = "U1: PICH LFO=" + lcdprint3(PICHLFO[2]);
         break;
       case 52:
         PICH_LFO_level[2] = value;
-        line = "U1: PICH_LFOL=" + lcdprint3(PICH_LFO_level[2]);
+        line = "U1: PLFO LEV=" + lcdprint3(PICH_LFO_level[2]);
         break;
       case 64:
         //couarse u2
         COARSE[3] = value;
-        line = "U2: COARSE=" + lcdprint3(COARSE[3]);
+        line = "U2: COARSE=" + lcdprint3(COARSE[3]) + "  ";
         notetune();
         break;
       case 65:
         //couarse u2
         FINE[3] = value;
-        line = "U2: COARSE=" + lcdprint3(FINE[3]);
+        line = "U2: COARSE=" + lcdprint3(FINE[3]) + "  ";
         notetune();
         break;
       case 66:
         KEYFollow[3] = value;
-        line = "U2: KEYFollow=" + lcdprint2(KEYFollow[3]);
+        line = "U2: KEYFolow=" + lcdprint2(KEYFollow[3]);
         notetune();
         break;
       case 67:
         break;
       case 68:
         TVA[3] = value;
-        line = "U2: TVA=" + lcdprint3(TVA[3]);
+        line = "U2: TVA=" + lcdprint3(TVA[3]) + "   ";
         break;
       case 70:
         Waveform[3] = value;
@@ -912,6 +932,24 @@ void parametersysexchanged() {
         tvf_reso[3] = value;
         line = "U2: TVF_RESO=" + lcdprint3(tvf_reso[3]);
         break;
+      case 82:
+        tvf_env_depth[7] = value; // pl. 0-100 közötti érték
+        line = "U2 TVF Depth: " + String(value);
+        break;
+      // --- TVF 4 (index 7) ---
+      case 86: ENV_T1[7] = 100 - value; line = "U2: TVF_T1=" + lcdprint3(ENV_T1[7]); break;
+      case 87: ENV_T2[7] = 100 - value; line = "U2: TVF_T2=" + lcdprint3(ENV_T2[7]); break;
+      case 88: ENV_T3[7] = 100 - value; line = "U2: TVF_T3=" + lcdprint3(ENV_T3[7]); break;
+      case 89: ENV_T4[7] = 100 - value; line = "U2: TVF_T4=" + lcdprint3(ENV_T4[7]); break;
+      case 90: ENV_T5[7] = 100 - value; line = "U2: TVF_T5=" + lcdprint3(ENV_T5[7]); break;
+      case 91: ENV_L1[7] = value; line = "U2: TVF_L1=" + lcdprint3(ENV_L1[7]); break;
+      case 92: ENV_L2[7] = value; line = "U2: TVF_L2=" + lcdprint3(ENV_L2[7]); break;
+      case 93: ENV_L3[7] = value; line = "U2: TVF_L3=" + lcdprint3(ENV_L3[7]); break;
+      case 94: ENV_LSUS[7] = value; line = "U2: TVF_L4=" + lcdprint3(ENV_LSUS[7]); break;
+      case 95: ENV_LEND[7] = value; line = "U2: TVF_L5=" + lcdprint3(ENV_LEND[7]); break;
+
+
+
       case 96:
         TWFLFO[3] = value;
         line = "U2: TWFLFO=" + lcdprint3(TWFLFO[3]);
@@ -1165,6 +1203,40 @@ void parametersysexchanged() {
         tvf_reso[0] = value;
         line = "L1: TVF_RESO=" + lcdprint3(tvf_reso[0]);
         break;
+      case 82:
+        // Itt nincs float, nincs szorzás, csak nyers érték (0-127)
+        tvf_env_depth[4] = value;
+        line = "L1 TVF Depth: " + String(value);
+        break;
+
+      case 86:
+        ENV_T1[4] = 100 - value;
+        line = "L1: TVF_T1=" + lcdprint3(ENV_T1[4]);
+        break;
+      case 87:
+        ENV_T2[4] = 100 - value;
+        line = "L1: TVF_T2=" + lcdprint3(ENV_T2[4]);
+        break;
+      case 88:
+        ENV_T3[4] = 100 - value;
+        line = "L1: TVF_T3=" + lcdprint3(ENV_T3[4]);
+        break;
+      case 89:
+        ENV_T4[4] = 100 - value;
+        line = "L1: TVF_T4=" + lcdprint3(ENV_T4[4]);
+        break;
+      case 90:
+        ENV_T5[4] = 100 - value;
+        line = "L1: TVF_T5=" + lcdprint3(ENV_T5[4]);
+        break;
+      case 91: ENV_L1[4] = value; line = "L1: TVF_L1=" + lcdprint3(ENV_L1[4]); break;
+      case 92: ENV_L2[4] = value; line = "L1: TVF_L2=" + lcdprint3(ENV_L2[4]); break;
+      case 93: ENV_L3[4] = value; line = "L1: TVF_L3=" + lcdprint3(ENV_L3[4]); break;
+      case 94: ENV_LSUS[4] = value; line = "L1: TVF_L4=" + lcdprint3(ENV_LSUS[4]); break;
+      case 95: ENV_LEND[4] = value; line = "L1: TVF_L5=" + lcdprint3(ENV_LEND[4]); break;
+
+
+
       case 96:
         TWFLFO[0] = value;
         line = "L1: TWFLFO=" + lcdprint3(TWFLFO[0]);
@@ -1327,6 +1399,24 @@ void parametersysexchanged() {
         tvf_reso[1] = value;
         line = "L2: TVF_RESO=" + lcdprint3(tvf_reso[1]);
         break;
+      case 18:
+        // Itt nincs float, nincs szorzás, csak nyers érték (0-127)
+        tvf_env_depth[5] = value;
+        line = "L2 TVF Depth: " + String(value);
+        break;
+      case 22: ENV_T1[5] = 100 - value; line = "L2: TVF_T1=" + lcdprint3(ENV_T1[5]); break;
+      case 23: ENV_T2[5] = 100 - value; line = "L2: TVF_T2=" + lcdprint3(ENV_T2[5]); break;
+      case 24: ENV_T3[5] = 100 - value; line = "L2: TVF_T3=" + lcdprint3(ENV_T3[5]); break;
+      case 25: ENV_T4[5] = 100 - value; line = "L2: TVF_T4=" + lcdprint3(ENV_T4[5]); break;
+      case 26: ENV_T5[5] = 100 - value; line = "L2: TVF_T5=" + lcdprint3(ENV_T5[5]); break;
+      case 27: ENV_L1[5] = value; line = "L2: TVF_L1=" + lcdprint3(ENV_L1[5]); break;
+      case 28: ENV_L2[5] = value; line = "L2: TVF_L2=" + lcdprint3(ENV_L2[5]); break;
+      case 29: ENV_L3[5] = value; line = "L2: TVF_L3=" + lcdprint3(ENV_L3[5]); break;
+      case 30: ENV_LSUS[5] = value; line = "L2: TVF_L4=" + lcdprint3(ENV_LSUS[5]); break;
+      case 31: ENV_LEND[5] = value; line = "L2: TVF_L5=" + lcdprint3(ENV_LEND[5]); break;
+
+
+
       case 32:
         TWFLFO[1] = value;
         line = "L2: TWFLFO=" + lcdprint3(TWFLFO[1]);
@@ -1501,6 +1591,28 @@ void parametersysexchanged() {
         LFO_Delay[2] = value;
         line = " LFO3_DELAY: " + lcdprint3(LFO_Delay[2]);
         break;
+      case 101: // "Ceiling" - 0-tól 15-ig
+        {
+          float norm = value / 15.0f; // 15-nél lesz pontosan 1.0
+          ceiling_val = (norm * norm) * 0.98f;
+
+          if (ceiling_val < 0.015f) ceiling_val = 0.015f;
+        }
+        break;
+
+      case 102: // "Stretch" - 0-tól 24-ig
+        {
+          // 24 / 24.0f = 1.0 -> a négyzete is 1.0
+          float norm = value / 24.0f;
+
+          // A 0.00025f szorzóval a 24-es állásnál pont a
+          // stabilitási határ szélén fog táncolni (brutál vonyítás)
+          stretch_val = (norm * norm) * 0.00025f;
+
+          if (stretch_val < 0.00001f) stretch_val = 0.00001f;
+        }
+        break;
+
       case 106:
         switch (value) {
           case 1:
@@ -1861,123 +1973,6 @@ void parametersysexchanged() {
   lcdprint(line, 1);
 }
 
-//--------------MIDI PARAMETER CONTROL-------------
-void parameterchange2() {
-
-  byte value = velocityByte;
-  switch (noteByte) {
-    case 0:
-      KEYFollow[opmenuoldal] = value;
-      break;
-    case 5:
-      volume[opmenuoldal] = value;
-
-      Serial.println("generatorvolume" + String(opmenuoldal) + ": " + String(volume[opmenuoldal]));
-      break;
-    case 6:
-      if (value < 32) {
-        PCMWaveNo[opmenuoldal] = value;
-        setPCMWave();
-      }
-      if (value == 32) {
-        loopsample[opmenuoldal] = false;
-        Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
-      }
-      if (value == 33) {
-        loopsample[opmenuoldal] = true;
-        Serial.println("loopsample" + String(opmenuoldal) + ": " + String(loopsample[opmenuoldal]));
-      }
-      //opmenuincrent
-      if (value == 52) {
-        if (opmenuoldal < 3) {
-          opmenuoldal++;
-        } else {
-          opmenuoldal = 0;
-        }
-      }
-      //opmenudecrement
-      if (value == 53) {
-        if (opmenuoldal > 0) {
-          opmenuoldal--;
-        } else {
-          opmenuoldal = 3;
-        }
-      }
-      //opmenuset
-      if (value == 54) {
-        opmenuoldal = 0;
-      }
-      if (value == 55) {
-        opmenuoldal = 1;
-      }
-      if (value == 56) {
-        opmenuoldal = 2;
-      }
-      if (value == 57) {
-        opmenuoldal = 3;
-      }
-      Serial.println("opmenuoldal: " + String(opmenuoldal));
-      break;
-    case 7:
-
-      switch (opmenuoldal) {
-        case 0: reverblevel = value + 1; break;
-        case 1: reverbdiffusion = value; break;
-        case 2: delaytime = value; break;
-        case 3: delay2time = value; break;
-      }
-      Serial.println("Reverblevel: " + String(reverblevel));
-      Serial.println("Reverbdiffusion: " + String(reverbdiffusion));
-      Serial.println("delaytime: " + String(delaytime));
-      Serial.println("delay2time: " + String(delay2time));
-      break;
-    case 44:
-      COARSE[opmenuoldal] = value;
-      Serial.println("GENERATOR FREQ: " + String(opmenuoldal) + " :" + String(COARSE[opmenuoldal]));
-      break;
-    case 108:
-      ENV_L1[opmenuoldal] = value;
-      break;
-    case 109:
-      ENV_L2[opmenuoldal] = value;
-      break;
-    case 110:
-      ENV_LSUS[opmenuoldal] = value;
-      break;
-    case 113:
-
-      break;
-    case 114:
-      ENV_T1[opmenuoldal] = value;
-      break;
-
-    case 115:
-      ENV_T2[opmenuoldal] = value;
-
-      samplebegin[opmenuoldal] = value << 7;
-
-      if  (samplesize[opmenuoldal] < samplebegin[opmenuoldal])
-      {
-        samplebegin[opmenuoldal] = samplesize[opmenuoldal];
-      }
-
-      Serial.println("SAMPLE BEGIN" + String(opmenuoldal) + " :" + String(samplebegin[opmenuoldal]));
-
-      break;
-    case 116:
-      sampleend[opmenuoldal] = value << 7;
-      if (samplesize[opmenuoldal] < sampleend[opmenuoldal]) {
-        sampleend[opmenuoldal] = samplesize[opmenuoldal];
-      }
-      Serial.println("SAMPLE END: " + String(opmenuoldal) + " :" + String(sampleend[opmenuoldal]));
-      break;
-    case 117:
-      ENV_T4[opmenuoldal] = value;
-      break;
-  }
-}
-
-
 //-------------------------------REVERB-DELAY EFFECT LEFT----------------------------------------
 
 int32_t atlag = 0;
@@ -2239,46 +2234,47 @@ void chorusright() {
 //delaybuffer actual sample, x: delaybuffer prev sample
 
 
-
-void lowpassfilterleft() {
+/*
+  void lowpassfilterleft() {
   //delaybuffer[delaybufferindex] = (delaybuffer[delaybufferindex] + x) >> 1;
   //x = delaybuffer[delaybufferindex];
-}
-
+  }
+*/
 //LOWPASSFILTER RIGHT
 //lowpassfilter in delaybuffer!!!
 //delaybuffer actual sample, x2: delaybuffer prev sample
-
-void lowpassfilterright() {
+/*
+  void lowpassfilterright() {
   //delaybuffer2[delaybufferindex2] = (delaybuffer2[delaybufferindex2] + x2) >> 1;
   //x2 = delaybuffer2[delaybufferindex2];
-}
-
-
-
+  }
+*/
 
 //-------------------------------MIDI INPUT COMMAND-------------------------------------
 //keylogic
-int findBestSlot() {
-  int foundIdx = 0; // Alapértelmezett a legrégebbi (0. index a stackben)
-  // 1. Keresés: Megállunk az első szabad slotnál
+
+inline int findBestSlot() {
+  int foundIdx = 0;
+  // 1. Keresés az első szabadra (status 5)
   for (int i = 0; i < polyphony; i++) {
     if (generatorstatus[0][voiceStack[i]] == 5) {
       foundIdx = i;
       break;
     }
   }
+
   int bestS = voiceStack[foundIdx];
-  // 2. Stack frissítése: Csak akkor mozgatunk, ha nem az utolsót választottuk
+
+  // 2. Csak akkor mozgatunk, ha szükséges.
+  // Ha kicsi a polyphony (pl. <= 8), egy sima for ciklus gyorsabb is lehet, mint a memmove
   if (foundIdx < (polyphony - 1)) {
-    // A memmove sokkal gyorsabb, mint a manuális for ciklus!
     int count = polyphony - 1 - foundIdx;
-    memmove(&voiceStack[foundIdx], &voiceStack[foundIdx + 1], count * sizeof(byte));
+    memmove(&voiceStack[foundIdx], &voiceStack[foundIdx + 1], count); // sizeof(byte) elhagyható, ha byte
   }
   voiceStack[polyphony - 1] = bestS;
   return bestS;
 }
-
+byte noteToSlot[128]; // Inicializáld 255-tel a setupban!
 byte monoNote = 0;
 void keyon(byte noteByte) {
   bool isAnyPoly = false;
@@ -2295,10 +2291,7 @@ void keyon(byte noteByte) {
     int shift = (i < 2) ? LKeyShift : UKeyShift;
     wavefreq[i][targetS] = noteertek[i][noteByte + shift];
     wavebias[i][targetS] = Bias[i][noteByte + shift];
-
-
     pich[i][targetS] = wavefreq[i][targetS];
-
     // Portamento
     if (portamento_time[i] == 0) {
       currentPitch[i][targetS] = pich[i][targetS];
@@ -2307,7 +2300,6 @@ void keyon(byte noteByte) {
     }
     lastTargetPitch[i] = pich[i][targetS];
   }
-
   // --- 3. INDÍTÁSI LOGIKA OSC-NKÉNT ---
   for (int i = 0; i < 4; i++) {
     if (oscMode[i] == 0) {
@@ -2317,6 +2309,9 @@ void keyon(byte noteByte) {
       v_bp[i][g] = 0.0f;
       TVAvolume[i][g] = ENV_L0;
       generatorstatus[i][g] = 0; // ATTACK
+      // --- EZ A KIEGÉSZÍTÉS A TVF-NEK (i+4) ---
+      generatorstatus[i + 4][g] = 0;
+      TVAvolume[i + 4][g] = 0; // Vagy ENV_L0, ha a TVF is innen indul
     }
     else {
       //monofon
@@ -2325,55 +2320,55 @@ void keyon(byte noteByte) {
         smoothedVol[i][m] = 0; // A simítót nulláról indítjuk
         TVAvolume[i][m] = 0;   // A burkolót is nulláról indítjuk
         generatorstatus[i][m] = 0; // Indul az Attack
+        generatorstatus[i + 4][m] = 0;
+        TVAvolume[i + 4][m] = 0;
       }
       // 2. Ha már szól valami (Legato):
       else {
-        // SEMMI fázis-reset (freqmutato marad, ahol volt!)
-        // SEMMI hangerő-reset (smoothedVol marad, ahol volt!)
-
-        // Csak a burkológörbe célját állítjuk át, hogy innen menjen tovább
         generatorstatus[i][m] = 0;
+        generatorstatus[i + 4][m] = 0;
       }
     }
   }
   // --- 4. ADMINISZTRÁCIÓ ---
   oldnoteByte[g] = noteByte;
   noteoff[g] = false;
-
+  noteToSlot[noteByte] = (byte)g; // <--- EZT ADD HOZZÁ! Ekkor fogja tudni a keyoff, hova nyúljon.
   // LFO Sync
   for (int i = 0; i < 6; i++) {
     if (LFOSYNC[i] == 2) LFO_Delay_Counter[i] = 0;
   }
   monoNote = noteByte; // Megjegyezzük, mi indította a monofont
-
 }
+
+
+
+
 void keyoff(byte noteByte) {
-  // 1. Végigmegyünk az összes sloton (0-7)
-  for (int g = 0; g < polyphony; g++) {
+  int g = noteToSlot[noteByte];
 
-    // POLIFÓN ELLENŐRZÉS: Ha ez a slot az adott billentyűhöz tartozik
-    if (noteByte == oldnoteByte[g]) {
-      oldnoteByte[g] = 0; // Felszabadítjuk a slot adminisztrációját
+  if (g < polyphony && oldnoteByte[g] == noteByte) {
+    oldnoteByte[g] = 255;      // Jelezzük, hogy ez a slot már nem tartozik semmilyen billentyűhöz
+    noteToSlot[noteByte] = 255; // Kitakarítjuk a táblát is
 
-      for (int i = 0; i < 4; i++) {
-        // Csak a polifón módban lévő oszcillátorokat küldjük Release-be ebben a slotban
-        if (oscMode[i] == 0) {
-          generatorstatus[i][g] = 4;
-        }
+    for (int i = 0; i < 4; i++) {
+      if (oscMode[i] == 0) {
+        generatorstatus[i][g] = 4;
+        generatorstatus[i + 4][g] = 4;
       }
     }
   }
-  // 2. MONOFÓN ELLENŐRZÉS: Minden oszcillátort külön megnézünk a 0. slotban
+
+  // 3. MONOFÓN ELLENŐRZÉS (Ha ugyanaz a hang, ami a monofont tartja)
   if (noteByte == monoNote) {
     for (int i = 0; i < 4; i++) {
-      // Ha ez az oszcillátor monofón (oscMode > 0), akkor ő a 0. slotot használja
       if (oscMode[i] > 0) {
-        generatorstatus[i][0] = 4; // A monofón hang is elmegy Release-be
+        generatorstatus[i][0] = 4;
+        generatorstatus[i + 4][0] = 4;
       }
     }
   }
 }
-
 //--------------CHASE---------------------------
 void chasearpeggiomidiclock() {
 
@@ -2596,87 +2591,92 @@ void handleProgramChange(byte channel, byte number) {
     case 0:
       LoadPatch(storedpach1);
       //Serial.println("Patch 1 betöltve");
-      lcdprint("01 PizzaGogo", 0);
+      lcdprint("01:PizzaGogo    ", 0);
       break;
     case 1:
       LoadPatch(storedpach2);
       //Serial.println("Patch 2 betöltve");
-      lcdprint("02 UltraBass", 0);
+      lcdprint("02:UltraBass    ", 0);
       break;
     case 2:
       LoadPatch(storedpach3);
       //Serial.println("Patch 3 betöltve");
-      lcdprint("03 BELLS", 0);
+      lcdprint("03:BELLS 1      ", 0);
       break;
     case 3:
       LoadPatch(storedpach4);
       //Serial.println("Patch 4 betöltve");
-      lcdprint("04 Fifty Pad", 0);
+      lcdprint("04:Fifty Pad    ", 0);
       break;
     case 4:
       LoadPatch(storedpach5);
       //Serial.println("Patch 5 betöltve");
-      lcdprint("05 Clarinet Pad", 0);
+      lcdprint("05:Clarinet Pad ", 0);
       break;
     case 5:
       LoadPatch(storedpach6);
       // Serial.println("Patch 6 betöltve");
-      lcdprint("06 Fifty Pad 2", 0);
+      lcdprint("06:Fifty Pad 2  ", 0);
       break;
     case 6:
       LoadPatch(storedpach7);
       // Serial.println("Patch 7 betöltve");
-      lcdprint("07 Arabian FM", 0);
+      lcdprint("07:Arabian FM   ", 0);
       break;
     case 7:
       LoadPatch(storedpach8);
       // Serial.println("Patch 7 betöltve");
-      lcdprint("08 Guitarbells", 0);
+      lcdprint("08:Guitarbells   ", 0);
       break;
     case 8:
       LoadPatch(storedpach9);
       //Serial.println("Patch 8 betöltve");
-      lcdprint("09 Spectrum pad", 0);
+      lcdprint("09:Spectrum pad ", 0);
       break;
     case 9:
       LoadPatch(storedpach10);
       //Serial.println("Patch 9 betöltve");
-      lcdprint("10 FMPad", 0);
+      lcdprint("10:FMPad        ", 0);
       break;
     case 10:
       LoadPatch(storedpach11);
       //Serial.println("Patch 10 betöltve");
-      lcdprint("11 Slap BassFM", 0);
+      lcdprint("11:Slap BassFM  ", 0);
       break;
     case 11:
       LoadPatch(storedpach12);
       //Serial.println("Patch 11 betöltve");
-      lcdprint("12 BrassFM", 0);
+      lcdprint("12:BrassFM      ", 0);
       break;
     case 12:
       LoadPatch(storedpach13);
       //Serial.println("Patch 12 betöltve");
-      lcdprint("13 KelepFM", 0);
+      lcdprint("13:KelepFM      ", 0);
       break;
     case 13:
       LoadPatch(storedpach14);
       //Serial.println("Patch 13 betöltve");
-      lcdprint("14 FMPad 2", 0);
+      lcdprint("14:FMPad 2      ", 0);
       break;
     case 14:
       LoadPatch(storedpach15);
       // Serial.println("Patch 14 betöltve");
-      lcdprint("15 FMPad 2", 0);
+      lcdprint("15:FMPad 2      ", 0);
       break;
     case 15:
       LoadPatch(storedpach16);
       // Serial.println("Patch 15 betöltve");
-      lcdprint("15 Paradise Bells", 0);
+      lcdprint("16:Paradise Bell", 0);
       break;
     case 16:
       LoadPatch(storedpach17);
       // Serial.println("Patch 15 betöltve");
-      lcdprint("17 Linear LFOMod", 0);
+      lcdprint("17:Linear LFOMod", 0);
+      break;
+    case 17:
+      LoadPatch(storedpach18);
+      // Serial.println("Patch 15 betöltve");
+      lcdprint("18:Roads4c      ", 0);
       break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
@@ -2792,207 +2792,169 @@ void loop() {
     pLfoIdx++; pLfoFreq++; pLfoVal++; pCounter++;
   }
 
-  // --- GLOBÁLIS VÁLTOZÓ (Ezt a függvényen kívülre tedd) ---
-  uint16_t lastGenVol[4][polyphony] = {0};
-
-  // ... a függvényed többi része ...
-
   // TVA ENVELOPE OPTIMIZED
-  for (int i = 0; i < 4; i++) {
-    if (TVA[i] > 0) {
-      // Előre kiszámolt célpontok az adott oszcillátorhoz (i)
-      const uint32_t attackTarget = (uint32_t)ENV_L1[i] << 17;
-      const uint32_t targetL2     = (uint32_t)ENV_L2[i] << 17;
-      const uint32_t targetL3     = (uint32_t)ENV_L3[i] << 17;
-      const uint32_t targetLSUS   = (uint32_t)ENV_LSUS[i] << 17;
-      const uint32_t targetLEND   = (uint32_t)(ENV_LEND[i] * 100) << 17;
+  for (int i = 0; i < 8; i++) {
+    // Előszámítások (csak 8x futnak le)
+    const uint32_t L1 = (uint32_t)ENV_L1[i] << 17;
+    const uint32_t L2 = (uint32_t)ENV_L2[i] << 17;
+    const uint32_t L3 = (uint32_t)ENV_L3[i] << 17;
+    const uint32_t LS = (uint32_t)ENV_LSUS[i] << 17;
+    const uint32_t LE = (uint32_t)(ENV_LEND[i] * 100) << 17;
 
-      // Sebességek előre kiszámolva (nem kell a switch-ben újra és újra)
-      const uint32_t sT1 = ((uint32_t)speedTable[ENV_T1[i]] << 12) + 100U;
-      const uint32_t sT2 = ((uint32_t)speedTable[ENV_T2[i]] << 12) + 100U;
-      const uint32_t sT3 = ((uint32_t)speedTable[ENV_T3[i]] << 12) + 100U;
-      const uint32_t sT4 = ((uint32_t)speedTable[ENV_T4[i]] << 12) + 100U;
-      const uint32_t sT5 = ((uint32_t)speedTable[ENV_T5[i]] << 12) + 100U;
+    const uint32_t sT1 = ((uint32_t)speedTable[ENV_T1[i]] << 12) + 100U;
+    const uint32_t sT2 = ((uint32_t)speedTable[ENV_T2[i]] << 12) + 100U;
+    const uint32_t sT3 = ((uint32_t)speedTable[ENV_T3[i]] << 12) + 100U;
+    const uint32_t sT4 = ((uint32_t)speedTable[ENV_T4[i]] << 12) + 100U;
+    const uint32_t sT5 = ((uint32_t)speedTable[ENV_T5[i]] << 12) + 100U;
 
-      // Pointerek az oszcillátor 'i' sorának elejére
-      uint8_t* pStatus = &generatorstatus[i][0];
-      uint32_t* pTVAvol = &TVAvolume[i][0];
-      uint16_t* pGenVol = &generatorvolume[i][0];
+    uint8_t* pStat = &generatorstatus[i][0];
+    uint32_t* pVol  = &TVAvolume[i][0];
 
-      const uint16_t baseVol = volume[i];
-      const uint8_t  tvaMode = TVA[i];
+    // Előkészítjük a TVA specifikus adatokat, hogy a ciklusban ne kelljen IF
+    const bool isTVA = (i < 4);
+    const uint16_t base = isTVA ? volume[i] : 0;
+    const uint8_t tvaMode = isTVA ? TVA[i] : 0;
+    uint16_t* pGVol = isTVA ? &generatorvolume[i][0] : nullptr;
 
-      for (int j = 0; j < polyphony; j++) {
-        // Aktuális hang állapotának és hangerejének betöltése pointerről
-        uint8_t  status = *pStatus;
-        uint32_t vol    = *pTVAvol;
+    for (int j = 0; j < polyphony; j++) {
+      uint32_t v = *pVol;
+      uint8_t s = *pStat;
 
-        switch (status) {
-          case 0: // ATTACK
-            if (vol < attackTarget) vol += sT1;
-            if (vol >= attackTarget) {
-              vol = attackTarget;
-              status = 1;
-            }
-            break;
+      // --- Tömörített Switch (kevesebb elágazás) ---
+      switch (s) {
+        case 0: v += sT1; if (v >= L1) {
+            v = L1;
+            s = 1;
+          } break;
+        case 1: if (v > L2) {
+            v = (v > L2 + sT2) ? v - sT2 : L2;
+            if (v == L2) s = 2;
+          }
+          else {
+            v = (v + sT2 < L2) ? v + sT2 : L2;
+            if (v == L2) s = 2;
+          } break;
+        case 2: if (v > L3) {
+            v = (v > L3 + sT3) ? v - sT3 : L3;
+            if (v == L3) s = 3;
+          }
+          else {
+            v = (v + sT3 < L3) ? v + sT3 : L3;
+            if (v == L3) s = 3;
+          } break;
+        case 3: if (v > LS) v = (v > LS + sT4) ? v - sT4 : LS;
+          else if (v < LS) v = (v + sT4 < LS) ? v + sT4 : LS; break;
+        case 4: if (v > LE + sT5) v -= sT5;
+          else if (v < LE) {
+            v += sT5;
+            if (v > LE) v = LE;
+          } else v = LE;
+          if (v == LE) s = (LE == 0) ? 5 : 4; break;
+        case 5: v = 0; break;
+      }
+      *pVol = v; *pStat = s;
 
-          case 1: // DECAY 1
-            if (vol > targetL2) {
-              vol = (vol > targetL2 + sT2) ? vol - sT2 : targetL2;
-              if (vol == targetL2) status = 2;
-            } else {
-              vol = (vol + sT2 < targetL2) ? vol + sT2 : targetL2;
-              if (vol == targetL2) status = 2;
-            }
-            break;
-
-          case 2: // DECAY 2
-            if (vol > targetL3) {
-              vol = (vol > targetL3 + sT3) ? vol - sT3 : targetL3;
-              if (vol == targetL3) status = 3;
-            } else {
-              vol = (vol + sT3 < targetL3) ? vol + sT3 : targetL3;
-              if (vol == targetL3) status = 3;
-            }
-            break;
-
-          case 3: // SUSTAIN SLIDE
-            if (vol > targetLSUS) vol = (vol > targetLSUS + sT4) ? vol - sT4 : targetLSUS;
-            else if (vol < targetLSUS) vol = (vol + sT4 < targetLSUS) ? vol + sT4 : targetLSUS;
-            break;
-
-          case 4: // RELEASE
-            if (vol > targetLEND + sT5) vol -= sT5;
-            else if (vol < targetLEND) {
-              vol += sT5;
-              if (vol > targetLEND) vol = targetLEND;
-            } else vol = targetLEND;
-
-            if (vol == targetLEND) {
-              status = (targetLEND == 0) ? 5 : 4;
-            }
-            break;
-
-          case 5:
-            vol = 0;
-            break;
+      // --- KIMENETI LOGIKA (IF NÉLKÜL, BIT-MASZKKAL) ---
+      if (isTVA) {
+        if (tvaMode > 0) {
+          // 32 bites szorzás 64 helyett (sokkal gyorsabb!)
+          uint8_t idx = (v >> 16); // 0-255
+          if (tvaMode != 1) idx = 255 - idx;
+          *pGVol = (uint16_t)((uint32_t)logTable16_S[idx] * base >> 14);
+          pGVol++;
+        } else {
+          // Ha nincs TVA, wavebias alapú fix hangerő
+          *pGVol = (volume[i] * wavebias[i][j]) >> 2;
+          pGVol++;
         }
-
-        // Értékek visszaírása pointeren keresztül
-        *pStatus = status;
-        *pTVAvol = vol;
-
-        // --- KIMENETI SZÁMÍTÁS POINTEREKKEL ---
-        uint8_t currentLevel = (vol >> 16) & 0xFF;
-        uint8_t lookupIdx = (tvaMode == 1) ? currentLevel : (255 - currentLevel);
-
-        // Logaritmikus tábla elérése és hangerő számítás
-        uint64_t tempVolume = (uint64_t)logTable16_S[lookupIdx] * (uint64_t)baseVol;
-        *pGenVol = (uint16_t)(tempVolume >> 14);
-
-        // Pointerek léptetése a következő hangra (j++)
-        pStatus++; pTVAvol++; pGenVol++;
+      } else {
+        // TVF: Csak akkor konvertálunk float-ra, ha muszáj
+        tvf_env_mod[i - 4][j] = (float)(v >> 16) * 0.00390625f;
       }
-    } else {
-      // Ha nincs TVA, egyszerűsített feltöltés pointerrel
-      uint16_t* pGenVol = &generatorvolume[i][0];
-      uint8_t* pBias   = &wavebias[i][0];
-      uint16_t  v       = volume[i];
-      for (int j = 0; j < polyphony; j++) {
-        *pGenVol = (v * (*pBias)) >> 2;
-        pGenVol++; pBias++;
-      }
+      pVol++; pStat++;
     }
   }
 
-
   // BEND SZÁMÍTÁSA KÍVÜL ???---
-
   // LFO working area
-  if (true) {
-    for (int osc = 0; osc < 4; osc++) {
-      int lfoBaseIndex = (osc < 2) ? 0 : 3;
-      int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
-
-      // --- 1. PWM MODULÁCIÓ ---
-      // [osc][0] -> PWM Mátrix
-      int32_t currentPWMLFODepth = PWMLFODepth[osc];
-      if (modulationMatrix[osc][0]) {
-        currentPWMLFODepth += (modulationWheel >> 1);
-      }
-
-      int32_t lfoMod = (lfovalue[selectedLFO] * currentPWMLFODepth) >> 5;
-      if (PWMLFO[osc] & 1) lfoMod = -lfoMod;
-
-      int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
-      finalPW = (finalPW > 1023) ? 1023 : (finalPW < 1 ? 1 : finalPW);
-
-      // --- 2. TVF (SZŰRŐ) MODULÁCIÓ ---
-      // [osc][1] -> TVF (Szűrő) Mátrix
-      float lfo_part = (tvf_cutoff[osc] * 0.01f);
-      if (modulationMatrix[osc][1]) {
-        int32_t totalTVFLfoLevel = TVF_LFO_level[osc] + (modulationWheel >> 2);
-        lfo_part += ((lfovalue[TWFLFO[osc]] - 128.0f) * (totalTVFLfoLevel * 0.000039f));
-      }
-      filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
-
-      // --- 3. PITCH MODULÁCIÓ ---
-      // [osc][2] -> Pitch Mátrix
-      int32_t pitchMod = 0;
-      if (modulationMatrix[osc][2]) {
-        int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
-        int32_t totalPichLfoDepth = (PICH_LFO_level[osc] + (modulationWheel >> 2)) >> 2;
-        pitchMod = bipolarLFO * totalPichLfoDepth;
-      }
-      // A pitchMod-ot itt adod hozzá a frekvencia számításhoz
-
-
-      // Portamento sebesség skálázása (Próbáld a << 14 vagy << 15 értéket, ha lassú/gyors)
-      uint32_t portamentoSpeed = (uint32_t)portamento_time[osc] << 15;
-
-      for (int j = 0; j < polyphony; j++) {
-
-        // --- 4. PORTAMENTO (GLIDE) LÉPTETÉS - GYORS ÉS PONTOS ---
-        if (currentPitch[osc][j] != pich[osc][j]) {
-          if (portamento_time[osc] == 0) {
-            currentPitch[osc][j] = pich[osc][j];
+  for (int osc = 0; osc < 4; osc++) {
+    int lfoBaseIndex = (osc < 2) ? 0 : 3;
+    int selectedLFO = lfoBaseIndex + (PWMLFO[osc] >> 1);
+    // --- 1. PWM MODULÁCIÓ ---
+    // [osc][0] -> PWM Mátrix
+    int32_t currentPWMLFODepth = PWMLFODepth[osc];
+    if (modulationMatrix[osc][0]) {
+      currentPWMLFODepth += (modulationWheel >> 1);
+    }
+    int32_t lfoMod = (lfovalue[selectedLFO] * currentPWMLFODepth) >> 5;
+    if (PWMLFO[osc] & 1) lfoMod = -lfoMod;
+    int32_t finalPW = ((PW[osc] + 1) << 5) + lfoMod;
+    finalPW = (finalPW > 1023) ? 1023 : (finalPW < 1 ? 1 : finalPW);
+    // --- 2. TVF (SZŰRŐ) MODULÁCIÓ ---
+    // [osc][1] -> TVF (Szűrő) Mátrix
+    float lfo_part = (tvf_cutoff[osc] * 0.01f);
+    if (modulationMatrix[osc][1]) {
+      int32_t totalTVFLfoLevel = TVF_LFO_level[osc] + (modulationWheel >> 2);
+      lfo_part += ((lfovalue[TWFLFO[osc]] - 128.0f) * (totalTVFLfoLevel * 0.000039f));
+    }
+    filter_q[osc] = fmaxf(0.05f, 1.0f - (tvf_reso[osc] * 0.03f));
+    // --- 3. PITCH MODULÁCIÓ ---
+    // [osc][2] -> Pitch Mátrix
+    int32_t pitchMod = 0;
+    if (modulationMatrix[osc][2]) {
+      int16_t bipolarLFO = (int16_t)lfovalue[PICHLFO[osc]] - 127;
+      int32_t totalPichLfoDepth = (PICH_LFO_level[osc] + (modulationWheel >> 2)) >> 2;
+      pitchMod = bipolarLFO * totalPichLfoDepth;
+    }
+    // A pitchMod-ot itt adod hozzá a frekvencia számításhoz
+    // Portamento sebesség skálázása (Próbáld a << 14 vagy << 15 értéket, ha lassú/gyors)
+    uint32_t portamentoSpeed = (uint32_t)portamento_time[osc] << 15;
+    for (int j = 0; j < polyphony; j++) {
+      // --- 4. PORTAMENTO (GLIDE) LÉPTETÉS - GYORS ÉS PONTOS ---
+      if (currentPitch[osc][j] != pich[osc][j]) {
+        if (portamento_time[osc] == 0) {
+          currentPitch[osc][j] = pich[osc][j];
+        } else {
+          uint32_t distance;
+          uint8_t shift = 1 + (portamento_time[osc] >> 3);
+          if (currentPitch[osc][j] < pich[osc][j]) {
+            // FELFELÉ
+            distance = pich[osc][j] - currentPitch[osc][j];
+            uint32_t step = distance >> shift;
+            if (step < 2) step = 2;
+            currentPitch[osc][j] += step;
+            // Ha túlszaladtunk (felfelé), korrigálunk
+            if (currentPitch[osc][j] > pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
           } else {
-            uint32_t distance;
-            uint8_t shift = 1 + (portamento_time[osc] >> 3);
-
-            if (currentPitch[osc][j] < pich[osc][j]) {
-              // FELFELÉ
-              distance = pich[osc][j] - currentPitch[osc][j];
-              uint32_t step = distance >> shift;
-              if (step < 2) step = 2;
-
-              currentPitch[osc][j] += step;
-              // Ha túlszaladtunk (felfelé), korrigálunk
-              if (currentPitch[osc][j] > pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
-            } else {
-              // LEFELÉ
-              distance = currentPitch[osc][j] - pich[osc][j];
-              uint32_t step = distance >> shift;
-              if (step < 2) step = 2;
-
-              currentPitch[osc][j] -= step;
-              // JAVÍTÁS: Ha túlszaladtunk lefelé (kisebb lett), korrigálunk
-              if (currentPitch[osc][j] < pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
-            }
+            // LEFELÉ
+            distance = currentPitch[osc][j] - pich[osc][j];
+            uint32_t step = distance >> shift;
+            if (step < 2) step = 2;
+            currentPitch[osc][j] -= step;
+            // JAVÍTÁS: Ha túlszaladtunk lefelé (kisebb lett), korrigálunk
+            if (currentPitch[osc][j] < pich[osc][j]) currentPitch[osc][j] = pich[osc][j];
           }
         }
-        // --- 5. SZŰRŐ ÉS PWM FRISSÍTÉS ---
-        float total_norm = lfo_part + (TVFlevel[osc][j] * 0.5f);
-        total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
-        float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
-        filter_f[osc][j] = fmaxf(0.005f, fminf(0.45f, 2.0f * sinf(cutoffHz * 0.0000712f)));
-
-        PWcount[osc][j] = finalPW;
-
-        // --- 6. VÉGLEGES PITCH (GLIDE + LFO) ---
-        //pichcount[osc][j] = currentPitch[osc][j] + (bipolarLFO * totalPichLfoDepth);
-        pichcount[osc][j] = currentPitch[osc][j] + pitchMod;
       }
+      // --- 5. SZŰRŐ ÉS PWM FRISSÍTÉS ---
+      // 1. Olvasd ki a bájt mélységet (0-100)
+      float env_mod = tvf_env_mod[osc][j];
+      uint8_t depthByte = tvf_env_depth[osc + 4];
+      // 2. Gyors skálázás float-ra (mivel env_mod float, ezt a proci nagyon szereti)
+      // A 0.01f konstans szorzás a leggyorsabb módja a 0-100 -> 0.0-1.0 konverziónak
+      float current_env_depth = (float)depthByte * 0.01f;
+      // 3. Összevonás (lfo_part már float, ez maradhat)
+      float total_norm = lfo_part + (env_mod * current_env_depth);
+      // 4. Biztonsági korlát
+      total_norm = fmaxf(0.0f, fminf(1.0f, total_norm));
+      float cutoffHz = 20.0f + (total_norm * total_norm * 12000.0f);
+      //filter_f[osc][j] = fmaxf(0.005f, fminf(0.95f, 2.0f * sinf(cutoffHz * 0.00015f)));
+      filter_f[osc][j] = fmaxf(0.005f, fminf(ceiling_val, 2.0f * sinf(cutoffHz * stretch_val)));
+
+      PWcount[osc][j] = finalPW;
+      // --- 6. VÉGLEGES PITCH (GLIDE + LFO) ---
+      //pichcount[osc][j] = currentPitch[osc][j] + (bipolarLFO * totalPichLfoDepth);
+      pichcount[osc][j] = currentPitch[osc][j] + pitchMod;
     }
   }
 
