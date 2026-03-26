@@ -2686,8 +2686,6 @@ void handleProgramChange(byte channel, byte number) {
 
 //----------------------------------------setup--------------------------------
 void setup() {
-
-
   // Ha a DSP a loop-ban van, adj neki prioritást
   // Ez megakadályozza, hogy a háttérfolyamatok "ellopják" az időt
   vTaskPrioritySet(NULL, 1);
