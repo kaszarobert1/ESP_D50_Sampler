@@ -239,7 +239,21 @@ float tvf_env_mod[4][polyphony];
 uint8_t tvf_env_depth[8] = {100, 100, 100, 100, 50, 50, 50, 50}; // 0-100 közötti értékek
 float ceiling_val = 0.95f;
 float stretch_val = 0.00015f;
+// 1. MEMÓRIA LEFOGLALÁS (Fixen a legnagyobb szoba méretére: 2048)
+int16_t chorusbufferleft[2048];
+int16_t chorusbufferright[2048];
 
+
+uint16_t chorusbufferindex = 0;
+uint16_t chorusbufferindex2 = 0;
+
+// Ezt a változót állítod a case 106-ban (pl. 127, 255, 511, 1023, 2047)
+uint16_t currentChorusMask = 511;
+
+int16_t atlagchorus0 = 0;
+int16_t atlagchorus1 = 0;
+uint16_t maskLeft = 511;
+uint16_t maskRight = 511;
 
 //----------------------------PARAMETRIC EQ LEFT-------------------------------------------------
 /* cut-off (or center) frequency in Hz */
@@ -414,7 +428,7 @@ void notetune() {
 
     // Kiszámítjuk az alapfrekvenciát (középső C környékén érdemes indítani)
     // A FINE[j] eltolást itt adjuk hozzá (128-as felbontással számolva)
-    float TUNE_NOW = (GLOBAL_TUNE + (FINE[j] / 128.0));
+   float TUNE_NOW = GLOBAL_TUNE + (FINE[j] / 4.0);
 
     // Alkalmazzuk a COARSE (félhang) eltolást a skálázott térben
     TUNE_NOW = TUNE_NOW * pow(szorzo2, COARSE[j] / 12.0);
@@ -1169,6 +1183,23 @@ void parametersysexchanged() {
         LFO_Delay[5] = value;
         line = " LFO6_DELAY: " + lcdprint3(LFO_Delay[5]);
         break;
+
+
+      case 42:
+        switch (value) {
+          case 0: maskRight = 255;  LFOadress[7] = lfosine;     break;
+          case 1: maskRight = 511;  LFOadress[7] = lfotriangle; break;
+          case 2: maskRight = 383;  LFOadress[7] = lfosine;     break;
+          case 3: maskRight = 383;  LFOadress[7] = lfotriangle; break;
+          case 4: maskRight = 255;  LFOadress[7] = lfosine;     break;
+          case 5: maskRight = 255;  LFOadress[7] = lfotriangle; break;
+          case 6: maskRight = 127;  LFOadress[7] = lfosine;     break;
+          case 7: maskRight = 127;  LFOadress[7] = lfotriangle; break;
+          default: return;
+        }
+        memset(chorusbufferright, 0, sizeof(chorusbufferright));
+        chorusbufferindex2 = 0;
+        break;
       case 43:
         lfofreq[7] = value;
         line = "U: CHORUSFREQ=" + lcdprint3(lfofreq[7] );
@@ -1643,62 +1674,22 @@ void parametersysexchanged() {
           if (stretch_val < 0.00001f) stretch_val = 0.00001f;
         }
         break;
-
       case 106:
         switch (value) {
-          case 1:
-            //chorus1
-            chorusbuffersize = 2048;
-            LFOadress[0] = lfotriangle;
-            LFOadress[1] = lfotriangle;
-            break;
-          case 2:
-            //chorus2
-            chorusbuffersize = 2048;
-            LFOadress[0] = lfotriangle;
-            LFOadress[1] = lfosine;
-            break;
-          case 3:
-            //chorus3
-            chorusbuffersize = 1024;
-            LFOadress[0] = lfotriangle;
-            LFOadress[1] = lfotriangle;
-            break;
-          case 4:
-            //chorus4
-            chorusbuffersize = 1023;
-            LFOadress[0] = lfosine;
-            LFOadress[1] = lfotriangle;
-            break;
-          case 5:
-            //chorus5
-            chorusbuffersize = 386;
-            LFOadress[0] = lfosine;
-            LFOadress[1] = lfosine;
-            break;
-          case 6:
-            //chorus6
-            chorusbuffersize = 511;
-            LFOadress[0] = lfosine;
-            LFOadress[1] = lfosine;
-            break;
-          case 7:
-            //chorus6
-            chorusbuffersize = 255;
-            LFOadress[0] = lfotriangle;
-            LFOadress[1] = lfotriangle;
-            break;
-          case 8:
-            //chorus6
-            chorusbuffersize = 127;
-            LFOadress[0] = lfosine;
-            LFOadress[1] = lfosine;
-            break;
-          default:
-            return;
-            break;
+          case 0: maskLeft = 255;  LFOadress[6] = lfosine;     break; // A régi kedvenc (Standard)
+          case 1: maskLeft = 511;  LFOadress[6] = lfotriangle; break; // A régi kedvenc (Tri)
+          case 2: maskLeft = 383;  LFOadress[6] = lfosine;     break; // Egyedi méret (Stabil marad)
+          case 3: maskLeft = 383;  LFOadress[6] = lfotriangle; break;
+          case 4: maskLeft = 255;  LFOadress[6] = lfosine;     break; // Ez az 5-ösöd, ami most jó
+          case 5: maskLeft = 255;  LFOadress[6] = lfotriangle; break;
+          case 6: maskLeft = 127;  LFOadress[6] = lfosine;     break; // Ez a 7-esed, ami most jó
+          case 7: maskLeft = 127;  LFOadress[6] = lfotriangle; break;
         }
+        memset(chorusbufferleft, 0, sizeof(chorusbufferleft));
+        chorusbufferindex = 0;
         break;
+
+
       case 107:
         // chorusRate=value;
         lfofreq[6] = value;
@@ -2091,16 +2082,10 @@ void reverbright() {
   delaybufferindex2 &= (reverbtime2 - 1);
 }
 
-//--------------------------CHORUS LEFT------------------------------
-
-int16_t chorusbufferleft[512];
-uint16_t chorusbufferindex = 0;
-uint16_t chorusindex;
-int16_t atlagchorus0 = 0;
-int32_t lfoSmoothedLeft = 0;
-
+//--------------------------CHORUS LEFT (OPTIMALIZÁLT)------------------------------
 void chorusleft() {
-  // 1. Interpolált LFO kiolvasás (LFO 6-os csatorna)
+//  if (maskLeft == 0) return;
+
   uint32_t indexLarge = lfoarrayindex[6];
   uint16_t i1 = (indexLarge >> 23) & 511;
   uint16_t i2 = (i1 + 1) & 511;
@@ -2108,61 +2093,43 @@ void chorusleft() {
 
   int32_t v1 = (int32_t)(*(LFOadress[6] + i1));
   int32_t v2 = (int32_t)(*(LFOadress[6] + i2));
-
-  // 16-bites nyers LFO érték kiszámítása
   uint32_t rawLFO = v1 + (((v2 - v1) * lfoFraction) >> 8);
 
-  // SEBESSÉG: Itt is a bevált << 14 eltolást használjuk
   lfoarrayindex[6] += (lfofreq[6] << 14);
 
-  // 2. SKÁLÁZÁS ÉS ERŐSÍTÉS (A "majdnem teljesen erős" recept)
-  // A rawLFO-ból (0-65535) csinálunk egy mélyebb, 0-511 közötti eltolást
-  uint32_t depthLFO = rawLFO >> 7;
+  // --- A "RÉGI JÓ" RECEPT SKÁLÁZÁSA ---
+  // A maszk 75%-át engedjük csak bejárni (mint a régi 384/512 arányod)
+  uint32_t depthLimit = (maskLeft * 3) >> 2;
+  uint32_t depthLFO = (rawLFO * depthLimit) >> 16;
+  uint8_t fraction = (rawLFO & 0xFF);
 
-  int32_t currentLFO = (depthLFO * 3) >> 2;
-  uint8_t fraction = (rawLFO & 0xFF);  // A törtrész marad 0-255 a ketyegésmentességhez
-
-  // 3. BUFFER MŰVELETEK
   chorusbufferleft[chorusbufferindex] = bufferbe[0];
-  uint16_t mask = 511;
 
-  uint16_t idx1 = (chorusbufferindex - currentLFO) & mask;
-  uint16_t idx2 = (idx1 + 1) & mask;
+  uint16_t idx1 = (chorusbufferindex - depthLFO) & maskLeft;
+  uint16_t idx2 = (idx1 + 1) & maskLeft;
 
   int16_t s1 = chorusbufferleft[idx1];
   int16_t s2 = chorusbufferleft[idx2];
 
-  // Tiszta interpoláció (>> 8-cal, mert a fraction 255-ig megy)
   int16_t interpolated = s1 + (((s2 - s1) * fraction) >> 8);
 
-  // 4. MIX ÉS KIMENET
-  // Meghagytam az átlagolást (LPF), de ha túl halk, ezen még lazíthatunk
-  atlagchorus0 = (interpolated + atlagchorus0) >> 1;
-  int32_t chorusPart = (atlagchorus0 * chorusLevelLeft) >> 8;
-
+  // Kimenet: Közvetlen az interpolált jelet használjuk a harapáshoz
+  int32_t chorusPart = (interpolated * chorusLevelLeft) >> 8;
   int32_t out = (int32_t)bufferbe[0] + chorusPart;
 
-  // Limiter
+  atlagchorus0 = (interpolated + atlagchorus0) >> 1;
+
   if (out > 32767) out = 32767;
   else if (out < -32768) out = -32768;
 
   bufferbe[0] = (int16_t)out;
-  chorusbufferindex = (chorusbufferindex + 1) & mask;
+  chorusbufferindex = (chorusbufferindex + 1) & maskLeft;
 }
 
-//--------------------------CHORUS RIGHT------------------------------
-#define DEBUG_SIZE 512
-int16_t debug_lfo[DEBUG_SIZE];
-int16_t debug_fract[DEBUG_SIZE];
-uint16_t debug_ptr = 0;
-bool debug_ready = false;
-//debug end
-int chorusbufferright[512];
-uint16_t chorusbufferindex2 = 0;
-uint16_t chorusindex2;
-int16_t atlagchorus1 = 0;
-int32_t lfoSmoothedRight = 0;
+//--------------------------CHORUS RIGHT (OPTIMALIZÁLT)------------------------------
 void chorusright() {
+ // if (maskRight == 0) return;
+
   uint32_t indexLarge = lfoarrayindex[7];
   uint16_t i1 = (indexLarge >> 23) & 511;
   uint16_t i2 = (i1 + 1) & 511;
@@ -2172,39 +2139,33 @@ void chorusright() {
   int32_t v2 = (int32_t)(*(LFOadress[7] + i2));
   uint32_t rawLFO = v1 + (((v2 - v1) * lfoFraction) >> 8);
 
-  lfoarrayindex[7] += (lfofreq[7] << 14); // A tempó, ami bevált
+  lfoarrayindex[7] += (lfofreq[7] << 14);
 
-  // --- ERŐSÍTÉS KETYEGÉS NÉLKÜL ---
-  // A rawLFO-t (0-65535) nem shifteljük le fixen 8-ra,
-  // hanem csinálunk egy köztes értéket, ami mélyebb.
-  uint32_t depthLFO = rawLFO >> 7; // Ez 0-511 közötti eltolás (erős!)
-
-  int32_t currentLFO = (depthLFO * 3) >> 2;  // Az egész rész (visszahozzuk a skálát)
-  // A trükk: A fraction-t mindig a rawLFO legaljából vesszük,
-  // így az mindig 0-255 marad, függetlenül a mélységtől!
+  // --- A "RÉGI JÓ" RECEPT SKÁLÁZÁSA ---
+  uint32_t depthLimit = (maskRight * 3) >> 2;
+  uint32_t depthLFO = (rawLFO * depthLimit) >> 16;
   uint8_t fraction = (rawLFO & 0xFF);
 
   chorusbufferright[chorusbufferindex2] = bufferbe[1];
-  uint16_t mask = 511;
 
-  uint16_t idx1 = (chorusbufferindex2 - currentLFO) & mask;
-  uint16_t idx2 = (idx1 + 1) & mask;
+  uint16_t idx1 = (chorusbufferindex2 - depthLFO) & maskRight;
+  uint16_t idx2 = (idx1 + 1) & maskRight;
 
   int16_t s1 = chorusbufferright[idx1];
   int16_t s2 = chorusbufferright[idx2];
 
-  // Itt marad a >> 8, mert a fraction 0-255. Így tiszta lesz a hang!
   int16_t interpolated = s1 + (((s2 - s1) * fraction) >> 8);
 
   int32_t chorusPart = (interpolated * chorusLevelRight) >> 8;
-
   int32_t out = (int32_t)bufferbe[1] + chorusPart;
 
+  atlagchorus1 = (interpolated + atlagchorus1) >> 1;
+
   if (out > 32767) out = 32767;
-  if (out < -32768) out = -32768;
+  else if (out < -32768) out = -32768;
 
   bufferbe[1] = (int16_t)out;
-  chorusbufferindex2 = (chorusbufferindex2 + 1) & mask;
+  chorusbufferindex2 = (chorusbufferindex2 + 1) & maskRight;
 }
 
 
