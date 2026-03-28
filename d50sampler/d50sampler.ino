@@ -342,73 +342,104 @@ void notevaluesarraytest() {
 
 void notebias() {
   for (int j = 0; j < 4; j++) {
-    if (BiasPoint[j] < 64) {
-      for (int i = 0; i < 128; i++)
-      {
-        if (i < BiasPoint[j]) {
-          Bias[j][i] = BiasLevel[j] ;
+    int point = BiasPoint[j];
+    int level = BiasLevel[j];
+
+    for (int i = 0; i < 128; i++) {
+      int result = 12;
+      int diff = 0;
+
+      // 1. Távolság meghatározása (D-50 irányultság szerint)
+      if (point < 64) {
+        if (i < point) diff = point - i;
+      } else {
+        if (i > point) diff = i - point;
+      }
+
+      // 2. Görbe kiszámítása
+      if (diff > 0) {
+        if (level == 12) {
+          result = 12; // Teljesen lapos, nincs hatás
+        } else if (level == 0) {
+          result = 0;  // Azonnali némítás (Hard Split)
         } else {
-          Bias[j][i] = 12;
+          // A szorzót (slope) a kívánt meredekséghez igazítjuk
+          // Level 11-nél a slope = 4.
+          // A számítás: (diff * 4) / 32 -> minden 8. billentyűnél veszítünk 1 egység hangerőt.
+          // Ez azt jelenti, hogy 96 billentyű (8 oktáv!) kell a teljes elnémuláshoz.
+          int slope = (12 - level) * 4;
+
+          result = 12 - ((diff * slope) >> 5);
         }
       }
-    }
-    if (BiasPoint[j] >= 64) {
-      for (int i = 0; i < 128; i++)
-      {
-        if (i < BiasPoint[j]) {
-          Bias[j][i] = 12 ;
-        } else {
-          Bias[j][i] = BiasLevel[j];
-        }
-      }
+
+      // 3. Biztonsági korlátok
+      if (result < 0) result = 0;
+      if (result > 12) result = 12;
+
+      Bias[j][i] = (byte)result;
     }
   }
 }
 
 void notetune() {
-  float szorzo2 = 1;
   for (int j = 0; j < 4; j++) {
+    float rate = 1.0; // Alapértelmezett KeyFollow ráta
+
+    // D-50 stílusú KeyFollow skála leképezése rátára
     switch (KEYFollow[j]) {
-      case 0:  szorzo2 = 0.12; break;
-      case 1:  szorzo2 = 0.5; break;
-      case 2:  szorzo2 = 0.25; break;
-      case 3:  szorzo2 = 1; break;
-      case 4:  szorzo2 = 1.125; break;
-      case 5:  szorzo2 = 1.25; break;
-      case 6:  szorzo2 = 1.375; break;
-      case 7:  szorzo2 = 1.5; break;
-      case 8:  szorzo2 = 1.625; break;
-      case 9:  szorzo2 = 1.75; break;
-      case 10: szorzo2 = 1.875; break;
-      case 11: szorzo2 = 2; break;
-      case 12: szorzo2 = 2.25; break;
-      case 13: szorzo2 = 2.5; break;
-      case 14: szorzo2 = 4; break;
-      case 15: szorzo2 = 3; break;
-      case 16: szorzo2 = 5; break;
+      case 0:  rate = -1.0; break;   // -1
+      case 1:  rate = -0.5; break;   // -1/2
+      case 2:  rate = -0.25; break;  // -1/4
+      case 3:  rate = 0.0;  break;   // FIXED (0)
+      case 4:  rate = 0.125; break;  // 1/8
+      case 5:  rate = 0.25;  break;  // 1/4
+      case 6:  rate = 0.375; break;  // 3/8
+      case 7:  rate = 0.5;   break;  // 1/2
+      case 8:  rate = 0.625; break;  // 5/8
+      case 9:  rate = 0.75;  break;  // 3/4
+      case 10: rate = 0.875; break;  // 7/8
+      case 11: rate = 1.0;   break;  // NORMAL (1)
+      case 12: rate = 1.25;  break;  // 5/4
+      case 13: rate = 1.5;   break;  // 3/2
+      case 14: rate = 1.02;  break;  // s1 (Stretch 1)
+      case 15: rate = 1.05;  break;  // s2 (Stretch 2)
+      case 16: rate = 2.0;   break;  // 2 (Dupla skála)
     }
-    float TUNE_NOW = GLOBAL_TUNE + FINE[j];
+
+    // A szorzo2 a frekvencia-arány egy oktávra vetítve
+    // rate = 1.0 esetén szorzo2 = 2.0 (standard oktáv)
+    // rate = 0.0 esetén szorzo2 = 1.0 (minden billentyű ugyanaz)
+    float szorzo2 = pow(2, rate);
+
+    // Kiszámítjuk az alapfrekvenciát (középső C környékén érdemes indítani)
+    // A FINE[j] eltolást itt adjuk hozzá (128-as felbontással számolva)
+    float TUNE_NOW = (GLOBAL_TUNE + (FINE[j] / 128.0));
+
+    // Alkalmazzuk a COARSE (félhang) eltolást a skálázott térben
     TUNE_NOW = TUNE_NOW * pow(szorzo2, COARSE[j] / 12.0);
-    TUNE_NOW += ((pow(2, 13) / pow(szorzo2, 13)) - 1) * COARSE[j];
+
+    // Feltöltjük az első 12 hangot (egy oktáv)
     float BASIC_TUNE[12];
     for (int i = 0; i < 12; i++) {
-
-      BASIC_TUNE[i] = TUNE_NOW  * pow(szorzo2, i / 12.0);
+      BASIC_TUNE[i] = TUNE_NOW * pow(szorzo2, i / 12.0);
     }
-    for (int i = 0; i < 12; i++) {
-      // Serial.print(String(BASIC_TUNE[i]) + " ");
-    }
-    //Serial.println();
 
-    float okt = 1;
+    // Kiterjesztjük a teljes 14 oktávos tartományra
+    float okt = 1.0;
+    // Megjegyzés: Ha a 60-as MIDI hangot akarod referenciának,
+    // érdemes az 'okt' kezdőértékét ehhez igazítani.
+    // Most 0-tól indul felfelé.
     for (int i = 0; i < 14; i++) {
       for (int k = 0; k < 12; k++) {
-        noteertek [j][i * 12 + k] = round(BASIC_TUNE[k] * okt);
+        int index = i * 12 + k;
+        if (index < 168) { // Biztonsági határ
+          noteertek[j][index] = round(BASIC_TUNE[k] * okt);
+        }
       }
       okt = okt * szorzo2;
     }
   }
-  //notevaluesarraytest();
 }
 
 uint16_t sizes[128];
@@ -2370,27 +2401,42 @@ void keyoff(byte noteByte) {
   }
 }
 //--------------CHASE---------------------------
-void chasearpeggiomidiclock() {
 
+
+
+void chasearpeggiomidiclock() {
+  // 1. Csak akkor fut, ha van külső START (MIDI_SYNC) és van tempó osztás
   if (MIDI_SYNC == 1 && CHASE_TIME > 0) {
-    // A masterTick eltolása az offsettel (0-23 tartományban tartva)
+
     int shiftedTick = (masterTick + OFFSET);
-    // A shiftedTick alapján nézzük az osztást
+
+    // 2. Időzítés a MIDI Tickek alapján
     if (shiftedTick % CHASE_TIME == 0) {
-      // A statikus változó most a shiftedTick-et figyeli,
-      // hogy ne fusson le többször ugyanaz a lépés
       static int lastProcessedTick = -1;
       if (shiftedTick == lastProcessedTick) return;
       lastProcessedTick = shiftedTick;
-      // --- AZ ARPEGGIO LÉPTETÉSE ---
-      if (lastchase != 255) {
-        keyoff(lastchase);
-      }
-      chaseindex++;
-      if (chaseindex >= CHASE_LEVEL) chaseindex = 0;
 
-      if (CaseArray[chaseindex] > 0) {
-        lastchase = CaseArray[chaseindex];
+      int talaltHang = 255;
+
+      // 3. KERESÉS: Végigpörgetjük a slotokat a következő lefogott hangért
+      // Pontosan ugyanúgy, ahogy a sima Arpeggiónál csináltuk!
+      for (int i = 0; i < polyphony; i++) {
+        chaseindex++;
+        if (chaseindex >= polyphony) chaseindex = 0;
+
+        if (oldnoteByte[chaseindex] != 255) {
+          talaltHang = oldnoteByte[chaseindex];
+          break;
+        }
+      }
+
+      // 4. MEGSZÓLALTATÁS
+      if (talaltHang != 255) {
+        // Frissítjük a lastchase-t, hogy tudjuk, mit kell majd leállítani
+        lastchase = talaltHang;
+
+        // Újraindítjuk a hangot (keyoff-keyon az LRU miatt)
+        keyoff(lastchase);
         keyon(lastchase);
       } else {
         lastchase = 255;
@@ -2400,71 +2446,32 @@ void chasearpeggiomidiclock() {
 }
 
 
-/*
-  void chasearpeggio() {
-  if (CHASE_TIME > 0) {
-    ido = micros();
-    if (elozoido > ido)
-    {
-      elozoido = 0;
-    }
-    //Serial.println("Lastchase: " + String(elozoido)+" "+String(ido));
-    if (ido - elozoido > (CHASE_TIME << 12)) {
-      keyoff( CaseArray[chaseindex]);
-      chaseindex++;
-      if (chaseindex >= CHASE_LEVEL) {
-        chaseindex = 0;
-      }
-      if (CaseArray[chaseindex] != 0)
-      {
-        lastchase = CaseArray[chaseindex];
-        keyon(lastchase);
-
-      }
-      elozoido = ido;
-    }
-  }
-  }
-*/
-
 void chasearpeggio() {
   if (CHASE_TIME > 0) {
     ido = micros();
     if (ido - elozoido > (uint32_t)CHASE_TIME << 13) {
 
-      int count = 0;
-      int talaltHang = 0;
+      int talaltHang = 255; // 255 = "Nincs mit lejátszani"
 
-      // Egyszerűen végigmegyünk a slotokon (0, 1, 2, 3...)
+      // 1. Keresünk egy élő hangot a slotokban
       for (int i = 0; i < polyphony; i++) {
         chaseindex++;
         if (chaseindex >= polyphony) chaseindex = 0;
 
-        // Csak azt a slotot nézzük, ami éppen hangot generál
-        // generatorstatus[0] az OSC 0 állapota, ha nem 5, akkor szól
-        if (generatorstatus[0][chaseindex] != 5) {
+        // Csak olyan slotot fogadunk el, ami NINCS felengedve (255)
+        // ÉS nem 0 (ha a 0-ás hangjegy nálad a "nincs hang")
+        if (oldnoteByte[chaseindex] != 255 && oldnoteByte[chaseindex] > 0) {
           talaltHang = oldnoteByte[chaseindex];
-          if (talaltHang != 0) break; // Megvan a következő hang!
+          break;
         }
       }
 
-      if (talaltHang != 0) {
-        // 1. Kikapcsoljuk a hangot "hivatalosan"
+      // 2. KRITIKUS PONT: Csak akkor indítunk hangot, ha találtunk VALÓDIT
+      if (talaltHang != 255) {
         keyoff(talaltHang);
-
-        // 2. VISSZAÍRJUK az adminisztrációba, amit a keyoff törölt!
-        // Ez a trükk: a keyoff lezárta a generátort, de mi azonnal
-        // visszatesszük a listába, hogy a következő körben is megtalálja az Arp.
-        for (int g = 0; g < polyphony; g++) {
-          if (oldnoteByte[g] == 0) { // Keressük meg, hol szabadult fel
-            oldnoteByte[g] = talaltHang;
-            break;
-          }
-        }
-
-        // 3. Újraindítjuk tisztán
         keyon(talaltHang);
       }
+      // Ha talaltHang == 255, nem hívunk keyon-t -> nincs kopogás!
 
       elozoido = ido;
     }
@@ -2853,19 +2860,25 @@ void loop() {
       *pVol = v; *pStat = s;
 
       // --- KIMENETI LOGIKA (IF NÉLKÜL, BIT-MASZKKAL) ---
+      // A ciklus előtt számold ki a "módosított" alaphangerőt
+      uint32_t biasedBase = ((uint32_t)base * wavebias[i][j] * 21) >> 8;
+
       if (isTVA) {
         if (tvaMode > 0) {
-          // 32 bites szorzás 64 helyett (sokkal gyorsabb!)
-          uint8_t idx = (v >> 16); // 0-255
+          uint8_t idx = (v >> 16);
           if (tvaMode != 1) idx = 255 - idx;
-          *pGVol = (uint16_t)((uint32_t)logTable16_S[idx] * base >> 14);
+
+          // A belső loopban már csak a biasedBase-t használod
+          *pGVol = (uint16_t)((uint32_t)logTable16_S[idx] * biasedBase >> 14);
           pGVol++;
         } else {
-          // Ha nincs TVA, wavebias alapú fix hangerő
-          *pGVol = (volume[i] * wavebias[i][j]) >> 2;
+          // Ha nincs TVA, a biasedBase adja a fix hangerőt
+          *pGVol = (uint16_t)(biasedBase >> 2);
           pGVol++;
         }
-      } else {
+      }
+
+      else {
         // TVF: Csak akkor konvertálunk float-ra, ha muszáj
         tvf_env_mod[i - 4][j] = (float)(v >> 16) * 0.00390625f;
       }
