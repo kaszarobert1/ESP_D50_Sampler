@@ -129,7 +129,8 @@ byte delay2step = 0;
 byte delaytime = 1;
 byte delay2time = 1;
 byte reverblevel = 20;
-byte reverbdiffusion = 22;
+byte reverbdiffusion = 1; // 1 = éles/pattogós, 8 = nagyon sűrű/puha
+
 uint16_t reverbtime = delaybuffersize;
 uint16_t reverbtime2 = delaybuffersize;
 byte chorusLevelLeft = 56;
@@ -428,7 +429,7 @@ void notetune() {
 
     // Kiszámítjuk az alapfrekvenciát (középső C környékén érdemes indítani)
     // A FINE[j] eltolást itt adjuk hozzá (128-as felbontással számolva)
-   float TUNE_NOW = GLOBAL_TUNE + (FINE[j] / 4.0);
+    float TUNE_NOW = GLOBAL_TUNE + (FINE[j] / 4.0);
 
     // Alkalmazzuk a COARSE (félhang) eltolást a skálázott térben
     TUNE_NOW = TUNE_NOW * pow(szorzo2, COARSE[j] / 12.0);
@@ -1208,6 +1209,10 @@ void parametersysexchanged() {
         chorusLevelRight = value;
         line = "U: CHORUSLEVEL=" + lcdprint3(chorusLevelRight );
         break;
+      case 45:
+        reverbdiffusion = value;
+        line = "Reverbdiff=" + lcdprint3(reverbdiffusion);
+        break;
       case 64:
         COARSE[0] = value;
         line = "L1: COARSE=" + lcdprint3(COARSE[0]);
@@ -1802,6 +1807,7 @@ void parametersysexchanged() {
             delaytime = 1;
             delay2time = 1;
             reverblevel = 45;
+            reverbdiffusion = 2;
             line = "1. Small Hall";
             break;
           case 1:
@@ -2007,11 +2013,11 @@ void processingStereoReverb() {
   int16_t delayedL = delaybuffer[delaybufferindex];
   int16_t delayedR = delaybuffer2[delaybufferindex2];
 
-  // 2. Bemenet + Kereszt-visszacsatolás
-  // Eltároljuk az eredeti bemenetet, hogy ne adjuk hozzá kétszer
+  // 2. Bemenet + Kereszt-visszacsatolás (itt történik a sztereó varázslat)
   int16_t inputL = bufferbe[0];
   int16_t inputR = bufferbe[1];
 
+  // A delayedR >> 2 és delayedL >> 2 azt jelenti, hogy 25% átszivárog a másik oldalra
   bufferbe[0] = inputL + delayedL + (delayedR >> 2);
   bufferbe[1] = inputR + delayedR + (delayedL >> 2);
 
@@ -2020,10 +2026,14 @@ void processingStereoReverb() {
   delaystep++;
 
   if (delaystep >= delaytime) {
-    int16_t resL = atlag / delaystep; // Kiszámoljuk az új mintát
+    int16_t resL = atlag / delaystep;
 
-    // Fényesebb Lowpass: (3*új + 1*régi) / 4
-    x = ((resL << 1) + resL + x) >> 2;
+    // 1. LIMITER (Hogy ne gerjedjen be a kereszt-feedback miatt sem)
+    if (resL > 16384) resL = 16384 + (resL - 16384) / 2;
+    else if (resL < -16384) resL = -16384 + (resL + 16384) / 2;
+
+    // 2. REVERB DIFFUSION (A régi fix (3*új+régi)/4 helyett)
+    x = ((resL * (8 - reverbdiffusion)) + (x * reverbdiffusion)) >> 3;
 
     delaybuffer[delaybufferindex] = x;
     atlag = 0;
@@ -2037,10 +2047,14 @@ void processingStereoReverb() {
   delay2step++;
 
   if (delay2step >= delay2time) {
-    int16_t resR = atlag2 / delay2step; // Kiszámoljuk az új mintát
+    int16_t resR = atlag2 / delay2step;
 
-    // Fényesebb Lowpass a jobb oldalon is
-    x2 = ((resR << 1) + resR + x2) >> 2;
+    // 1. LIMITER JOBB
+    if (resR > 16384) resR = 16384 + (resR - 16384) / 2;
+    else if (resR < -16384) resR = -16384 + (resR + 16384) / 2;
+
+    // 2. REVERB DIFFUSION JOBB
+    x2 = ((resR * (8 - reverbdiffusion)) + (x2 * reverbdiffusion)) >> 3;
 
     delaybuffer2[delaybufferindex2] = x2;
     atlag2 = 0;
@@ -2055,9 +2069,17 @@ void reverbleft() {
   bufferbe[0] += delayedSample;
   atlag += (bufferbe[0] * reverblevel) >> 6;
   delaystep++;
+
   if (delaystep >= delaytime) {
     int16_t newSample = atlag / delaystep;
-    x = (newSample + x) >> 1;
+
+    // 1. LIMITER (Puha vágás, hogy ne gerjedjen be)
+    if (newSample > 16384) newSample = 16384 + (newSample - 16384) / 2;
+    else if (newSample < -16384) newSample = -16384 + (newSample + 16384) / 2;
+
+    // 2. DIFFUSION (Ez simítja el a limiter esetleges éleit is)
+    x = ((newSample * (8 - reverbdiffusion)) + (x * reverbdiffusion)) >> 3;
+
     delaybuffer[delaybufferindex] = x;
     atlag = 0;
     delaybufferindex++;
@@ -2071,9 +2093,17 @@ void reverbright() {
   bufferbe[1] = bufferbe[1] + delayedSample2;
   atlag2 += (bufferbe[1] * reverblevel) >> 6;
   delay2step++;
+
   if (delay2step >= delay2time) {
     int16_t newSample2 = atlag2 / delay2step;
-    x2 = (newSample2 + x2) >> 1;
+
+    // 1. LIMITER jobb oldal
+    if (newSample2 > 16384) newSample2 = 16384 + (newSample2 - 16384) / 2;
+    else if (newSample2 < -16384) newSample2 = -16384 + (newSample2 + 16384) / 2;
+
+    // 2. DIFFUSION jobb oldal
+    x2 = ((newSample2 * (8 - reverbdiffusion)) + (x2 * reverbdiffusion)) >> 3;
+
     delaybuffer2[delaybufferindex2] = x2;
     atlag2 = 0;
     delaybufferindex2++;
@@ -2082,9 +2112,10 @@ void reverbright() {
   delaybufferindex2 &= (reverbtime2 - 1);
 }
 
+
 //--------------------------CHORUS LEFT (OPTIMALIZÁLT)------------------------------
 void chorusleft() {
-//  if (maskLeft == 0) return;
+  //  if (maskLeft == 0) return;
 
   uint32_t indexLarge = lfoarrayindex[6];
   uint16_t i1 = (indexLarge >> 23) & 511;
@@ -2128,7 +2159,7 @@ void chorusleft() {
 
 //--------------------------CHORUS RIGHT (OPTIMALIZÁLT)------------------------------
 void chorusright() {
- // if (maskRight == 0) return;
+  // if (maskRight == 0) return;
 
   uint32_t indexLarge = lfoarrayindex[7];
   uint16_t i1 = (indexLarge >> 23) & 511;
@@ -3083,7 +3114,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3205,7 +3237,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3327,7 +3360,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3450,7 +3484,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3576,7 +3611,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3699,7 +3735,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3885,7 +3922,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -4016,7 +4054,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -4145,7 +4184,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -4274,7 +4314,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -5100,7 +5141,8 @@ void loop() {
       bufferbe[0] = (100 * bufferbe[0] - paraeqleftbuffer * eqlevel) >> 7;
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       // lowpassfilterleft(); lowpassfilterright();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
@@ -5242,7 +5284,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
+      //reverbleft(); reverbright();
+       processingStereoReverb();
       //processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
@@ -5374,8 +5417,8 @@ void loop() {
       parametereqright();
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
-      reverbleft(); reverbright();
-      //processingStereoReverb();
+      //reverbleft(); reverbright();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
