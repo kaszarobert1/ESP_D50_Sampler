@@ -120,8 +120,10 @@ uint16_t generatorvolume[4][polyphony];
 //reverb variable
 int32_t bufferbe[8];
 uint16_t delaybuffersize = 8192;
-int16_t delaybuffer[8192];
-int16_t delaybuffer2[8192];
+//int16_t delaybuffer[8192];
+//int16_t delaybuffer2[8192];
+int16_t* delaybuffer = NULL; // Fontos a NULL, hogy lássuk, ha nincs kész
+int16_t* delaybuffer2 = NULL;
 uint16_t delaybufferindex = 0;
 uint16_t delaybufferindex2 = 0;
 byte delaystep = 0;
@@ -241,8 +243,8 @@ uint8_t tvf_env_depth[8] = {100, 100, 100, 100, 50, 50, 50, 50}; // 0-100 közö
 float ceiling_val = 0.95f;
 float stretch_val = 0.00015f;
 // 1. MEMÓRIA LEFOGLALÁS (Fixen a legnagyobb szoba méretére: 2048)
-int16_t chorusbufferleft[2048];
-int16_t chorusbufferright[2048];
+int16_t chorusbufferleft[512];
+int16_t chorusbufferright[512];
 
 
 uint16_t chorusbufferindex = 0;
@@ -570,8 +572,10 @@ void setsamplesize() {
 
 //"marimba","vibraphone","xilophone1","xilophone2","logbass","hammer","japanesedrum","kalimba","pluck1","chink","agogo","triangle","bells","pick","lowpiano","pianosample","highpiano","hapsichord","harp","organpercus",
 //"steelstrings","nylonstrings","electgitar1","electgitar2","dirtygitar","pickbass","popbass","thump","klarinet","breath","popbass","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer","steamer",
-
+DRAM_ATTR int16_t fast_samples[4][8192];
 void setPCMWave() {
+  const int16_t* source_ptr = NULL;
+  uint32_t source_size = 0;
   switch (PCMWaveNo[opmenuoldal]) {
     case 0: genstartadress[opmenuoldal] = marimba; break;
     case 1: genstartadress[opmenuoldal] = vibraphone; break;
@@ -675,8 +679,30 @@ void setPCMWave() {
     case 98: genstartadress[opmenuoldal] = nailfile; break;
     case 99: genstartadress[opmenuoldal] = nailfile; break;
   }
-  //Serial.println("PCMWave" + String(opmenuoldal) + "generator: " + String(PCMWaveNo[opmenuoldal]));
-  setsamplesize();
+ // Kimentjük a Flash címet és az EREDETI méretet
+  const int16_t* flash_ptr = genstartadress[opmenuoldal]; 
+  uint32_t original_sample_count = sizes[PCMWaveNo[opmenuoldal]];
+  uint32_t flash_size_bytes = original_sample_count << 1;
+
+  if (flash_ptr != NULL) {
+    uint32_t max_bytes = sizeof(fast_samples[0]);
+    uint32_t copy_bytes = (flash_size_bytes > max_bytes) ? max_bytes : flash_size_bytes;
+
+    // SRAM törlés és MÁSOLÁS
+    memset(fast_samples[opmenuoldal], 0, max_bytes);
+    memcpy(fast_samples[opmenuoldal], flash_ptr, copy_bytes);
+
+    // Átirányítjuk a generátort az SRAM-ra
+    genstartadress[opmenuoldal] = fast_samples[opmenuoldal];
+
+    // Itt a trükk: a 'samplesize' és 'sampleend' változókat állítjuk be a másolt méretre,
+    // de az eredeti 'sizes' tömböt NEM bántjuk, hogy megmaradjon az információ.
+    samplesize[opmenuoldal] = copy_bytes >> 1;
+    sampleend[opmenuoldal] = samplesize[opmenuoldal];
+  }
+  
+  // A setsamplesize() hívás már nem is kell, mert fentebb beállítottuk kézzel a RAM-hoz
+
 }
 
 //-----------LFO-Waveform-----------------------
@@ -2723,6 +2749,11 @@ void setup() {
   MIDI2.setHandlePitchBend(handlePitchBend);
   MIDI2.setHandleProgramChange(handleProgramChange);
   MIDI2.begin(MIDI_CHANNEL_OMNI);
+ delaybuffer = (int16_t*) heap_caps_malloc(delaybuffersize * sizeof(int16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  delaybuffer2 = (int16_t*) heap_caps_malloc(delaybuffersize * sizeof(int16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+
+  if (delaybuffer != NULL) memset(delaybuffer, 0, delaybuffersize * sizeof(int16_t));
+  if (delaybuffer2 != NULL) memset(delaybuffer2, 0, delaybuffersize * sizeof(int16_t));
   //Set up NOTE TUNE
   notetune();
   notebias();
@@ -3238,7 +3269,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3361,7 +3392,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3485,7 +3516,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3612,7 +3643,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3736,7 +3767,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -3923,7 +3954,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -4055,7 +4086,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -4185,7 +4216,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -4315,7 +4346,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
     }
@@ -5142,7 +5173,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       // lowpassfilterleft(); lowpassfilterright();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
@@ -5285,7 +5316,7 @@ void loop() {
       bufferbe[1] = (100 * bufferbe[1] - paraeqrightbuffer * eqlevel2) >> 7;
       chorusleft(); chorusright();
       //reverbleft(); reverbright();
-       processingStereoReverb();
+      processingStereoReverb();
       //processingStereoReverb();
       sBuffer[i] = bufferbe[0];
       sBuffer[i + 1] = bufferbe[1];
