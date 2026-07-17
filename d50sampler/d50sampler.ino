@@ -401,60 +401,38 @@ void notebias() {
 
 void notetune() {
   for (int j = 0; j < 4; j++) {
-    float rate = 1.0; // Alapértelmezett KeyFollow ráta
-
-    // D-50 stílusú KeyFollow skála leképezése rátára
+    float szorzo2 = 1.0;
     switch (KEYFollow[j]) {
-      case 0:  rate = -1.0; break;   // -1
-      case 1:  rate = -0.5; break;   // -1/2
-      case 2:  rate = -0.25; break;  // -1/4
-      case 3:  rate = 0.0;  break;   // FIXED (0)
-      case 4:  rate = 0.125; break;  // 1/8
-      case 5:  rate = 0.25;  break;  // 1/4
-      case 6:  rate = 0.375; break;  // 3/8
-      case 7:  rate = 0.5;   break;  // 1/2
-      case 8:  rate = 0.625; break;  // 5/8
-      case 9:  rate = 0.75;  break;  // 3/4
-      case 10: rate = 0.875; break;  // 7/8
-      case 11: rate = 1.0;   break;  // NORMAL (1)
-      case 12: rate = 1.25;  break;  // 5/4
-      case 13: rate = 1.5;   break;  // 3/2
-      case 14: rate = 1.02;  break;  // s1 (Stretch 1)
-      case 15: rate = 1.05;  break;  // s2 (Stretch 2)
-      case 16: rate = 2.0;   break;  // 2 (Dupla skála)
+      case 0:  szorzo2 = 0.5;    break;
+      case 1:  szorzo2 = 0.7071; break;
+      case 2:  szorzo2 = 0.8409; break;
+      case 3:  szorzo2 = 1.0;    break;
+      case 4:  szorzo2 = 1.125;  break;
+      case 5:  szorzo2 = 1.25;   break;
+      case 6:  szorzo2 = 1.375;  break;
+      case 7:  szorzo2 = 1.5;    break;
+      case 8:  szorzo2 = 1.625;  break;
+      case 9:  szorzo2 = 1.75;   break;
+      case 10: szorzo2 = 1.875;  break;
+      case 11: szorzo2 = 2.0;    break; // Normal
+      case 12: szorzo2 = 2.25;   break;
+      case 13: szorzo2 = 2.5;    break;
+      case 14: szorzo2 = 4.0;    break;
+      case 15: szorzo2 = 3.0;    break;
+      case 16: szorzo2 = 5.0;    break;
     }
 
-    // A szorzo2 a frekvencia-arány egy oktávra vetítve
-    // rate = 1.0 esetén szorzo2 = 2.0 (standard oktáv)
-    // rate = 0.0 esetén szorzo2 = 1.0 (minden billentyű ugyanaz)
-    float szorzo2 = pow(2, rate);
+  // A referencia hangolás (Középső C = 60)
+    float TUNE_NOW = (GLOBAL_TUNE + (FINE[j] / 8.0))*16;
+    TUNE_NOW = TUNE_NOW * pow(2.0, COARSE[j] / 12.0);
 
-    // Kiszámítjuk az alapfrekvenciát (középső C környékén érdemes indítani)
-    // A FINE[j] eltolást itt adjuk hozzá (128-as felbontással számolva)
-    float TUNE_NOW = GLOBAL_TUNE + (FINE[j] / 4.0);
-
-    // Alkalmazzuk a COARSE (félhang) eltolást a skálázott térben
-    TUNE_NOW = TUNE_NOW * pow(szorzo2, COARSE[j] / 12.0);
-
-    // Feltöltjük az első 12 hangot (egy oktáv)
-    float BASIC_TUNE[12];
-    for (int i = 0; i < 12; i++) {
-      BASIC_TUNE[i] = TUNE_NOW * pow(szorzo2, i / 12.0);
-    }
-
-    // Kiterjesztjük a teljes 14 oktávos tartományra
-    float okt = 1.0;
-    // Megjegyzés: Ha a 60-as MIDI hangot akarod referenciának,
-    // érdemes az 'okt' kezdőértékét ehhez igazítani.
-    // Most 0-tól indul felfelé.
-    for (int i = 0; i < 14; i++) {
-      for (int k = 0; k < 12; k++) {
-        int index = i * 12 + k;
-        if (index < 168) { // Biztonsági határ
-          noteertek[j][index] = round(BASIC_TUNE[k] * okt);
-        }
-      }
-      okt = okt * szorzo2;
+    for (int idx = 0; idx < 168; idx++) {
+      // Kiszámoljuk, hány félhangra van az adott billentyű a 60-astól
+      float tavolsag = (idx - 60) / 12.0;
+      
+      // Közvetlenül a 60-as hangból indulunk ki minden hangnál!
+      // f = f60 * (szorzo2 ^ tavolsag)
+      noteertek[j][idx] = round(TUNE_NOW * pow(szorzo2, tavolsag));
     }
   }
 }
