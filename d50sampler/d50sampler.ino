@@ -110,6 +110,7 @@ bool LCD_ON = true;
 
 int step = 22;
 uint16_t GLOBAL_TUNE = 5040;
+byte prognumber = 0;
 byte COARSE[4] = { 48, 48, 48, 48 };
 byte FINE[4] = { 50, 50, 50, 50 };
 byte szorzo[4] = {1, 1, 1, 1};
@@ -206,7 +207,7 @@ byte chaseindex = 0;
 byte MIDI_SYNC = 1;
 byte sixteen = 0;
 byte PW[4] = {15, 15, 15, 15};
-
+String pachname = "Initial Patch";
 uint32_t PWcount[4][polyphony];
 float filter_f[4][polyphony] = {0.8f, 0.8f, 0.8f, 0.8f};
 float filter_q[4] = {0.5f, 0.5f, 0.5f, 0.5f}; // Semleges rezonancia
@@ -422,14 +423,14 @@ void notetune() {
       case 16: szorzo2 = 5.0;    break;
     }
 
-  // A referencia hangolás (Középső C = 60)
-    float TUNE_NOW = (GLOBAL_TUNE + (FINE[j] / 8.0))*16;
+    // A referencia hangolás (Középső C = 60)
+    float TUNE_NOW = (GLOBAL_TUNE + (FINE[j] / 8.0)) * 16;
     TUNE_NOW = TUNE_NOW * pow(2.0, COARSE[j] / 12.0);
 
     for (int idx = 0; idx < 168; idx++) {
       // Kiszámoljuk, hány félhangra van az adott billentyű a 60-astól
       float tavolsag = (idx - 60) / 12.0;
-      
+
       // Közvetlenül a 60-as hangból indulunk ki minden hangnál!
       // f = f60 * (szorzo2 ^ tavolsag)
       noteertek[j][idx] = round(TUNE_NOW * pow(szorzo2, tavolsag));
@@ -657,8 +658,8 @@ void setPCMWave() {
     case 98: genstartadress[opmenuoldal] = nailfile; break;
     case 99: genstartadress[opmenuoldal] = nailfile; break;
   }
- // Kimentjük a Flash címet és az EREDETI méretet
-  const int16_t* flash_ptr = genstartadress[opmenuoldal]; 
+  // Kimentjük a Flash címet és az EREDETI méretet
+  const int16_t* flash_ptr = genstartadress[opmenuoldal];
   uint32_t original_sample_count = sizes[PCMWaveNo[opmenuoldal]];
   uint32_t flash_size_bytes = original_sample_count << 1;
 
@@ -678,7 +679,7 @@ void setPCMWave() {
     samplesize[opmenuoldal] = copy_bytes >> 1;
     sampleend[opmenuoldal] = samplesize[opmenuoldal];
   }
-  
+
   // A setsamplesize() hívás már nem is kell, mert fentebb beállítottuk kézzel a RAM-hoz
 
 }
@@ -1716,6 +1717,22 @@ void parametersysexchanged() {
     }
   }
   if (localParameterByte == 3) {
+    if (noteByte >= 0 && noteByte <= 13) {
+      int charIndex = noteByte; // 1-es noteByte -> 0-s index, 13-as noteByte -> 12-es index
+
+      char c = ' ';
+      if (value == 0) {
+        c = ' '; // Szóköz
+      } else if (value >= 1 && value <= 26) {
+        c = 'A' + (value - 1);  // Nagybetűk
+      } else if (value >= 27 && value <= 52) {
+        c = 'a' + (value - 27); // Kisbetűk
+      } else if (value >= 52 && value <= 61) {
+        c = '0' + (value - 52); // Számok (0-9)
+      }
+
+      pachname[charIndex] = c;
+    }
     switch (noteByte) {
       case 18:
         if (value == 0) {
@@ -2002,7 +2019,10 @@ void parametersysexchanged() {
   //serial
   //Serial.println(line);
   //lcd
-  lcdprint(line, 1);
+  if (LCD_ON) {
+    lcdprint(line, 1);
+  }
+
 }
 
 //-------------------------------REVERB-DELAY EFFECT LEFT----------------------------------------
@@ -2529,6 +2549,7 @@ void handleSysEx(byte* data, unsigned size) {
   // CSAK AKKOR printelj, ha nagyon muszáj, mert a Serial.print lassú!
   // A legjobb, ha csak a feldolgozás marad:
   // prefix ellenőrzés: 240, 65, 0, 20, 18, 0
+  //Sysex:240,65,0,20,18,0,---local-3,  notebayt-0, velocitybyte-0,    0,0,0,0,0,0,27,38,32,27,48,35,38,38,31,0,0,0,0,0,0,0,24,50,50,2,16,0,0,5,39,18,50,0,0,40,0,0,0,29,247
   if (size >= 6 && data[0] == 240 && data[1] == 65 && data[2] == 0 && data[3] == 20 && data[4] == 18 && data[5] == 0) {
     if (size <= 11) {
       localParameterByte = data[6];
@@ -2547,7 +2568,11 @@ void handleSysEx(byte* data, unsigned size) {
         velocityByte = data[i];
         parametersysexchanged();
       }
+      line = lcdprint2(prognumber);
+      line += ":";
+      line += pachname;
       LCD_ON = true;
+      lcdprint(line, 0);
     }
   }
 }
@@ -2590,101 +2615,184 @@ void LoadPatch(const byte* storedPatch) {
 
 void handleProgramChange(byte channel, byte number) {
   //Serial.print("Program Change érkezett: "); Serial.println(number);
-  switch (number) {
+  prognumber = number;
+  switch (prognumber) {
     case 0:
       LoadPatch(storedpach1);
       //Serial.println("Patch 1 betöltve");
-      lcdprint("01:PizzaGogo    ", 0);
+      //lcdprint("01:PizzaGogo    ", 0);
       break;
     case 1:
       LoadPatch(storedpach2);
       //Serial.println("Patch 2 betöltve");
-      lcdprint("02:UltraBass    ", 0);
+      //lcdprint("02:UltraBass    ", 0);
       break;
     case 2:
       LoadPatch(storedpach3);
       //Serial.println("Patch 3 betöltve");
-      lcdprint("03:BELLS 1      ", 0);
+      //lcdprint("03:BELLS 1      ", 0);
       break;
     case 3:
       LoadPatch(storedpach4);
       //Serial.println("Patch 4 betöltve");
-      lcdprint("04:Fifty Pad    ", 0);
+      //lcdprint("04:Fifty Pad    ", 0);
       break;
     case 4:
       LoadPatch(storedpach5);
       //Serial.println("Patch 5 betöltve");
-      lcdprint("05:Clarinet Pad ", 0);
+      //lcdprint("05:Clarinet Pad ", 0);
       break;
     case 5:
       LoadPatch(storedpach6);
       // Serial.println("Patch 6 betöltve");
-      lcdprint("06:Fifty Pad 2  ", 0);
+      //lcdprint("06:Fifty Pad 2  ", 0);
       break;
     case 6:
       LoadPatch(storedpach7);
       // Serial.println("Patch 7 betöltve");
-      lcdprint("07:Arabian FM   ", 0);
+      //lcdprint("07:Arabian FM   ", 0);
       break;
     case 7:
       LoadPatch(storedpach8);
       // Serial.println("Patch 7 betöltve");
-      lcdprint("08:Guitarbells   ", 0);
+      //lcdprint("08:Guitarbells   ", 0);
       break;
     case 8:
       LoadPatch(storedpach9);
       //Serial.println("Patch 8 betöltve");
-      lcdprint("09:Spectrum pad ", 0);
+      //lcdprint("09:Spectrum pad ", 0);
       break;
     case 9:
       LoadPatch(storedpach10);
       //Serial.println("Patch 9 betöltve");
-      lcdprint("10:FMPad        ", 0);
+      //lcdprint("10:FMPad 1      ", 0);
       break;
     case 10:
       LoadPatch(storedpach11);
       //Serial.println("Patch 10 betöltve");
-      lcdprint("11:Slap BassFM  ", 0);
+      //lcdprint("11:Slap BassFM  ", 0);
       break;
     case 11:
       LoadPatch(storedpach12);
       //Serial.println("Patch 11 betöltve");
-      lcdprint("12:BrassFM      ", 0);
+      //lcdprint("12:BrassFM      ", 0);
       break;
     case 12:
       LoadPatch(storedpach13);
       //Serial.println("Patch 12 betöltve");
-      lcdprint("13:KelepFM      ", 0);
+      //lcdprint("13:KelepFM      ", 0);
       break;
     case 13:
       LoadPatch(storedpach14);
       //Serial.println("Patch 13 betöltve");
-      lcdprint("14:FMPad 2      ", 0);
+      //lcdprint("14:FMPad 2      ", 0);
       break;
     case 14:
       LoadPatch(storedpach15);
       // Serial.println("Patch 14 betöltve");
-      lcdprint("15:FMPad 2      ", 0);
+      //lcdprint("15:Balaton      ", 0);
       break;
     case 15:
       LoadPatch(storedpach16);
       // Serial.println("Patch 15 betöltve");
-      lcdprint("16:Paradise Bell", 0);
+      //lcdprint("16:Paradise Bell", 0);
       break;
     case 16:
       LoadPatch(storedpach17);
       // Serial.println("Patch 15 betöltve");
-      lcdprint("17:Linear LFOMod", 0);
+      //lcdprint("17:Linear LFOMod", 0);
       break;
     case 17:
       LoadPatch(storedpach18);
       // Serial.println("Patch 15 betöltve");
-      lcdprint("18:Roads4c      ", 0);
+      //lcdprint("18:Roads4c      ", 0);
+      break;
+    case 18:
+      LoadPatch(storedpach19);
+      // Serial.println("Patch 15 betöltve");
+      //lcdprint("19:Sweep 2      ", 0);
+      break;
+    case 19:
+      LoadPatch(storedpach20);
+      // Serial.println("Patch 15 betöltve");
+      //lcdprint("20:Alphaville   ", 0);
+
       break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
       break;
+
+
   }
+  line = lcdprint2(prognumber);
+  line += ":";
+  line += pachname;
+  lcdprint(line, 0);
+  line = "                ";
+
+
+
+  switch (STRUCTURE) {
+  case 0:
+    line = "LA+LA LA+LA";
+    break;
+  case 1:
+    line = "LA+LA LA*LA";
+    break;
+  case 2:
+    line = "LA+LA PCM+LA";
+    break;
+  case 10:
+    line = "LA+LA LA*LA";
+    break;
+  case 11:
+    line = "LA*LA LA*LA";
+    break;
+  case 20:
+    line = "PCM+LA LA+LA";
+    break;
+  case 22:
+    line = "PCM+LA PCM+LA";
+    break;
+  case 23:
+    line = "PCM+LA PCM*LA";
+    break;
+  case 32:
+    line = "PCM*LA PCM+LA";
+    break;
+  case 33:
+    line = "PCM*LA PCM*LA";
+    break;
+  case 55:
+    line = "PCM+PCM PCM+PCM";
+    break;
+  case 56:
+    line = "PCM+PCM PCM*PCM";
+    break;
+  case 57:
+    line = "PCM+PCM FM-2OP";
+    break;
+  case 65:
+    line = "PCM+PCM PCM*PCM";
+    break;
+  case 66:
+    line = "PCM*PCM PCM*PCM";
+    break;
+  case 67:
+    line = "FM-2OP FM-2OP";
+    break;
+  case 76:
+    line = "FM Y structura";
+    break;
+  case 77:
+    line = "FM-2OP FM-2OP";
+    break;
+  default:
+    line = "  UNKNOWN  ";
+    break;
+}
+
+lcdprint(line, 1);
 }
 
 //----------------------------------------setup--------------------------------
@@ -2727,7 +2835,7 @@ void setup() {
   MIDI2.setHandlePitchBend(handlePitchBend);
   MIDI2.setHandleProgramChange(handleProgramChange);
   MIDI2.begin(MIDI_CHANNEL_OMNI);
- delaybuffer = (int16_t*) heap_caps_malloc(delaybuffersize * sizeof(int16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  delaybuffer = (int16_t*) heap_caps_malloc(delaybuffersize * sizeof(int16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   delaybuffer2 = (int16_t*) heap_caps_malloc(delaybuffersize * sizeof(int16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 
   if (delaybuffer != NULL) memset(delaybuffer, 0, delaybuffersize * sizeof(int16_t));
@@ -4906,7 +5014,7 @@ void loop() {
 
 
 
-  //----------------------6-6-----PCM*PXM------PCM*PCM----------------------------------------------------
+  //----------------------6-6-----PCM*PCM------PCM*PCM----------------------------------------------------
   if (STRUCTURE == 66) {
     // Kiszámoljuk előre az osztás reciprokát, így a ciklusban csak szorzunk
     const float invStep = 1.0f / (float)(1 << step);
