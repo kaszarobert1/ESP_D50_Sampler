@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <!-- Fehér háttér kék kerettel -->
+  <rect x="10" y="10" width="480" height="480" fill="#ffffff" stroke="#0f38a8" stroke-width="8"/>
+
+  <!-- ZÖLD VONALAK (Összeköttetések) -->
+  <g stroke="#41c363" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- 1) Moduláció: 2 -> 1 (OSC 0 -> OSC 1) -->
+    <line x1="180" y1="210" x2="180" y2="240" />
+
+    <!-- 2) Moduláció: 4 -> 3 (OSC 2 -> OSC 3) -->
+    <line x1="320" y1="210" x2="320" y2="240" />
+
+    <!-- 3) Audio kimenet (1 és 3 kimenetének keverése alul) -->
+    <path d="M 180,300 L 180,335 L 320,335 L 320,300" />
+
+    <!-- 4) 4-es Operátor Self-FB (OSC 2 visszacsatolás) -->
+    <path d="M 370,190 L 395,190 L 395,145 L 350,145 L 350,150" />
+
+    <!-- 5) Cross-pair Link: 3. operátortól (OSC 3) vissza az 1-esre (OSC 1) -->
+    <path d="M 320,240 L 320,225 L 430,225 L 430,105 L 180,105 L 180,150" />
+
+    <!-- 6) 2-es Operátor Self-FB + Cross-Mod (OSC 0 FB & OSC 1 -> OSC 0) -->
+    <path d="M 130,190 L 95,190 L 95,135 L 150,135 L 150,150" />
+    
+  </g>
+
+  <!-- KÉK OPERÁTOR DOBOZOK -->
+  <g fill="#0f38a8">
+    <!-- OP 2 (OSC 0) -->
+    <rect x="130" y="150" width="100" height="60" rx="3" />
+    <!-- OP 4 (OSC 2) -->
+    <rect x="270" y="150" width="100" height="60" rx="3" />
+    <!-- OP 1 (OSC 1) -->
+    <rect x="130" y="240" width="100" height="60" rx="3" />
+    <!-- OP 3 (OSC 3) -->
+    <rect x="270" y="240" width="100" height="60" rx="3" />
+  </g>
+
+  <!-- FEHÉR SZÁMOK -->
+  <g fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="40" text-anchor="middle" dominant-baseline="central">
+    <text x="180" y="180">2</text>
+    <text x="320" y="180">4</text>
+    <text x="180" y="270">1</text>
+    <text x="320" y="270">3</text>
+  </g>
+
+  <!-- ALGORITMUS SZÁMA (Jobb alsó sarok) -->
+  <text x="425" y="425" fill="#0f38a8" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="75" text-anchor="middle">77</text>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <!-- Fehér háttér kék kerettel -->
+  <rect x="10" y="10" width="480" height="480" fill="#ffffff" stroke="#0f38a8" stroke-width="8"/>
+
+  <!-- ZÖLD VONALAK (Összeköttetések és Modulációk) -->
+  <g stroke="#41c363" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- 1) Soros FM Lánc: OP 4 (OSC 0) -> OP 2 (OSC 1) -->
+    <line x1="180" y1="120" x2="180" y2="150" />
+
+    <!-- 2) Soros FM Lánc: OP 2 (OSC 1) -> OP 1 (OSC 2) -->
+    <line x1="180" y1="210" x2="180" y2="240" />
+
+    <!-- 3) Audio kimenet (OP 1 és OP 3 kimenetének keverése alul) -->
+    <path d="M 180,300 L 180,335 L 320,335 L 320,300" />
+
+    <!-- 4) OP 4 Self-FB (OSC 0 visszacsatolás) -->
+    <path d="M 130,90 L 95,90 L 95,45 L 150,45 L 150,60" />
+
+    <!-- 5) OP 2 Self-FB (OSC 1 visszacsatolás) -->
+    <path d="M 130,180 L 95,180 L 95,135 L 150,135 L 150,150" />
+
+    <!-- 6) OP 1 Self-FB (OSC 2 visszacsatolás) -->
+    <path d="M 130,270 L 95,270 L 95,225 L 150,225 L 150,240" />
+
+    <!-- 7) OP 3 Self-FB (OSC 3 visszacsatolás - jobb oldalon) -->
+    <path d="M 370,270 L 405,270 L 405,225 L 350,225 L 350,240" />
+    
+  </g>
+
+  <!-- KÉK OPERÁTOR DOBOZOK -->
+  <g fill="#0f38a8">
+    <!-- OP 4 (OSC 0 - Legfelső modulátor) -->
+    <rect x="130" y="60" width="100" height="60" rx="3" />
+    <!-- OP 2 (OSC 1 - Középső modulátor) -->
+    <rect x="130" y="150" width="100" height="60" rx="3" />
+    <!-- OP 1 (OSC 2 - Fő hordozó) -->
+    <rect x="130" y="240" width="100" height="60" rx="3" />
+    <!-- OP 3 (OSC 3 - Független alap hordozó) -->
+    <rect x="270" y="240" width="100" height="60" rx="3" />
+  </g>
+
+  <!-- FEHÉR SZÁMOK -->
+  <g fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="40" text-anchor="middle" dominant-baseline="central">
+    <text x="180" y="90">4</text>
+    <text x="180" y="180">2</text>
+    <text x="180" y="270">1</text>
+    <text x="320" y="270">3</text>
+  </g>
+
+  <!-- ALGORITMUS SZÁMA (Jobb alsó sarok) -->
+  <text x="425" y="425" fill="#0f38a8" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="75" text-anchor="middle">76</text>
+</svg>

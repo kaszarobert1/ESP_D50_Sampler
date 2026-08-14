@@ -2494,6 +2494,76 @@ void chasearpeggio() {
   }
 }
 
+void patchbeginscreen() {
+  LCD_ON = true;
+  line = lcdprint2(prognumber);
+  line += ":";
+  line += pachname;
+  lcdprint(line, 0);
+  line = "                ";
+  switch (STRUCTURE) {
+    case 0:
+      line = "LA+LA LA+LA";
+      break;
+    case 1:
+      line = "LA+LA LA*LA";
+      break;
+    case 2:
+      line = "LA+LA PCM+LA";
+      break;
+    case 10:
+      line = "LA+LA LA*LA";
+      break;
+    case 11:
+      line = "LA*LA LA*LA";
+      break;
+    case 20:
+      line = "PCM+LA LA+LA";
+      break;
+    case 22:
+      line = "PCM+LA PCM+LA";
+      break;
+    case 23:
+      line = "PCM+LA PCM*LA";
+      break;
+    case 32:
+      line = "PCM*LA PCM+LA";
+      break;
+    case 33:
+      line = "PCM*LA PCM*LA";
+      break;
+    case 55:
+      line = "PCM+PCM PCM+PCM";
+      break;
+    case 56:
+      line = "PCM+PCM PCM*PCM";
+      break;
+    case 57:
+      line = "PCM+PCM FM-2OP";
+      break;
+    case 65:
+      line = "PCM+PCM PCM*PCM";
+      break;
+    case 66:
+      line = "PCM*PCM PCM*PCM";
+      break;
+    case 67:
+      line = "FM-2OP FM-2OP";
+      break;
+    case 76:
+      line = "FM Y structura";
+      break;
+    case 77:
+      line = "FM-2OP FM-2OP";
+      break;
+    default:
+      line = "  UNKNOWN  ";
+      break;
+  }
+  //lcdprint(line, 1);
+}
+
+
 void handleNoteOn(byte channel, byte note, byte velocity) {
   if (channel == midichan) { // <--- A szűrő kapuja
     if (velocity > 0 && note >= 12) {
@@ -2568,11 +2638,8 @@ void handleSysEx(byte* data, unsigned size) {
         velocityByte = data[i];
         parametersysexchanged();
       }
-      line = lcdprint2(prognumber);
-      line += ":";
-      line += pachname;
-      LCD_ON = true;
-      lcdprint(line, 0);
+      //Mivel csoportos sysex volt így sokminden történt. A legbiztonságosabb ha a Pach kezdőképernyőt írjuk ki!
+      patchbeginscreen();
     }
   }
 }
@@ -2619,180 +2686,72 @@ void handleProgramChange(byte channel, byte number) {
   switch (prognumber) {
     case 0:
       LoadPatch(storedpach1);
-      //Serial.println("Patch 1 betöltve");
-      //lcdprint("01:PizzaGogo    ", 0);
       break;
     case 1:
       LoadPatch(storedpach2);
-      //Serial.println("Patch 2 betöltve");
-      //lcdprint("02:UltraBass    ", 0);
       break;
     case 2:
       LoadPatch(storedpach3);
-      //Serial.println("Patch 3 betöltve");
-      //lcdprint("03:BELLS 1      ", 0);
       break;
     case 3:
       LoadPatch(storedpach4);
-      //Serial.println("Patch 4 betöltve");
-      //lcdprint("04:Fifty Pad    ", 0);
       break;
     case 4:
       LoadPatch(storedpach5);
-      //Serial.println("Patch 5 betöltve");
-      //lcdprint("05:Clarinet Pad ", 0);
       break;
     case 5:
       LoadPatch(storedpach6);
-      // Serial.println("Patch 6 betöltve");
-      //lcdprint("06:Fifty Pad 2  ", 0);
       break;
     case 6:
       LoadPatch(storedpach7);
-      // Serial.println("Patch 7 betöltve");
-      //lcdprint("07:Arabian FM   ", 0);
       break;
     case 7:
       LoadPatch(storedpach8);
-      // Serial.println("Patch 7 betöltve");
-      //lcdprint("08:Guitarbells   ", 0);
       break;
     case 8:
       LoadPatch(storedpach9);
-      //Serial.println("Patch 8 betöltve");
-      //lcdprint("09:Spectrum pad ", 0);
       break;
     case 9:
       LoadPatch(storedpach10);
-      //Serial.println("Patch 9 betöltve");
-      //lcdprint("10:FMPad 1      ", 0);
       break;
     case 10:
       LoadPatch(storedpach11);
-      //Serial.println("Patch 10 betöltve");
-      //lcdprint("11:Slap BassFM  ", 0);
       break;
     case 11:
       LoadPatch(storedpach12);
-      //Serial.println("Patch 11 betöltve");
-      //lcdprint("12:BrassFM      ", 0);
       break;
     case 12:
       LoadPatch(storedpach13);
-      //Serial.println("Patch 12 betöltve");
-      //lcdprint("13:KelepFM      ", 0);
       break;
     case 13:
       LoadPatch(storedpach14);
-      //Serial.println("Patch 13 betöltve");
-      //lcdprint("14:FMPad 2      ", 0);
       break;
     case 14:
       LoadPatch(storedpach15);
-      // Serial.println("Patch 14 betöltve");
-      //lcdprint("15:Balaton      ", 0);
       break;
     case 15:
       LoadPatch(storedpach16);
-      // Serial.println("Patch 15 betöltve");
-      //lcdprint("16:Paradise Bell", 0);
       break;
     case 16:
       LoadPatch(storedpach17);
-      // Serial.println("Patch 15 betöltve");
-      //lcdprint("17:Linear LFOMod", 0);
       break;
     case 17:
       LoadPatch(storedpach18);
-      // Serial.println("Patch 15 betöltve");
-      //lcdprint("18:Roads4c      ", 0);
       break;
     case 18:
       LoadPatch(storedpach19);
-      // Serial.println("Patch 15 betöltve");
-      //lcdprint("19:Sweep 2      ", 0);
       break;
     case 19:
       LoadPatch(storedpach20);
-      // Serial.println("Patch 15 betöltve");
-      //lcdprint("20:Alphaville   ", 0);
-
+      break;
+    case 20:
+      LoadPatch(storedpach21);
       break;
     default:
       Serial.println("Nincs ilyen tárolt patch!");
       break;
-
-
   }
-  line = lcdprint2(prognumber);
-  line += ":";
-  line += pachname;
-  lcdprint(line, 0);
-  line = "                ";
-
-
-
-  switch (STRUCTURE) {
-  case 0:
-    line = "LA+LA LA+LA";
-    break;
-  case 1:
-    line = "LA+LA LA*LA";
-    break;
-  case 2:
-    line = "LA+LA PCM+LA";
-    break;
-  case 10:
-    line = "LA+LA LA*LA";
-    break;
-  case 11:
-    line = "LA*LA LA*LA";
-    break;
-  case 20:
-    line = "PCM+LA LA+LA";
-    break;
-  case 22:
-    line = "PCM+LA PCM+LA";
-    break;
-  case 23:
-    line = "PCM+LA PCM*LA";
-    break;
-  case 32:
-    line = "PCM*LA PCM+LA";
-    break;
-  case 33:
-    line = "PCM*LA PCM*LA";
-    break;
-  case 55:
-    line = "PCM+PCM PCM+PCM";
-    break;
-  case 56:
-    line = "PCM+PCM PCM*PCM";
-    break;
-  case 57:
-    line = "PCM+PCM FM-2OP";
-    break;
-  case 65:
-    line = "PCM+PCM PCM*PCM";
-    break;
-  case 66:
-    line = "PCM*PCM PCM*PCM";
-    break;
-  case 67:
-    line = "FM-2OP FM-2OP";
-    break;
-  case 76:
-    line = "FM Y structura";
-    break;
-  case 77:
-    line = "FM-2OP FM-2OP";
-    break;
-  default:
-    line = "  UNKNOWN  ";
-    break;
-}
-
-lcdprint(line, 1);
+  patchbeginscreen();
 }
 
 //----------------------------------------setup--------------------------------
@@ -3089,7 +3048,28 @@ void loop() {
 
   //STRUCTURES
 
-  //------------------0-------------------0---------------------PWM+PWM PWM+PWM------------------------------------
+  //------------------0-------------------0---------------------LA+LA LA+LA------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 00: DUAL SYNTH MIX (LA0+LA1  |  LA2+LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      |  (LA 0)  |   |  (LA 1)  |        |  (LA 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Synth 0)    | (Synth 1)         | (Synth 2)    | (Synth 3)
+           |              |                   |              |
+           v              v                   v              v
+        ( Sum: LA0 + LA1 )                 ( Sum: LA2 + LA3 )
+           |              |                   |              |
+           +--------------+---------+---------+--------------+
+                                    |
+                                    v
+                              [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 0) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3238,7 +3218,31 @@ void loop() {
     }
   }
 
-  //------------------1-------------------0---------------------PWM*PWM PWM+PWM------------------------------------
+  //------------------1-------------------0---------------------LA*LA LA+LA------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 10: LA RINGMOD / MIX (LA0*LA1  |  LA2+LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      |  (LA 0)  |   |  (LA 1)  |        |  (LA 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Synth 0)    | (Synth 1)         | (Synth 2)    | (Synth 3)
+           |              |                   |              |
+           +------+  +----+                   v              v
+                  |  |                     ( Sum: LA2 + LA3 )
+                  v  v                        |              |
+                +------+                      |              |
+                |  (X) |  <-- RingMod         |              |
+                +--+---+     (LA0 * LA1)      |              |
+                   |                          |              |
+                   +--------------------------+--------------+
+                                              |
+                                              v
+                                        [ AUDIO OUT ]
+  */
   if (STRUCTURE == 10) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3361,7 +3365,32 @@ void loop() {
     }
   }
 
-  //------------------0-------------------1---------------------PWM+PWM PWM*PWM------------------------------------
+  //------------------0-------------------1---------------------LA+LA LA*LA------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 01: LA MIX / RINGMOD (LA0+LA1  |  LA2*LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      |  (LA 0)  |   |  (LA 1)  |        |  (LA 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Synth 0)    | (Synth 1)         | (Synth 2)    | (Synth 3)
+           |              |                   |              |
+           v              v                   +------+  +---+
+         ( Sum: LA0 + LA1 )                         |  |
+           |              |                         v  v
+           |              |                       +------+
+           |              |                       |  (X) |  <-- RingMod (LA2 * LA3)
+           |              |                       +--+---+
+           |              |                          |
+           +--------------+--------------------------+
+                          |
+                          v
+                    [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 1) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3485,7 +3514,31 @@ void loop() {
   }
 
 
-  //------------------1-------------------1---------------------PWM*PWM PWM*PWM------------------------------------
+  //------------------1-------------------1---------------------LA*LA LA*LA------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 11: DUAL RINGMOD SYNTH (LA0*LA1  |  LA2*LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      |  (LA 0)  |   |  (LA 1)  |        |  (LA 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Synth 0)    | (Synth 1)         | (Synth 2)    | (Synth 3)
+           |              |                   |              |
+           +------+  +----+                   +------+  +----+
+                  |  |                               |  |
+                  v  v                               v  v
+                +------+                           +------+
+                |  (X) |  <-- RingMod              |  (X) |  <-- RingMod
+                +--+---+     (LA0 * LA1)           +--+---+     (LA2 * LA3)
+                   |                                  |
+                   +-----------------+----------------+
+                                     |
+                                     v
+                               [ AUDIO OUT ]
+  */
   if (STRUCTURE == 11) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3610,6 +3663,27 @@ void loop() {
 
 
   //------------------0-------------------2---------------------LINEAR+LINEAR PCM+LINEAR------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 02: HYBRID MIX (LA0+LA1  |  PCM2+LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      |  (LA 0)  |   |  (LA 1)  |        | (PCM 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Synth 0)    | (Synth 1)         | (Sample 2)   | (Synth 3)
+           |              |                   |              |
+           v              v                   v              v
+        ( Sum: LA0 + LA1 )                 ( Sum: PCM2 + LA3 )
+           |              |                   |              |
+           +--------------+---------+---------+--------------+
+                                    |
+                                    v
+                              [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 2) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3737,6 +3811,27 @@ void loop() {
 
 
   //------------------2-------------------0---------------------PCM+LINEAR LINEAR+LINEAR------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 20: HYBRID MIX (PCM0+LA1  |  LA2+LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   |  (LA 1)  |        |  (LA 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Sample 0)   | (Synth 1)         | (Synth 2)    | (Synth 3)
+           |              |                   |              |
+           v              v                   v              v
+        ( Sum: PCM0 + LA1 )                ( Sum: LA2 + LA3 )
+           |              |                   |              |
+           +--------------+---------+---------+--------------+
+                                    |
+                                    v
+                              [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 20) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -3860,6 +3955,27 @@ void loop() {
   }
 
   //------------------2-------------------2---------------------PCM+LINEAR PCM+LINEAR------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 22: PARALLEL DUAL MIX (PCM0+LA1  |  PCM2+LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   |  (LA 1)  |        | (PCM 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Sample 0)   | (Synth 1)         | (Sample 2)   | (Synth 3)
+           |              |                   |              |
+           v              v                   v              v
+        ( Sum: PCM0 + LA1 )                ( Sum: PCM2 + LA3 )
+           |              |                   |              |
+           +--------------+---------+---------+--------------+
+                                    |
+                                    v
+                              [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 22) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -4048,7 +4164,33 @@ void loop() {
 
 
 
-  //------------------3-------------------2---------------------PWM*LINEAR---PWM+LINEAR------------------------------------
+  //------------------3-------------------2---------------------PCM*LINEAR---PCM+LINEAR------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 32: HYBRID RINGMOD/MIX (PCM0*LA1  |  PCM2+LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   |  (LA 1)  |        | (PCM 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Sample 0)   | (Synth 1)         | (Sample 2)   | (Synth 3)
+           |              |                   |              |
+           +------+  +----+                   v              v
+                  |  |                     ( Sum: PCM2 + LA3 )
+                  v  v                        |              |
+                +------+                      |              |
+                |  (X) |                      |              |
+                +--+---+                      |              |
+                   |                          |              |
+                   | (PCM0 * LA1)             |              |
+                   +--------------------------+--------------+
+                                              |
+                                              v
+                                        [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 32) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -4178,7 +4320,32 @@ void loop() {
     }
   }
 
-  //------------------2-------------------3---------------------PWM+LINEAR---PWM*LINEAR------------------------------------
+  //------------------2-------------------3---------------------PCM+LINEAR---PCM*LINEAR------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 23: HYBRID MIX/RINGMOD (PCM0+LA1  |  PCM2*LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   |  (LA 1)  |        | (PCM 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Sample 0)   | (Synth 1)         | (Sample 2)   | (Synth 3)
+           |              |                   |              |
+           v              v                   +------+  +---+
+        ( Sum: PCM0 + LA1 )                         |  |
+           |              |                         v  v
+           |              |                       +------+
+           |              |                       |  (X) |  <-- RingMod (PCM2 * LA3)
+           |              |                       +--+---+
+           |              |                          |
+           +--------------+--------------------------+
+                          |
+                          v
+                    [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 23) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -4309,6 +4476,32 @@ void loop() {
   }
 
   //------------------3-------------------3---------------------PWM*LINEAR------------------------------------
+  /*
+    ============================================================================
+                  ALGORITHM 33: DUAL RINGMOD (PCM0*LA1 + PCM2*LA3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   |  (LA 1)  |        | (PCM 2)  |   |  (LA 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Sample 0)   | (Synth 1)         | (Sample 2)   | (Synth 3)
+           |              |                   |              |
+           +------+  +----+                   +------+  +----+
+                  |  |                               |  |
+                  v  v                               v  v
+                +------+                           +------+
+                |  (X) |                           |  (X) |  <-- RingMod Processors
+                +--+---+                           +--+---+
+                   |                                  |
+                   | (PCM0 * LA1)                     | (PCM2 * LA3)
+                   +-----------------+----------------+
+                                     |
+                                     v
+                               [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 33 ) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       // Ezek gyűjtik a teljes polifóniát a két kimenetre
@@ -4439,7 +4632,32 @@ void loop() {
   }
 
   //---------------------5-5-----------------PCM+PCM--PCM+PCM----------------------------
+  /*
+     ============================================================================
+                    4-PCM QUAD PARALLEL MIXER (PCM 0..3)
+     ============================================================================
 
+       +----------+   +----------+   +----------+   +----------+
+       |  OSC 0   |   |  OSC 1   |   |  OSC 2   |   |  OSC 3   |
+       | (PCM 0)  |   | (PCM 1)  |   | (PCM 2)  |   | (PCM 3)  |
+       +----+-----+   +----+-----+   +----+-----+   +----+-----+
+            |              |              |              |
+            | (Sample 0)   | (Sample 1)   | (Sample 2)   | (Sample 3)
+            v              v              v              v
+       +----+--------------+--------------+--------------+----+
+       |                                                      |
+       |                 PARALLEL SUM BUS                     |
+       |                                                      |
+       +--------------------------+---------------------------+
+                                  |
+                                  v
+                            [ AUDIO OUT ]
+
+     ============================================================================
+     DSP Implementation note:
+     int32_t total_out = (int32_t)sample0 + sample1 + sample2 + sample3;
+     ============================================================================
+  */
   if (STRUCTURE == 55) {
     // Kiszámoljuk előre az osztás reciprokát, így a ciklusban csak szorzunk
     const float invStep = 1.0f / (float)(1 << step);
@@ -4583,6 +4801,31 @@ void loop() {
 
 
   //----------------------5-6-----PCM+PCM------PCM*PCM---------------------------------------------------
+  /*
+    ============================================================================
+              4-PCM ENGINE: MIX (PCM0 + PCM1) & RINGMOD (PCM2 * PCM3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   | (PCM 1)  |        | (PCM 2)  |   | (PCM 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           |              |                   |              |
+           v              v                   +------+  +---+
+        ( Sum: PCM0 + PCM1 )                        |  |
+           |              |                        v  v
+           |              |                      +------+
+           |              |                      |  (X) |  <-- RingMod (PCM2 * PCM3)
+           |              |                      +--+---+
+           |              |                         |
+           +--------------+-------------------------+
+                          |
+                          v
+                    [ AUDIO OUT ]
+
+    ============================================================================
+  */
 
   if (STRUCTURE == 56) {
     // Kiszámoljuk előre az osztás reciprokát, így a ciklusban csak szorzunk
@@ -4726,6 +4969,36 @@ void loop() {
   }
 
   //----------------------5-7-----PCM+PCM------FM+FM---------------------------------------------------
+  /*
+    ============================================================================
+                  ALGORITHM 57: DUAL PCM + 2-OP FM
+    ============================================================================
+
+                                               +----------+
+                                            +->|  OSC 2   | (FM Modulator)
+                                            |  |  (OP 2)  |
+                                           (Self-+----+-----+
+                                            FB)  |    |
+                                                 |    | (mod = lastOut[2] * pSV2)
+                                                 v    v
+      +----------+        +----------+         +----------+
+      |  OSC 0   |        |  OSC 1   |      +->|  OSC 3   | (FM Carrier)
+      | (PCM 0)  |        | (PCM 1)  |      |  |  (OP 3)  |
+      +----+-----+        +----+-----+     (Self-+----+-----+
+           |                   |            FB)  |    |
+           | (osc_out[0])      | (osc_out[1])    |    | (osc_out[3])
+           |                   |                 |    |
+           +-------------------+-----------------+----+
+                               |
+                               v
+                         [ AUDIO OUT ]
+
+    ============================================================================
+    Features in Alg 57:
+    - OSC 0 & OSC 1: Independent PCM Sample playback engines with SVF filters.
+    - OSC 2 -> OSC 3: 2-Operator FM engine with dual feedback loops.
+    ============================================================================
+  */
   if (STRUCTURE == 57) {
     const float invStep = 1.0f / (float)(1 << step);
 
@@ -5015,6 +5288,31 @@ void loop() {
 
 
   //----------------------6-6-----PCM*PCM------PCM*PCM----------------------------------------------------
+  /*
+    ============================================================================
+            ALGORITHM 66: DUAL PCM RINGMOD (PCM0*PCM1  |  PCM2*PCM3)
+    ============================================================================
+
+      +----------+   +----------+        +----------+   +----------+
+      |  OSC 0   |   |  OSC 1   |        |  OSC 2   |   |  OSC 3   |
+      | (PCM 0)  |   | (PCM 1)  |        | (PCM 2)  |   | (PCM 3)  |
+      +----+-----+   +----+-----+        +----+-----+   +----+-----+
+           |              |                   |              |
+           | (Sample 0)   | (Sample 1)        | (Sample 2)   | (Sample 3)
+           |              |                   |              |
+           +------+  +----+                   +------+  +----+
+                  |  |                               |  |
+                  v  v                               v  v
+                +------+                           +------+
+                |  (X) |  <-- RingMod              |  (X) |  <-- RingMod
+                +--+---+     (PCM0 * PCM1)         +--+---+     (PCM2 * PCM3)
+                   |                                  |
+                   +-----------------+----------------+
+                                     |
+                                     v
+                               [ AUDIO OUT ]
+
+  */
   if (STRUCTURE == 66) {
     // Kiszámoljuk előre az osztás reciprokát, így a ciklusban csak szorzunk
     const float invStep = 1.0f / (float)(1 << step);
@@ -5158,6 +5456,50 @@ void loop() {
   }
 
   //----------------------6-7-----fm-------Low Compensed------------------------------------------------
+  /*
+     ============================================================================
+                   ALGORITHM 67: LOW COMPENSATED (OPTIMIZED 4-OP)
+     ============================================================================
+
+           +--------------------------------------------------------+
+           |                                                        |
+           |       +------------------------------------+           |
+           |       | (Cross-Mod: OSC 1 -> OSC 0)        |           |
+           v       v                                    |           |
+        +-------------+  (fb0_scale)                    |           |
+     +->|    OSC 0    |<-------+                        |           |
+     |  | (OP 2 /Mod1)|        |                        |           |
+     |  +------+------+        |                        |           |
+     | (Self-  |               |                        |           |
+     |  FB)    | (in0*d0_scale)|                        |           |
+     +---------+               |                        |           |
+               v               |                        |           |
+        +-------------+        |                        |           |
+        |    OSC 1    |--------+------------------------+           |
+        | (OP 1 /Car1)|                                             |
+        +------+------+                                             |
+               |                                                    |
+               +-----------------------> [ AUDIO OUT ] <------+     |
+                                              ^               |     |
+                                              |               |     |
+        +-------------+                        | (out3)        |     |
+     +->|    OSC 2    |                        |               |     |
+     |  | (OP 4 /Mod2)|                  +-----+-------+       |     |
+     |  +------+------+                  |    OSC 3    |-------+-----+
+     | (Self-  |                         | (OP 3 /Car2)|  (Link: OSC 3 -> OSC 1)
+     |  FB)    | (in2*d2_scale)          +-------------+
+     +---------+                               ^
+               |                               |
+               +-------------------------------+
+
+     ============================================================================
+     Features in Alg 67:
+     - Pre-calculated quadratic scale factors (PWcount^2, generatorvolume^2).
+     - Per-operator SVF filters with soft-clip limiting (+/- 20000.0f threshold).
+     ============================================================================
+  */
+
+
   if (STRUCTURE == 67) {
     // --- Konstansok és előkalkulált értékek a belső ciklus előtt ---
     const float inv10000_0015 = 0.0001f * 0.0015f;
@@ -5267,6 +5609,44 @@ void loop() {
   }
 
   //------------------------7-6-------Fm-Y-Struktúra---------------------------------
+  /*
+    ============================================================================
+                     ALGORITHM 76: Y-STRUCTURE (3-OP CHAIN + SUB)
+    ============================================================================
+
+          +----------+
+       +->|  OSC 0   | (OP 4 - Modulator 1)
+       |  | (Mod 1)  |
+       |  +----+-----+
+      (Self-  |
+       FB)    | (in0 * pV0)
+              v
+          +----------+
+       +->|  OSC 1   | (OP 2 - Modulator 2)
+       |  | (Mod 2)  |
+       |  +----+-----+
+      (Self-  |
+       FB)    | (in1 * pV1)
+              v
+          +----------+                      +----------+
+       +->|  OSC 2   |                   +->|  OSC 3   | (OP 3 - Foundation)
+       |  |(MainCar) |                   |  |(SubCar)  |
+       |  +----+-----+                   |  +----+-----+
+      (Self-  |                         (Self-  |
+       FB)    | (out2)                   FB)    | (out3)
+              |                                 |
+              +--------------> [ AUDIO OUT ] <---+
+
+    ============================================================================
+    Note:
+    - OSC 0 -> OSC 1 -> OSC 2 forms a 3-operator serial FM chain.
+    - OSC 3 runs independently as a solid sub/foundation carrier.
+    - All 4 operators have independent self-feedback loops.
+    ============================================================================
+  */
+
+
+
   const float mDepth = 0.0005f;
   const float mLink = 0.0001f;
 
@@ -5410,6 +5790,45 @@ void loop() {
   }
 
   //-----------------------7-7-Two Fm Osci (Optimized Filtered Feedback)----------------------------------
+  /*
+     ============================================================================
+                             4-OPERATOR FM ALGORITHM
+     ============================================================================
+
+           +--------------------------------------------------------+
+           |                                                        |
+           |       +------------------------------------+           |
+           |       | (Cross-Mod: OSC 1 -> OSC 0)        |           |
+           v       v                                    |           |
+        +-------------+  (pW0)                          |           |
+     +->|    OSC 0    |<-------+                        |           |
+     |  | (Modulator) |        |                        |           |
+     |  +------+------+        |                        |           |
+     | (Self-  |               |                        |           |
+     |  FB)    | (in0 * pV0)   |                        |           |
+     +---------+               |                        |           |
+               v               |                        |           |
+        +-------------+        |                        |           |
+        |    OSC 1    |--------+------------------------+           |
+        |  (Carrier)  |                                             |
+        +------+------+                                             |
+               |                                                    |
+               +-----------------------> [ AUDIO OUT ] <------+     |
+                                              ^               |     |
+                                              |               |     |
+        +-------------+                        | (out3)        |     |
+     +->|    OSC 2    |                        |               |     |
+     |  | (Modulator) |                  +-----+-------+       |     |
+     |  +------+------+                  |    OSC 3    |-------+-----+
+     | (Self-  |                         |  (Carrier)  |  (Link: OSC 3 -> OSC 1)
+     |  FB)    | (in2 * pV2)             +-------------+
+     +---------+                               ^
+               |                               |
+               +-------------------------------+
+
+     ============================================================================
+  */
+
   if (STRUCTURE_L == 7 && STRUCTURE_U == 7) {
     for (int i = 0; i < bufferLen / 2 - 1; i += 2) {
       int32_t totalUpper = 0;

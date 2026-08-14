@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <!-- Fehér háttér kék kerettel -->
+  <rect x="10" y="10" width="480" height="480" fill="#ffffff" stroke="#0f38a8" stroke-width="8"/>
+
+  <!-- ZÖLD VONALAK (Jelfolyamok és Modulációk) -->
+  <g stroke="#41c363" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- 1) FM Moduláció: OSC 2 -> OSC 3 -->
+    <line x1="370" y1="180" x2="370" y2="240" />
+
+    <!-- 2) OSC 2 Self-FB -->
+    <path d="M 420,150 L 445,150 L 445,110 L 400,110 L 400,120" />
+
+    <!-- 3) OSC 3 Self-FB -->
+    <path d="M 420,270 L 445,270 L 445,230 L 400,230 L 400,240" />
+
+    <!-- 4) Egységes Audio Kimeneti Keverés (PCM 0 + PCM 1 + FM OSC 3 -> Audio Out) -->
+    <!-- PCM 0 (OSC 0) kimenet -->
+    <path d="M 100,270 L 100,335 L 235,335" />
+    <!-- PCM 1 (OSC 1) kimenet -->
+    <line x1="235" y1="270" x2="235" y2="335" />
+    <!-- FM Carrier (OSC 3) kimenet -->
+    <path d="M 370,300 L 370,335 L 235,335" />
+
+  </g>
+
+  <!-- OPERÁTOR DOBOZOK -->
+  <!-- PCM Blokkok (Narancssárga / Borostyán) -->
+  <rect x="50" y="210" width="100" height="60" rx="3" fill="#e67e22" />
+  <rect x="185" y="210" width="100" height="60" rx="3" fill="#e67e22" />
+  
+  <!-- FM Operátorok (Kék) -->
+  <g fill="#0f38a8">
+    <!-- OSC 2 (FM Mod) -->
+    <rect x="320" y="120" width="100" height="60" rx="3" />
+    <!-- OSC 3 (FM Car) -->
+    <rect x="320" y="240" width="100" height="60" rx="3" />
+  </g>
+
+  <!-- FEHÉR FELIRATOK -->
+  <g fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+    <!-- PCM Feliratok -->
+    <text x="100" y="240" font-size="22">PCM 0</text>
+    <text x="235" y="240" font-size="22">PCM 1</text>
+    
+    <!-- FM Operátor Számok -->
+    <text x="370" y="150" font-size="40">2</text>
+    <text x="370" y="270" font-size="40">3</text>
+  </g>
+
+  <!-- ALGORITMUS SZÁMA (Jobb alsó sarok) -->
+  <text x="425" y="425" fill="#0f38a8" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="75" text-anchor="middle">57</text>
+</svg>

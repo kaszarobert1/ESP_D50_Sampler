@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <!-- Fehér háttér kék kerettel -->
+  <rect x="10" y="10" width="480" height="480" fill="#ffffff" stroke="#0f38a8" stroke-width="8"/>
+
+  <!-- ZÖLD VONALAK (Audio utak) -->
+  <g stroke="#41c363" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- Bal oldal: PCM 0 + LA 1 (Sima keverés / Összeadás) -->
+    <line x1="80" y1="210" x2="80" y2="335" />
+    <line x1="185" y1="210" x2="185" y2="335" />
+    <line x1="80" y1="335" x2="185" y2="335" />
+
+    <!-- Jobb oldal: LA 2 + LA 3 (Sima keverés / Összeadás) -->
+    <line x1="290" y1="210" x2="290" y2="335" />
+    <line x1="395" y1="210" x2="395" y2="335" />
+    <line x1="290" y1="335" x2="395" y2="335" />
+
+    <!-- Közös Kimeneti Busz (Összekötő alul) -->
+    <line x1="132" y1="335" x2="342" y2="335" />
+
+  </g>
+
+  <!-- BLOKKOK -->
+  <!-- 1 db PCM Blokkk (Narancssárga) -->
+  <g fill="#e67e22">
+    <!-- PCM 0 -->
+    <rect x="35" y="150" width="90" height="60" rx="3" />
+  </g>
+
+  <!-- 3 db LA Oszcillátor Blokk (Kék) -->
+  <g fill="#0f38a8">
+    <!-- LA 1 -->
+    <rect x="140" y="150" width="90" height="60" rx="3" />
+    <!-- LA 2 -->
+    <rect x="245" y="150" width="90" height="60" rx="3" />
+    <!-- LA 3 -->
+    <rect x="350" y="150" width="90" height="60" rx="3" />
+  </g>
+
+  <!-- FEHÉR FELIRATOK A BLOKKOKBAN -->
+  <g fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+    <text x="80" y="180" font-size="16">PCM 0</text>
+    <text x="185" y="180" font-size="16">LA 1</text>
+    <text x="290" y="180" font-size="16">LA 2</text>
+    <text x="395" y="180" font-size="16">LA 3</text>
+  </g>
+
+  <!-- ALGORITMUS SZÁMA (Jobb alsó sarok) -->
+  <text x="425" y="425" fill="#0f38a8" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="75" text-anchor="middle">20</text>
+</svg>
