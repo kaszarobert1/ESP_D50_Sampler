@@ -110,6 +110,7 @@ bool LCD_ON = true;
 
 int step = 22;
 uint16_t GLOBAL_TUNE = 5040;
+byte tune = 90;
 byte prognumber = 0;
 byte COARSE[4] = { 48, 48, 48, 48 };
 byte FINE[4] = { 50, 50, 50, 50 };
@@ -1783,25 +1784,27 @@ void parametersysexchanged() {
         break;
       case 27:
         step = value;
+        tune = 90;
         switch (step) {
           case 7: GLOBAL_TUNE = 1; break;
           case 8: GLOBAL_TUNE = 2; break;
           case 9: GLOBAL_TUNE = 4; break;
           case 10: GLOBAL_TUNE = 7; break;
           case 11: GLOBAL_TUNE = 14; break;
-          case 12: GLOBAL_TUNE = 28; break;
-          case 13: GLOBAL_TUNE = 59; break;
-          case 14: GLOBAL_TUNE = 118; break;
-          case 15: GLOBAL_TUNE = 236; break;
-          case 16: GLOBAL_TUNE = 333; break;//módosított korrekció 472-rol
-          case 17: GLOBAL_TUNE = 944; break;
-          case 18: GLOBAL_TUNE = 1888; break;
-          case 19: GLOBAL_TUNE = 3776; break;
-          case 20: GLOBAL_TUNE = 7552; break;
-          case 21: GLOBAL_TUNE = 15104; break;
-          case 22: GLOBAL_TUNE = 30208; break;
-          case 23: GLOBAL_TUNE = 60416; break;
-          case 24: GLOBAL_TUNE = 120832; break;
+          case 12: GLOBAL_TUNE = tune / 16; break;
+          case 13: GLOBAL_TUNE = tune / 8; break;
+          case 14: GLOBAL_TUNE = tune / 4; break;
+          case 15: GLOBAL_TUNE = tune / 2; break;
+
+          case 16: GLOBAL_TUNE = tune; break;//módosított korrekció 472-rol 333-ra
+          case 17: GLOBAL_TUNE = tune * 2; break;
+          case 18: GLOBAL_TUNE = tune * 4; break;
+          case 19: GLOBAL_TUNE = tune * 8; break;
+          case 20: GLOBAL_TUNE = tune * 16; break;
+          case 21: GLOBAL_TUNE = tune * 32; break;
+          case 22: GLOBAL_TUNE = tune * 64; break;
+          case 23: GLOBAL_TUNE = tune * 128; break;
+          case 24: GLOBAL_TUNE = tune * 256; break;
           default:
             return;
             break;
@@ -1824,161 +1827,374 @@ void parametersysexchanged() {
       case 30:
         switch (value) {
           case 0:
-            delaybuffersize = 337;
-            delaytime = 1;
-            delay2time = 1;
-            reverblevel = 45;
-            reverbdiffusion = 2;
+            delaybuffersize = 8192;
+            reverbtime = 617;
+            reverbtime2 = 653;
+            delaytime = 2;
+            delay2time = 3;
+            reverblevel = 30;
+            reverbdiffusion = 6;
             line = "1. Small Hall";
             break;
+
           case 1:
-            delaybuffersize = 1583;
-            delaytime = 3;
-            delay2time = 2;
-            reverblevel = 50;
+            delaybuffersize = 8192;
+            reverbtime = 1033;
+            reverbtime2 = 1249;
+            delaytime = 2;
+            delay2time = 3;
+            reverblevel = 30;
+            reverbdiffusion = 6;
             line = "2. Medium Hall";
             break;
+
           case 2:
-            delaybuffersize = 1024;
+            delaybuffersize = 8192;
+            reverbtime = 1663;
+            reverbtime2 = 2213;
             delaytime = 1;
-            delay2time = 1;
-            reverblevel = 60;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 6;
             line = "3. Large Hall";
             break;
+
           case 3:
-            delaybuffersize = 2048;
-            delaytime = 1;
-            delay2time = 1;
-            reverblevel = 60;
+            delaybuffersize = 8192;
+            reverbtime = 2633;
+            reverbtime2 = 3037;
+            delaytime = 2;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 6;
             line = "4. Chapel";
             break;
+
           case 4:
-            delaybuffersize = 4127;
+            delaybuffersize = 8192;
+            reverbtime = 337;
+            reverbtime2 = 419;
             delaytime = 1;
             delay2time = 1;
-            reverblevel = 40;
+            reverblevel = 30;
+            reverbdiffusion = 5;
             line = "5. Box";
             break;
+
           case 5:
-            delaybuffersize = 211;
-            delaytime = 2;
-            delay2time = 1;
-            reverblevel = 40;
+            delaybuffersize = 8192;
+            reverbtime = 521;
+            reverbtime2 = 577;
+            delaytime = 1;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 6;
             line = "6. Small Metal Room";
             break;
+
           case 6:
-            delaybuffersize = 8191;
+            delaybuffersize = 8192;
+            reverbtime = 787;
+            reverbtime2 = 883;
+            delaytime = 2;
+            delay2time = 3;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "7. Small Room";
+            break;
+
+          case 7:
+            delaybuffersize = 8192;
+            reverbtime = 1249;
+            reverbtime2 = 1451;
             delaytime = 1;
             delay2time = 1;
-            reverblevel = 40;
-            line = "7. Small Room ";
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "8. Room";
             break;
-          case 7:
-            delaybuffersize = 8191;
-            delaytime = 1;
-            delay2time = 2;
-            reverblevel = 40;
-            line = "8. Small Room";
-            break;
+
           case 8:
             delaybuffersize = 8192;
+            reverbtime = 1867;
+            reverbtime2 = 2039;
             delaytime = 2;
-            delay2time = 2;
-            reverblevel = 40;
-            line = "9. Room";
+            delay2time = 3;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "9. Medium Room";
             break;
+
           case 9:
             delaybuffersize = 8192;
-            delaytime = 3;
-            delay2time = 2;
-            reverblevel = 40;
-            line = "8. Medium Room";
-            break;
-          case 10:
-            reverbtime = 8192;  // Bal oldal: hosszú út
-            reverbtime2 = 2048; // Jobb oldal: rövid út (azonnali válasz)
+            reverbtime = 2213;
+            reverbtime2 = 2477;
             delaytime = 1;
-            delay2time = 2;     // A jobb oldal legyen kicsit tompább (több átlagolás)
-            reverblevel = 45;
-            line = "9. Medium Large Room";
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "10. Medium Large Room";
             break;
+
+          case 10:
+            delaybuffersize = 8192;
+            reverbtime = 2803;
+            reverbtime2 = 3209;
+            delaytime = 2;
+            delay2time = 3;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "11. Large Room";
+            break;
+
           case 11:
             delaybuffersize = 8192;
-            delaytime = 3;
-            delay2time = 4;
-            reverblevel = 40;
-            line = "10. Large Room";
-            break;
-          case 12:
-            delaybuffersize = 8192;
-            delaytime = 1;
-            delay2time = 4;
-            reverblevel = 40;
-            line = "11. Single Delay 102ms";
-            break;
-          case 13:
-            delaybuffersize = 8192;
-            delaytime = 2;
-            delay2time = 4;
-            reverblevel = 40;
-            line = "12. Cross Delay 180ms";
-            break;
-          case 14:
-            delaybuffersize = 8192;
-            delaytime = 4;
-            delay2time = 4;
-            reverblevel = 40;
-            line = "13. Cross Delay 148-256msec";
-            break;
-          case 15:
-            delaybuffersize = 8192;
-            delaytime = 5;
-            delay2time = 6;
-            reverblevel = 40;
-            line = "14. Short Gate";
-            break;
-          case 16:
-            delaybuffersize = 8192;
-            delaytime = 6;
-            delay2time = 7;
-            reverblevel = 40;
-            line = "15. Long Gate";
-            break;
-          case 17:
-            delaybuffersize = 8192;
-            delaytime = 7;
-            delay2time = 8;
-            reverblevel = 40;
-            line = "Cross Delay 148-256msec";
-            break;
-          case 18:
-            delaybuffersize = 8192;
-            delaytime = 8;
-            delay2time = 9;
-            reverblevel = 40;
-            line = "Cross Delay 148-256msec";
-            break;
-          case 19:
-            delaybuffersize = 8192;
-            delaytime = 9;
-            delay2time = 10;
-            reverblevel = 40;
-            line = "Cross Delay 148-256msec";
-            break;
-          case 20:
-            delaybuffersize = 8192;
-            delaytime = 10;
-            delay2time = 10;
-            reverblevel = 40;
-            line = "Cross Delay 148-256msec";
-            break;
-          case 21:
-            delaybuffersize = 8192;
+            reverbtime = 2477;
+            reverbtime2 = 2477;
             delaytime = 1;
             delay2time = 1;
-            reverblevel = 40;
-            line = "Cross Delay 148-256msec";
+            reverblevel = 30;
+            reverbdiffusion = 1;
+            line = "12. Single Delay 102ms";
             break;
+
+          case 12:
+            delaybuffersize = 8192;
+            reverbtime = 4001;
+            reverbtime2 = 4663;
+            delaytime = 1;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 1;
+            line = "13. Cross Delay 180ms";
+            break;
+
+          case 13:
+            delaybuffersize = 8192;
+            reverbtime = 3571;
+            reverbtime2 = 6037;
+            delaytime = 1;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 2;
+            line = "14. Cross Delay 148-256msec";
+            break;
+
+          case 14:
+            delaybuffersize = 8192;
+            reverbtime = 1867;
+            reverbtime2 = 2039;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "15. Short Gate";
+            break;
+
+          case 15:
+            delaybuffersize = 8192;
+            reverbtime = 3209;
+            reverbtime2 = 3571;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "16. Long Gate";
+            break;
+
+          case 16:
+            // JAVÍTVA: Bright Hall - Nyílt, fényes akusztika, magas diffúzió és gyorsabb visszaverődés
+            delaybuffersize = 8192;
+            reverbtime = 3209;
+            reverbtime2 = 3571;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 35;
+            reverbdiffusion = 5;
+            line = "17. Bright Hall";
+            break;
+
+          case 17:
+            // Large Cave - Mély, elnyújtott, sötétebb barlangi lecsengés
+            delaybuffersize = 8192;
+            reverbtime = 6553;
+            reverbtime2 = 7451;
+            delaytime = 2;
+            delay2time = 3;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "18. Large Cave";
+            break;
+
+          case 18:
+            // Steel Pan - Fémes csengésű, rövid visszhangos üreg
+            delaybuffersize = 8192;
+            reverbtime = 1033;
+            reverbtime2 = 1249;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 3;
+            line = "19. Steel Pan";
+            break;
+
+          case 19:
+            // Delay 248ms - Tiszta single delay
+            delaybuffersize = 8192;
+            reverbtime = 5683;
+            reverbtime2 = 5683;
+            delaytime = 2;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 0;
+            line = "20. Delay (248ms)";
+            break;
+
+          case 20:
+            // Delay 338ms - Hosszabb tiszta delay
+            delaybuffersize = 8192;
+            reverbtime = 7951;
+            reverbtime2 = 7951;
+            delaytime = 2;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 0;
+            line = "21. Delay 338ms";
+            break;
+
+          case 21:
+            // Cross Delay (157ms) - Sztereó eltolt ismétlés
+            delaybuffersize = 8192;
+            reverbtime = 3571;
+            reverbtime2 = 4001;
+            delaytime = 1;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 1;
+            line = "22. Cross Delay (157ms)";
+            break;
+
+          case 22:
+            // Cross Delay (252ms)
+            delaybuffersize = 8192;
+            reverbtime = 5683;
+            reverbtime2 = 6037;
+            delaytime = 1;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 1;
+            line = "23. Cross Delay (252ms)";
+            break;
+
+          case 23:
+            // Cross Delay (274-137ms) - Aszimmetrikus ritmikus delay
+            delaybuffersize = 8192;
+            reverbtime = 6553;
+            reverbtime2 = 3209;
+            delaytime = 2;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 1;
+            line = "24. Cross Delay (274-137ms)";
+            break;
+
+          case 24:
+            // Gate Reverb - Standard dobgate
+            delaybuffersize = 8192;
+            reverbtime = 2213;
+            reverbtime2 = 2477;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 20;
+            reverbdiffusion = 7;
+            line = "25. Gate Reverb";
+            break;
+
+          case 25:
+            // Reverse Gate (360ms) - Élesebb, karakteresebb fordított beúszás
+            delaybuffersize = 8192;
+            reverbtime = 3209;
+            reverbtime2 = 4663; // Eltolt lecsengés a sztereó mozgáshoz
+            delaytime = 3;      // Hosszabb pre-delay a beszívó hatáshoz
+            delay2time = 4;
+            reverblevel = 35;
+            reverbdiffusion = 4; // Közepes diffúzió, hogy tisztább legyen az ív
+            line = "26. Reverse Gate (360ms)";
+            break;
+
+          case 26:
+            // Reverse Gate (460ms) - Hosszú, drámai crescendós beúszás
+            delaybuffersize = 8192;
+            reverbtime = 4663;
+            reverbtime2 = 6553;
+            delaytime = 4;
+            delay2time = 3;
+            reverblevel = 40;   // Kissé kiemelve, hogy a duzzadás teteje igazi csúcspont legyen
+            reverbdiffusion = 5;
+            line = "27. Reverse Gate (460ms)";
+            break;
+
+          case 27:
+            // Slap back short - Nagyon rövid, azonnali pattanó visszhang
+            delaybuffersize = 8192;
+            reverbtime = 1033;
+            reverbtime2 = 1033;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 0;
+            line = "28. Slap back short";
+            break;
+
+          case 28:
+            // Slap back mid - Közepes slapback
+            delaybuffersize = 8192;
+            reverbtime = 2213;
+            reverbtime2 = 2213;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 0;
+            line = "29. Slap back mid";
+            break;
+
+          case 29:
+            // Slap back long - Hosszabb slapback
+            delaybuffersize = 8192;
+            reverbtime = 3803;
+            reverbtime2 = 3803;
+            delaytime = 1;
+            delay2time = 1;
+            reverblevel = 30;
+            reverbdiffusion = 0;
+            line = "30. Slap back long";
+            break;
+
+          case 30:
+            // Twisted space - Modulált, kísérleti térhatás
+           delaybuffersize = 8192;
+            reverbtime = 3299;
+            reverbtime2 = 4909;
+            delaytime = 1;
+            delay2time = 2;
+            reverblevel = 30;
+            reverbdiffusion = 6;
+            line = "31. Twisted space";
+            break;
+
+          case 31:
+            // Space - Hatalmas, végtelenített hangterjedésú tér
+            delaybuffersize = 8192;
+            reverbtime = 8147;
+            reverbtime2 = 8191;
+            delaytime = 2;
+            delay2time = 3;
+            reverblevel = 20;
+            reverbdiffusion = 7;
+            line = "32. Space";
+            break;
+
+
           default:
             return;
             break;
@@ -2026,13 +2242,13 @@ void parametersysexchanged() {
 }
 
 //-------------------------------REVERB-DELAY EFFECT LEFT----------------------------------------
+/*
+  int32_t atlag = 0;
+  int16_t x = 0;
+  int32_t atlag2 = 0;
+  int16_t x2 = 0;
 
-int32_t atlag = 0;
-int16_t x = 0;
-int32_t atlag2 = 0;
-int16_t x2 = 0;
-
-void processingStereoReverb() {
+  void processingStereoReverb() {
   // 1. Kiolvasás a bufferekből
   int16_t delayedL = delaybuffer[delaybufferindex];
   int16_t delayedR = delaybuffer2[delaybufferindex2];
@@ -2086,6 +2302,199 @@ void processingStereoReverb() {
     delaybufferindex2 &= (reverbtime2 - 1);
     delay2step = 0;
   }
+  }
+*/
+//-------------------------------REVERB-DELAY EFFECT STEREO----------------------------------------Majdnem jó
+/*
+  int32_t atlag = 0;
+  int16_t x = 0;
+  int32_t atlag2 = 0;
+  int16_t x2 = 0;
+
+  void processingStereoReverb() {
+  // 1. Kiolvasás a meglévő bufferekből
+  int16_t delayedL = delaybuffer[delaybufferindex];
+  int16_t delayedR = delaybuffer2[delaybufferindex2];
+
+  // 2. Bemeneti minták elmentése
+  int16_t inputL = bufferbe[0];
+  int16_t inputR = bufferbe[1];
+
+  // FÁZIS-INVERTÁLT KERESZT-FEEDBACK (Kimeneti keverés)
+  int16_t wetL = inputL + delayedL + (delayedR >> 2); // +25% Jobb
+  int16_t wetR = inputR + delayedR - (delayedL >> 2); // -25% Bal (fázisfordítás)
+
+  // --- BAL OLDAL SZÁMÍTÁSA ---
+  atlag += (wetL * reverblevel) >> 6;
+  delaystep++;
+
+  if (delaystep >= delaytime) {
+    int16_t resL = atlag / delaystep;
+
+    // Limiter
+    if (resL > 16384) resL = 16384 + (resL - 16384) / 2;
+    else if (resL < -16384) resL = -16384 + (resL + 16384) / 2;
+
+    // All-pass diffúzió (Bal)
+    int16_t ap_in = resL;
+    int16_t ap_out = -ap_in + x;
+    x = ap_in + ((x * (reverbdiffusion & 0x07)) >> 3);
+    x = (x * 7) >> 3; // 12% Damping/csillapítás
+
+    delaybuffer[delaybufferindex] = ap_out;
+    atlag = 0;
+
+    // Pontos indexelés prím számokhoz (NINCS BITMASZK)
+    delaybufferindex++;
+    if (delaybufferindex >= reverbtime) {
+      delaybufferindex = 0;
+    }
+    delaystep = 0;
+  }
+
+  // --- JOBB OLDAL SZÁMÍTÁSA ---
+  atlag2 += (wetR * reverblevel) >> 6;
+  delay2step++;
+
+  if (delay2step >= delay2time) {
+    int16_t resR = atlag2 / delay2step;
+
+    // Limiter (Jobb)
+    if (resR > 16384) resR = 16384 + (resR - 16384) / 2;
+    else if (resR < -16384) resR = -16384 + (resR + 16384) / 2;
+
+    // All-pass diffúzió (Jobb)
+    int16_t ap_in2 = resR;
+    int16_t ap_out2 = ap_in2 - x2;
+    x2 = ap_in2 + ((x2 * (reverbdiffusion & 0x07)) >> 3);
+    x2 = (x2 * 7) >> 3; // 12% Damping/csillapítás
+
+    delaybuffer2[delaybufferindex2] = ap_out2;
+    atlag2 = 0;
+
+    // Pontos indexelés a jobb oldalra is
+    delaybufferindex2++;
+    if (delaybufferindex2 >= reverbtime2) {
+      delaybufferindex2 = 0;
+    }
+    delay2step = 0;
+  }
+
+  // 3. KIMENETI PUFFER FRISSÍTÉSE
+  bufferbe[0] = wetL;
+  bufferbe[1] = wetR;
+  }
+
+  void reverbleft() {
+  int16_t delayedSample = delaybuffer[delaybufferindex];
+  bufferbe[0] += delayedSample;
+  atlag += (bufferbe[0] * reverblevel) >> 6;
+  delaystep++;
+
+  if (delaystep >= delaytime) {
+    int16_t newSample = atlag / delaystep;
+
+    // 1. LIMITER (Puha vágás, hogy ne gerjedjen be)
+    if (newSample > 16384) newSample = 16384 + (newSample - 16384) / 2;
+    else if (newSample < -16384) newSample = -16384 + (newSample + 16384) / 2;
+
+    // 2. DIFFUSION (Ez simítja el a limiter esetleges éleit is)
+    x = ((newSample * (8 - reverbdiffusion)) + (x * reverbdiffusion)) >> 3;
+
+    delaybuffer[delaybufferindex] = x;
+    atlag = 0;
+    delaybufferindex++;
+    delaystep = 0;
+  }
+  delaybufferindex &= (reverbtime - 1);
+  }
+*/
+
+int32_t atlag = 0;
+int16_t x = 0;
+int32_t atlag2 = 0;
+int16_t x2 = 0;
+
+void processingStereoReverb() {
+  // 1. Kiolvasás a meglévő bufferekből
+  int16_t delayedL = delaybuffer[delaybufferindex];
+  int16_t delayedR = delaybuffer2[delaybufferindex2];
+
+  // 2. Bemeneti minták elmentése
+  int16_t inputL = bufferbe[0];
+  int16_t inputR = bufferbe[1];
+
+  // FÁZIS-INVERTÁLT KERESZT-FEEDBACK
+  int16_t wetL = inputL + delayedL + (delayedR >> 2);
+  int16_t wetR = inputR + delayedR - (delayedL >> 2);
+
+  // Diffúziós erősítés (0 .. 7 -> 0/8 .. 7/8)
+  int16_t g = reverbdiffusion & 0x07;
+
+  // --- BAL OLDAL SZÁMÍTÁSA ---
+  atlag += (wetL * reverblevel) >> 6;
+  delaystep++;
+
+  if (delaystep >= delaytime) {
+    int16_t resL = atlag / delaystep;
+
+    // Limiter
+    if (resL > 16384) resL = 16384 + (resL - 16384) / 2;
+    else if (resL < -16384) resL = -16384 + (resL + 16384) / 2;
+
+    // --- HELYES, STABIL SCHROEDER ALL-PASS ---
+    // y[n] = -g*x[n] + state
+    // state = x[n] + g*state
+    int16_t ap_in = resL;
+    int16_t ap_out = -((ap_in * g) >> 3) + x;
+    x = ap_in + ((x * g) >> 3);
+
+    // Csillapítás / Damping a hurokban (opcionális, de lágyítja a hangot)
+    x = (x * 7) >> 3;
+
+    delaybuffer[delaybufferindex] = ap_out;
+    atlag = 0;
+
+    // Pontos indexelés prím számokhoz
+    delaybufferindex++;
+    if (delaybufferindex >= reverbtime) {
+      delaybufferindex = 0;
+    }
+    delaystep = 0;
+  }
+
+  // --- JOBB OLDAL SZÁMÍTÁSA ---
+  atlag2 += (wetR * reverblevel) >> 6;
+  delay2step++;
+
+  if (delay2step >= delay2time) {
+    int16_t resR = atlag2 / delay2step;
+
+    // Limiter (Jobb)
+    if (resR > 16384) resR = 16384 + (resR - 16384) / 2;
+    else if (resR < -16384) resR = -16384 + (resR + 16384) / 2;
+
+    // --- HELYES, STABIL SCHROEDER ALL-PASS (Jobb) ---
+    int16_t ap_in2 = resR;
+    int16_t ap_out2 = -((ap_in2 * g) >> 3) + x2;
+    x2 = ap_in2 + ((x2 * g) >> 3);
+
+    x2 = (x2 * 7) >> 3;
+
+    delaybuffer2[delaybufferindex2] = ap_out2;
+    atlag2 = 0;
+
+    // Pontos indexelés a jobb oldalra is
+    delaybufferindex2++;
+    if (delaybufferindex2 >= reverbtime2) {
+      delaybufferindex2 = 0;
+    }
+    delay2step = 0;
+  }
+
+  // 3. KIMENETI PUFFER FRISSÍTÉSE
+  bufferbe[0] = wetL;
+  bufferbe[1] = wetR;
 }
 
 void reverbleft() {
